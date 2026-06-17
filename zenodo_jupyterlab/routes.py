@@ -1,7 +1,5 @@
 import json
 from pathlib import Path
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_core.paths import jupyter_data_dir
@@ -9,6 +7,7 @@ from jupyter_server.utils import url_path_join
 import tornado
 
 from .token_store import FileTokenStore, TokenStore
+from .zenodo import is_zenodo_access_token_valid
 
 
 def _default_token_store_path() -> Path:
@@ -25,18 +24,6 @@ def _get_user_token_id(handler: APIHandler) -> str:
     if some auth providers have better options available
     """
     return handler.current_user.username
-
-
-def _is_zenodo_access_token_valid(access_token: str) -> bool:
-    request = Request(
-        "https://zenodo.org/api/deposit/depositions",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-    try:
-        with urlopen(request, timeout=5) as response:
-            return response.status == 200
-    except (HTTPError, URLError, TimeoutError):
-        return False
 
 
 class HelloRouteHandler(APIHandler):
@@ -67,7 +54,7 @@ class ZenodoAccessTokenHandler(APIHandler):
         self.finish(json.dumps({
             "access_token_present": access_token is not None,
             "access_token_valid": (
-                _is_zenodo_access_token_valid(access_token)
+                is_zenodo_access_token_valid(access_token)
                 if access_token is not None
                 else False
             ),
@@ -82,7 +69,7 @@ class ZenodoAccessTokenHandler(APIHandler):
             self.finish(json.dumps({"message": "Missing 'access_token' in request body"}))
             return
 
-        if not _is_zenodo_access_token_valid(access_token):
+        if not is_zenodo_access_token_valid(access_token):
             self.set_status(400)
             self.finish(json.dumps({"message": "Invalid Zenodo access token"}))
             return
