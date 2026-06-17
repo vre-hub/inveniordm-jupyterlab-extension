@@ -16,7 +16,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
   activate: (app: JupyterFrontEnd) => {
     console.log('JupyterLab extension zenodo_jupyterlab is activated!');
 
-    const sidebarPanel = new SidebarPanel();
+    const sidebarPanel = new SidebarPanel(app.serviceManager.serverSettings);
     sidebarPanel.id = 'zenodo_jupyterlab:panel';
     app.shell.add(sidebarPanel, 'left', { rank: 900 });
     app.shell.activateById(sidebarPanel.id);
