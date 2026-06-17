@@ -79,7 +79,12 @@ class ZenodoAccessTokenHandler(APIHandler):
         access_token = data.get("access_token")
         if not access_token:
             self.set_status(400)
-            self.finish(json.dumps({"error": "Missing 'access_token' in request body"}))
+            self.finish(json.dumps({"message": "Missing 'access_token' in request body"}))
+            return
+
+        if not _is_zenodo_access_token_valid(access_token):
+            self.set_status(400)
+            self.finish(json.dumps({"message": "Invalid Zenodo access token"}))
             return
 
         token_id = _get_user_token_id(self)
