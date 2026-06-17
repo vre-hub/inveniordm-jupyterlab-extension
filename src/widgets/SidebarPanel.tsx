@@ -20,14 +20,19 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
     setMessage('');
 
     try {
-      const response = await requestAPI<{ access_token_present: boolean }>(
+      const response = await requestAPI<{
+        access_token_present: boolean;
+        access_token_valid: boolean;
+      }>(
         'access-token',
         serverSettings
       );
       setMessage(
-        response.access_token_present
-          ? 'An access token is stored.'
-          : 'No access token is stored.'
+        !response.access_token_present
+          ? 'No access token is stored.'
+          : response.access_token_valid
+          ? 'An access token is stored and valid.'
+          : 'An access token is stored, but it is not valid.'
       );
     } catch (reason) {
       setMessage(String(reason));
