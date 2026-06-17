@@ -15,6 +15,27 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
   const [message, setMessage] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
 
+  const checkAccessToken = async (): Promise<void> => {
+    setIsLoading(true);
+    setMessage('');
+
+    try {
+      const response = await requestAPI<{ access_token_present: boolean }>(
+        'access-token',
+        serverSettings
+      );
+      setMessage(
+        response.access_token_present
+          ? 'An access token is stored.'
+          : 'No access token is stored.'
+      );
+    } catch (reason) {
+      setMessage(String(reason));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const submitAccessToken = async (
     event: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
@@ -40,6 +61,27 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
         }
       );
       setMessage(response.message);
+      setAccessToken('');
+    } catch (reason) {
+      setMessage(String(reason));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteAccessToken = async (): Promise<void> => {
+    setIsLoading(true);
+    setMessage('');
+
+    try {
+      const response = await requestAPI<{ message: string }>(
+        'access-token',
+        serverSettings,
+        {
+          method: 'DELETE'
+        }
+      );
+      setMessage(response.message);
     } catch (reason) {
       setMessage(String(reason));
     } finally {
@@ -62,6 +104,12 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
           {isLoading ? 'Saving...' : 'Save'}
         </button>
       </form>
+      <button disabled={isLoading} onClick={checkAccessToken} type="button">
+        Check token
+      </button>
+      <button disabled={isLoading} onClick={deleteAccessToken} type="button">
+        Delete token
+      </button>
       {message ? <p>{message}</p> : null}
     </div>
   );
