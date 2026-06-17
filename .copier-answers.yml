@@ -1,0 +1,16 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.6.2
+_src_path: https://github.com/jupyterlab/extension-template
+advanced: false
+author_email: elisabeth.hannah.juttner@cern.ch
+author_name: Elisabeth Jüttner
+has_ai_rules: false
+has_binder: false
+has_settings: false
+kind: frontend-and-server
+labextension_name: zenodo_jupyterlab
+project_short_description: Integrates Zenodo into JupyterLab.
+python_name: zenodo_jupyterlab
+repository: https://github.com/ejuet/zenodo-jupyterlab-extension-prototype
+test: true
+
