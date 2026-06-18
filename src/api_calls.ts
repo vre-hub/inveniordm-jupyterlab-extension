@@ -13,3 +13,26 @@ export async function checkAccessStatus(
 ): Promise<AccessTokenResponse> {
   return await requestAPI<AccessTokenResponse>('access-token', serverSettings);
 }
+
+export type PutDeleteAccessTokenResponse = {
+  message: string;
+};
+
+export async function putAccessToken(
+  serverSettings: ServerConnection.ISettings,
+  token: string
+): Promise<PutDeleteAccessTokenResponse> {
+  return await requestAPI('access-token', serverSettings, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ access_token: token })
+  });
+}
+
+export async function deleteAccessToken(
+  serverSettings: ServerConnection.ISettings
+): Promise<PutDeleteAccessTokenResponse> {
+  return await requestAPI('access-token', serverSettings, {
+    method: 'DELETE'
+  });
+}

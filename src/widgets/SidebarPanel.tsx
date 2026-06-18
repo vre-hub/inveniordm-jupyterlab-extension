@@ -2,9 +2,8 @@ import React from 'react';
 import { VDomRenderer } from '@jupyterlab/apputils';
 import { ServerConnection } from '@jupyterlab/services';
 
-import { checkAccessStatus } from '../api_calls';
+import { checkAccessStatus, deleteAccessToken, putAccessToken } from '../api_calls';
 import { LoginStatusPill } from '../components/LoginStatusPill';
-import { requestAPI } from '../request';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
 
@@ -22,7 +21,7 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
     setMessage('');
 
     try {
-      setMessage(await checkAccessStatus(serverSettings));
+      setMessage(JSON.stringify(await checkAccessStatus(serverSettings)));
     } catch (reason) {
       setMessage(String(reason));
     } finally {
@@ -45,15 +44,7 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
     setMessage('');
 
     try {
-      const response = await requestAPI<{ message: string }>(
-        'access-token',
-        serverSettings,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: token })
-        }
-      );
+      const response = await putAccessToken(serverSettings, token);
       setMessage(response.message);
       setAccessToken('');
     } catch (reason) {
@@ -63,18 +54,12 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
     }
   };
 
-  const deleteAccessToken = async (): Promise<void> => {
+  const deleteAccessTokenCall = async (): Promise<void> => {
     setIsLoading(true);
     setMessage('');
 
     try {
-      const response = await requestAPI<{ message: string }>(
-        'access-token',
-        serverSettings,
-        {
-          method: 'DELETE'
-        }
-      );
+      const response = await deleteAccessToken(serverSettings);
       setMessage(response.message);
     } catch (reason) {
       setMessage(String(reason));
@@ -102,7 +87,7 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
       <button disabled={isLoading} onClick={checkAccessToken} type="button">
         Check token
       </button>
-      <button disabled={isLoading} onClick={deleteAccessToken} type="button">
+      <button disabled={isLoading} onClick={deleteAccessTokenCall} type="button">
         Delete token
       </button>
       {message ? <p>{message}</p> : null}

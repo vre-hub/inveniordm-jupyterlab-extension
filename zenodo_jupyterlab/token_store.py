@@ -1,19 +1,43 @@
 import json
 import os
 from abc import ABC, abstractmethod
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+
+
+@dataclass
+class StoredToken:
+    access_token: str
+    access_token_valid: bool
 
 
 class TokenStore(ABC):
     """Store access tokens by stable identifier."""
 
     @abstractmethod
+    def get_token(self, token_id: str) -> StoredToken | None:
+        pass
+
     def get_access_token(self, token_id: str) -> str | None:
+        token = self.get_token(token_id)
+        return token.access_token if token is not None else None
+
+    @abstractmethod
+    def set_access_token(
+        self, token_id: str, access_token: str, access_token_valid: bool
+    ) -> None:
         pass
 
     @abstractmethod
-    def set_access_token(self, token_id: str, access_token: str) -> None:
+    def set_access_token_validity(
+        self, token_id: str, access_token_valid: bool
+    ) -> None:
+        """
+        Update the validity of the access token without changing the token itself.
+        Call this after making a call to Zenodo with the token
+        to update the validity based on whether the call succeeded or failed due to auth.
+        """
         pass
 
     @abstractmethod
@@ -21,7 +45,7 @@ class TokenStore(ABC):
         pass
 
     def has_access_token(self, token_id: str) -> bool:
-        return self.get_access_token(token_id) is not None
+        return self.get_token(token_id) is not None
 
 
 class FileTokenStore(TokenStore):
@@ -35,12 +59,24 @@ class FileTokenStore(TokenStore):
     def __init__(self, path: str | Path):
         self.path = Path(path)
 
-    def get_access_token(self, token_id: str) -> str | None:
+    def get_token(self, token_id: str) -> StoredToken | None:
         return self._read_tokens().get(token_id)
 
-    def set_access_token(self, token_id: str, access_token: str) -> None:
+    def set_access_token(
+        self, token_id: str, access_token: str, access_token_valid: bool
+    ) -> None:
         tokens = self._read_tokens()
-        tokens[token_id] = access_token
+        tokens[token_id] = StoredToken(access_token, access_token_valid)
+        self._write_tokens(tokens)
+
+    def set_access_token_validity(
+        self, token_id: str, access_token_valid: bool
+    ) -> None:
+        tokens = self._read_tokens()
+        token = tokens.get(token_id)
+        if token is None:
+            return
+        tokens[token_id] = StoredToken(token.access_token, access_token_valid)
         self._write_tokens(tokens)
 
     def remove_access_token(self, token_id: str) -> None:
@@ -48,7 +84,7 @@ class FileTokenStore(TokenStore):
         tokens.pop(token_id, None)
         self._write_tokens(tokens)
 
-    def _read_tokens(self) -> dict[str, str]:
+    def _read_tokens(self) -> dict[str, StoredToken]:
         if not self.path.exists():
             return {}
 
@@ -58,17 +94,29 @@ class FileTokenStore(TokenStore):
         if not isinstance(data, dict):
             return {}
 
-        return {
-            str(token_id): token
-            for token_id, token in data.items()
-            if isinstance(token, str)
-        }
+        tokens: dict[str, StoredToken] = {}
+        for token_id, token in data.items():
+            if isinstance(token, str):
+                tokens[str(token_id)] = StoredToken(token, True)
+            elif isinstance(token, dict):
+                access_token = token.get("access_token")
+                access_token_valid = token.get("access_token_valid")
+                if isinstance(access_token, str) and isinstance(
+                    access_token_valid, bool
+                ):
+                    tokens[str(token_id)] = StoredToken(
+                        access_token, access_token_valid
+                    )
+        return tokens
 
-    def _write_tokens(self, tokens: dict[str, str]) -> None:
+    def _write_tokens(self, tokens: dict[str, StoredToken]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp_path = self.path.with_suffix(f"{self.path.suffix}.tmp")
 
         with tmp_path.open("w", encoding="utf-8") as fid:
-            json.dump(tokens, fid)
+            json.dump(
+                {token_id: asdict(token) for token_id, token in tokens.items()},
+                fid,
+            )
 
         os.replace(tmp_path, self.path)

@@ -50,12 +50,12 @@ class ZenodoAccessTokenHandler(APIHandler):
     @tornado.web.authenticated
     def get(self):
         token_id = _get_user_token_id(self)
-        access_token = self.token_store.get_access_token(token_id)
+        token = self.token_store.get_token(token_id)
         self.finish(json.dumps({
-            "access_token_present": access_token is not None,
+            "access_token_present": token is not None,
             "access_token_valid": (
-                is_zenodo_access_token_valid(access_token)
-                if access_token is not None
+                token.access_token_valid
+                if token is not None
                 else False
             ),
         }))
@@ -69,13 +69,14 @@ class ZenodoAccessTokenHandler(APIHandler):
             self.finish(json.dumps({"message": "Missing 'access_token' in request body"}))
             return
 
-        if not is_zenodo_access_token_valid(access_token):
+        access_token_valid = is_zenodo_access_token_valid(access_token)
+        if not access_token_valid:
             self.set_status(400)
             self.finish(json.dumps({"message": "Invalid Zenodo access token"}))
             return
 
         token_id = _get_user_token_id(self)
-        self.token_store.set_access_token(token_id, access_token)
+        self.token_store.set_access_token(token_id, access_token, access_token_valid)
 
         self.finish(json.dumps({"message": "Access token received successfully"}))
 

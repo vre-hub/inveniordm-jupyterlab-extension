@@ -23,12 +23,19 @@ export const LoginStatusPill: React.FC<ILoginStatusPillProps> = ({
 }) => {
   const [status, setStatus] = React.useState<LoginStatus>('Not Logged In');
 
+  const updateStatus = async (): Promise<void> => {
+    try {
+      const accessStatus = await checkAccessStatus(serverSettings);
+      setStatus(formatAccessStatus(accessStatus));
+    } catch {
+      setStatus('Invalid Login');
+    }
+  }
+
   React.useEffect(() => {
-    //TODO this is only called once, find a way to update the status without polling
-    checkAccessStatus(serverSettings)
-      .then(formatAccessStatus)
-      .then(setStatus)
-      .catch(() => setStatus('Invalid Login'));
+    updateStatus();
+    // TODO instead of polling log in status, use SSE
+    setInterval(updateStatus, 1 * 1000);
   }, [serverSettings]);
 
   return (
