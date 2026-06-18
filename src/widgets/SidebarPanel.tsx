@@ -59,6 +59,14 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
   return (
     <div className={PANEL_CLASS}>
       <LoginStatusPill serverSettings={serverSettings} />
+      <button
+        disabled={isLoading}
+        onClick={deleteAccessTokenCall}
+        type="button"
+      >
+        Delete token
+      </button>
+      <hr />
       <form onSubmit={submitAccessToken}>
         <input
           aria-label="Zenodo access token"
@@ -80,13 +88,6 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
           {isLoading ? 'Saving...' : 'Save'}
         </button>
       </form>
-      <button
-        disabled={isLoading}
-        onClick={deleteAccessTokenCall}
-        type="button"
-      >
-        Delete token
-      </button>
       {message ? <p>{message}</p> : null}
     </div>
   );
