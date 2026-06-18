@@ -1,7 +1,7 @@
 import json
 import os
 from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +10,7 @@ from typing import Any
 class StoredToken:
     access_token: str
     access_token_valid: bool
+    sandbox: bool = False
 
 
 class TokenStore(ABC):
@@ -25,7 +26,11 @@ class TokenStore(ABC):
 
     @abstractmethod
     def set_access_token(
-        self, token_id: str, access_token: str, access_token_valid: bool
+        self,
+        token_id: str,
+        access_token: str,
+        access_token_valid: bool,
+        sandbox: bool = False,
     ) -> None:
         pass
 
@@ -44,8 +49,6 @@ class TokenStore(ABC):
     def remove_access_token(self, token_id: str) -> None:
         pass
 
-    def has_access_token(self, token_id: str) -> bool:
-        return self.get_token(token_id) is not None
 
 
 class FileTokenStore(TokenStore):
@@ -63,10 +66,14 @@ class FileTokenStore(TokenStore):
         return self._read_tokens().get(token_id)
 
     def set_access_token(
-        self, token_id: str, access_token: str, access_token_valid: bool
+        self,
+        token_id: str,
+        access_token: str,
+        access_token_valid: bool,
+        sandbox: bool = False,
     ) -> None:
         tokens = self._read_tokens()
-        tokens[token_id] = StoredToken(access_token, access_token_valid)
+        tokens[token_id] = StoredToken(access_token, access_token_valid, sandbox)
         self._write_tokens(tokens)
 
     def set_access_token_validity(
@@ -76,7 +83,7 @@ class FileTokenStore(TokenStore):
         token = tokens.get(token_id)
         if token is None:
             return
-        tokens[token_id] = StoredToken(token.access_token, access_token_valid)
+        tokens[token_id] = replace(token, access_token_valid=access_token_valid)
         self._write_tokens(tokens)
 
     def remove_access_token(self, token_id: str) -> None:
@@ -94,20 +101,11 @@ class FileTokenStore(TokenStore):
         if not isinstance(data, dict):
             return {}
 
-        tokens: dict[str, StoredToken] = {}
-        for token_id, token in data.items():
-            if isinstance(token, str):
-                tokens[str(token_id)] = StoredToken(token, True)
-            elif isinstance(token, dict):
-                access_token = token.get("access_token")
-                access_token_valid = token.get("access_token_valid")
-                if isinstance(access_token, str) and isinstance(
-                    access_token_valid, bool
-                ):
-                    tokens[str(token_id)] = StoredToken(
-                        access_token, access_token_valid
-                    )
-        return tokens
+        return {
+            str(token_id): StoredToken(**token)
+            for token_id, token in data.items()
+            if isinstance(token, dict)
+        }
 
     def _write_tokens(self, tokens: dict[str, StoredToken]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

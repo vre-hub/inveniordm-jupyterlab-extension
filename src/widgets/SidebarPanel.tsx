@@ -13,6 +13,7 @@ interface IPanelProps {
 
 const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
   const [accessToken, setAccessToken] = React.useState('');
+  const [sandbox, setSandbox] = React.useState(false);
   const [message, setMessage] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -31,7 +32,7 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
     setMessage('');
 
     try {
-      const response = await putAccessToken(serverSettings, token);
+      const response = await putAccessToken(serverSettings, token, sandbox);
       setMessage(response.message);
       setAccessToken('');
     } catch (reason) {
@@ -67,11 +68,23 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
           type="password"
           value={accessToken}
         />
+        <label>
+          <input
+            checked={sandbox}
+            onChange={event => setSandbox(event.target.checked)}
+            type="checkbox"
+          />
+          Sandbox
+        </label>
         <button disabled={isLoading || !accessToken.trim()} type="submit">
           {isLoading ? 'Saving...' : 'Save'}
         </button>
       </form>
-      <button disabled={isLoading} onClick={deleteAccessTokenCall} type="button">
+      <button
+        disabled={isLoading}
+        onClick={deleteAccessTokenCall}
+        type="button"
+      >
         Delete token
       </button>
       {message ? <p>{message}</p> : null}

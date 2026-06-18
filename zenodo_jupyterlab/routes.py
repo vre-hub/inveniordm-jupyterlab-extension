@@ -58,25 +58,33 @@ class ZenodoAccessTokenHandler(APIHandler):
                 if token is not None
                 else False
             ),
+            "sandbox": token.sandbox if token is not None else False,
         }))
 
     @tornado.web.authenticated
     def put(self):
         data = self.get_json_body() or {}
         access_token = data.get("access_token")
+        sandbox = data.get("sandbox")
         if not access_token:
             self.set_status(400)
             self.finish(json.dumps({"message": "Missing 'access_token' in request body"}))
             return
+        if not isinstance(sandbox, bool):
+            self.set_status(400)
+            self.finish(json.dumps({"message": "Missing boolean 'sandbox' in request body"}))
+            return
 
-        access_token_valid = is_zenodo_access_token_valid(access_token)
+        access_token_valid = is_zenodo_access_token_valid(access_token, sandbox)
         if not access_token_valid:
             self.set_status(400)
             self.finish(json.dumps({"message": "Invalid Zenodo access token"}))
             return
 
         token_id = _get_user_token_id(self)
-        self.token_store.set_access_token(token_id, access_token, access_token_valid)
+        self.token_store.set_access_token(
+            token_id, access_token, access_token_valid, sandbox
+        )
 
         self.finish(json.dumps({"message": "Access token received successfully"}))
 
