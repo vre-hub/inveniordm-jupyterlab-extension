@@ -2,6 +2,7 @@ import React from 'react';
 import { VDomRenderer } from '@jupyterlab/apputils';
 import { ServerConnection } from '@jupyterlab/services';
 
+import { ZenodoDepositions } from '../components/ZenodoDepositions';
 import { ZenodoLoginForm } from '../components/ZenodoLoginForm';
 import { ZenodoSandboxOverrideSetting } from '../components/ZenodoSandboxOverrideSetting';
 import { ZenodoSearch } from '../components/ZenodoSearch';
@@ -18,6 +19,8 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
       <ZenodoLoginForm serverSettings={serverSettings} />
       <hr />
       <ZenodoSandboxOverrideSetting />
+      <hr />
+      <ZenodoDepositions serverSettings={serverSettings} />
       <hr />
       <ZenodoSearch serverSettings={serverSettings} />
     </div>

@@ -66,3 +66,23 @@ def search_zenodo_records(
     response.raise_for_status()
     return response.json()
 
+
+def list_zenodo_depositions(
+    *,
+    access_token: str | None,
+    sandbox: bool = False,
+    page: int = 1,
+    size: int = 10,
+) -> dict[str, Any]:
+    """
+    List depositions owned by the authenticated user.
+    """
+    server_url = ZENODO_SANDBOX_SERVER_URL if sandbox else ZENODO_SERVER_URL
+    response = requests.get(
+        f"{server_url}/api/deposit/depositions",
+        params={"page": page, "size": size},
+        headers=_headers(access_token),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()

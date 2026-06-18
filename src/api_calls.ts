@@ -49,3 +49,19 @@ export async function searchZenodoRecords(
   }
   return await requestAPI(`records?${params.toString()}`, serverSettings);
 }
+
+export async function listZenodoDepositions(
+  serverSettings: ServerConnection.ISettings,
+  options?: { sandbox?: boolean }
+): Promise<unknown> {
+  const params = new URLSearchParams();
+  if (options?.sandbox !== undefined) {
+    params.append('sandbox', options.sandbox.toString());
+  }
+
+  const queryString = params.toString();
+  return await requestAPI(
+    `depositions${queryString ? `?${queryString}` : ''}`,
+    serverSettings
+  );
+}
