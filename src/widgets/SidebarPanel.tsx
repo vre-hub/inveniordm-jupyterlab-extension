@@ -3,6 +3,7 @@ import { VDomRenderer } from '@jupyterlab/apputils';
 import { ServerConnection } from '@jupyterlab/services';
 
 import { ZenodoLoginForm } from '../components/ZenodoLoginForm';
+import { ZenodoSandboxOverrideSetting } from '../components/ZenodoSandboxOverrideSetting';
 import { ZenodoSearch } from '../components/ZenodoSearch';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
@@ -15,6 +16,8 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
   return (
     <div className={PANEL_CLASS}>
       <ZenodoLoginForm serverSettings={serverSettings} />
+      <hr />
+      <ZenodoSandboxOverrideSetting />
       <hr />
       <ZenodoSearch serverSettings={serverSettings} />
     </div>

@@ -41,7 +41,7 @@ export async function deleteAccessToken(
 export async function searchZenodoRecords(
   serverSettings: ServerConnection.ISettings,
   query: string,
-  options?: { sandbox: boolean }
+  options?: { sandbox?: boolean }
 ): Promise<unknown> {
   const params = new URLSearchParams({ q: query });
   if (options?.sandbox !== undefined) {

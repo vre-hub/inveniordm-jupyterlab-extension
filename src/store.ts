@@ -1,15 +1,15 @@
 import { Store } from 'pullstate';
 
 interface IZenodoState {
-  isSandboxOverride: boolean;
+  sandboxOverride: boolean | undefined;
 }
 
 export const ZenodoStore = new Store<IZenodoState>({
-  isSandboxOverride: false
+  sandboxOverride: undefined
 });
 
-export function setIsSandboxOverride(isSandbox: boolean): void {
+export function setSandboxOverride(sandboxOverride: boolean | undefined): void {
   ZenodoStore.update(state => {
-    state.isSandboxOverride = isSandbox;
+    state.sandboxOverride = sandboxOverride;
   });
 }

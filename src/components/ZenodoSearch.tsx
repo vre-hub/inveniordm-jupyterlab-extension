@@ -2,7 +2,7 @@ import React from 'react';
 import { ServerConnection } from '@jupyterlab/services';
 
 import { searchZenodoRecords } from '../api_calls';
-import { setIsSandboxOverride, ZenodoStore } from '../store';
+import { ZenodoStore } from '../store';
 
 interface IZenodoSearchProps {
   serverSettings: ServerConnection.ISettings;
@@ -14,7 +14,7 @@ export const ZenodoSearch: React.FC<IZenodoSearchProps> = ({
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<unknown>(null);
   const [isSearching, setIsSearching] = React.useState(false);
-  const isSandbox = ZenodoStore.useState(state => state.isSandboxOverride);
+  const sandboxOverride = ZenodoStore.useState(state => state.sandboxOverride);
 
   const submitSearch = async (
     event: React.FormEvent<HTMLFormElement>
@@ -24,7 +24,9 @@ export const ZenodoSearch: React.FC<IZenodoSearchProps> = ({
 
     try {
       setResults(
-        await searchZenodoRecords(serverSettings, query, { sandbox: isSandbox })
+        await searchZenodoRecords(serverSettings, query, {
+          sandbox: sandboxOverride
+        })
       );
     } catch (reason) {
       setResults({ error: String(reason) });
@@ -43,13 +45,6 @@ export const ZenodoSearch: React.FC<IZenodoSearchProps> = ({
           type="search"
           value={query}
         />
-        <input
-          checked={isSandbox}
-          onChange={event => setIsSandboxOverride(event.target.checked)}
-          type="checkbox"
-        />
-        <label>Sandbox</label>
-        <br />
         <button disabled={isSearching} type="submit">
           {isSearching ? 'Searching...' : 'Search'}
         </button>
