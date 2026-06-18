@@ -2,6 +2,8 @@ import React from 'react';
 import { VDomRenderer } from '@jupyterlab/apputils';
 import { ServerConnection } from '@jupyterlab/services';
 
+import { checkAccessStatus } from '../api_calls';
+import { LoginStatusPill } from '../components/LoginStatusPill';
 import { requestAPI } from '../request';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
@@ -20,20 +22,7 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
     setMessage('');
 
     try {
-      const response = await requestAPI<{
-        access_token_present: boolean;
-        access_token_valid: boolean;
-      }>(
-        'access-token',
-        serverSettings
-      );
-      setMessage(
-        !response.access_token_present
-          ? 'No access token is stored.'
-          : response.access_token_valid
-          ? 'An access token is stored and valid.'
-          : 'An access token is stored, but it is not valid.'
-      );
+      setMessage(await checkAccessStatus(serverSettings));
     } catch (reason) {
       setMessage(String(reason));
     } finally {
@@ -96,6 +85,7 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
 
   return (
     <div className={PANEL_CLASS}>
+      <LoginStatusPill serverSettings={serverSettings} />
       <form onSubmit={submitAccessToken}>
         <input
           aria-label="Zenodo access token"
