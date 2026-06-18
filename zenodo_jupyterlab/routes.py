@@ -105,6 +105,13 @@ class ZenodoRecordsHandler(APIHandler):
         token_id = _get_user_token_id(self)
         token = self.token_store.get_token(token_id)
 
+        access_token = token.access_token if token is not None else None
+
+        sandbox = False
+        if self.get_query_argument("sandbox", None) is not None:
+            sandbox = self.get_query_argument("sandbox", "false").lower() in ("1", "true")
+        elif token is not None:
+            sandbox = token.sandbox
         filters = {
             key: self.get_query_argument(key, None)
             for key in ("communities", "type", "subtype", "bounds", "custom")
@@ -115,8 +122,8 @@ class ZenodoRecordsHandler(APIHandler):
             # TODO refactor so we do not specify defaults twice (here and in zenodo.py)
             records = search_zenodo_records(
                 self.get_query_argument("q", ""),
-                access_token=token.access_token if token is not None else None,
-                sandbox=token.sandbox if token is not None else False,
+                access_token=access_token,
+                sandbox=sandbox,
                 page=int(self.get_query_argument("page", "1")),
                 size=int(self.get_query_argument("size", "10")),
                 sort=self.get_query_argument("sort", "bestmatch"),

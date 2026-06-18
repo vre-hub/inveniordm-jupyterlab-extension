@@ -8,6 +8,7 @@ import {
   searchZenodoRecords
 } from '../api_calls';
 import { LoginStatusPill } from '../components/LoginStatusPill';
+import { setIsSandboxOverride, ZenodoStore } from '../store';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
 
@@ -19,6 +20,7 @@ const ZenodoSearch: React.FC<IPanelProps> = ({ serverSettings }) => {
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<unknown>(null);
   const [isSearching, setIsSearching] = React.useState(false);
+  const isSandbox = ZenodoStore.useState(state => state.isSandboxOverride);
 
   const submitSearch = async (
     event: React.FormEvent<HTMLFormElement>
@@ -27,7 +29,9 @@ const ZenodoSearch: React.FC<IPanelProps> = ({ serverSettings }) => {
     setIsSearching(true);
 
     try {
-      setResults(await searchZenodoRecords(serverSettings, query));
+      setResults(
+        await searchZenodoRecords(serverSettings, query, { sandbox: isSandbox })
+      );
     } catch (reason) {
       setResults({ error: String(reason) });
     } finally {
@@ -45,6 +49,13 @@ const ZenodoSearch: React.FC<IPanelProps> = ({ serverSettings }) => {
           type="search"
           value={query}
         />
+        <input
+          checked={isSandbox}
+          onChange={event => setIsSandboxOverride(event.target.checked)}
+          type="checkbox"
+        />
+        <label>Sandbox</label>
+        <br />
         <button disabled={isSearching} type="submit">
           {isSearching ? 'Searching...' : 'Search'}
         </button>

@@ -59,7 +59,8 @@
         "@jupyterlab/application": "^4.0.0",
         "@jupyterlab/apputils": "^4.0.0",
         "@jupyterlab/coreutils": "^6.0.0",
-        "@jupyterlab/services": "^7.0.0"
+        "@jupyterlab/services": "^7.0.0",
+        "pullstate": "^1.25.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.0.0",

@@ -22,11 +22,13 @@ export const LoginStatusPill: React.FC<ILoginStatusPillProps> = ({
   serverSettings
 }) => {
   const [status, setStatus] = React.useState<LoginStatus>('Not Logged In');
+  const [isSandbox, setIsSandbox] = React.useState<boolean>(false);
 
-  const updateStatus = async (): Promise<void> => {
+  async function updateStatus(): Promise<void> {
     try {
       const accessStatus = await checkAccessStatus(serverSettings);
       setStatus(formatAccessStatus(accessStatus));
+      setIsSandbox(accessStatus.sandbox);
     } catch {
       setStatus('Invalid Login');
     }
@@ -42,7 +44,7 @@ export const LoginStatusPill: React.FC<ILoginStatusPillProps> = ({
     <span
       style={{ border: '1px solid #aaa', borderRadius: 12, padding: '2px 8px' }}
     >
-      {status}
+      {status} {isSandbox && '(Sandbox)'}
     </span>
   );
 };

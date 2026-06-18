@@ -6840,6 +6840,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"immer@npm:^9.0.16":
+  version: 9.0.21
+  resolution: "immer@npm:9.0.21"
+  checksum: 70e3c274165995352f6936695f0ef4723c52c92c92dd0e9afdfe008175af39fa28e76aafb3a2ca9d57d1fb8f796efc4dd1e1cc36f18d33fa5b74f3dfb0375432
+  languageName: node
+  linkType: hard
+
 "import-fresh@npm:^3.2.1, import-fresh@npm:^3.3.0":
   version: 3.3.1
   resolution: "import-fresh@npm:3.3.1"
@@ -8876,6 +8883,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pullstate@npm:^1.25.0":
+  version: 1.25.0
+  resolution: "pullstate@npm:1.25.0"
+  dependencies:
+    fast-deep-equal: ^3.1.3
+    immer: ^9.0.16
+  peerDependencies:
+    react: ^16.12.0 || ^17.0.0 || ^18.0.0
+  checksum: 9a5518077c4b4db736fc456fcb46f68d43f18822e005e5a5edcbcdf34dd3b81d0d302c8021c4a15bc95015e23758a7a3960ed2ba64246589b4d3656a03d773b5
+  languageName: node
+  linkType: hard
+
 "punycode@npm:^2.1.0, punycode@npm:^2.1.1, punycode@npm:^2.3.1":
   version: 2.3.1
   resolution: "punycode@npm:2.3.1"
@@ -10583,6 +10602,7 @@ __metadata:
     mkdirp: ^1.0.3
     npm-run-all2: ^7.0.1
     prettier: ^3.0.0
+    pullstate: ^1.25.0
     rimraf: ^5.0.1
     stylelint: ^15.10.1
     stylelint-config-recommended: ^13.0.0
