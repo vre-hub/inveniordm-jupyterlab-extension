@@ -2,7 +2,7 @@ import React from 'react';
 import { VDomRenderer } from '@jupyterlab/apputils';
 import { ServerConnection } from '@jupyterlab/services';
 
-import { checkAccessStatus, deleteAccessToken, putAccessToken } from '../api_calls';
+import { deleteAccessToken, putAccessToken } from '../api_calls';
 import { LoginStatusPill } from '../components/LoginStatusPill';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
@@ -15,19 +15,6 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
   const [accessToken, setAccessToken] = React.useState('');
   const [message, setMessage] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
-
-  const checkAccessToken = async (): Promise<void> => {
-    setIsLoading(true);
-    setMessage('');
-
-    try {
-      setMessage(JSON.stringify(await checkAccessStatus(serverSettings)));
-    } catch (reason) {
-      setMessage(String(reason));
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const submitAccessToken = async (
     event: React.FormEvent<HTMLFormElement>
@@ -84,9 +71,6 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
           {isLoading ? 'Saving...' : 'Save'}
         </button>
       </form>
-      <button disabled={isLoading} onClick={checkAccessToken} type="button">
-        Check token
-      </button>
       <button disabled={isLoading} onClick={deleteAccessTokenCall} type="button">
         Delete token
       </button>
