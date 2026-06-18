@@ -5,9 +5,10 @@ from jupyter_server.base.handlers import APIHandler
 from jupyter_core.paths import jupyter_data_dir
 from jupyter_server.utils import url_path_join
 import tornado
+import requests
 
 from .token_store import FileTokenStore, TokenStore
-from .zenodo import is_zenodo_access_token_valid
+from .zenodo import is_zenodo_access_token_valid, search_zenodo_records
 
 
 def _default_token_store_path() -> Path:
@@ -95,6 +96,46 @@ class ZenodoAccessTokenHandler(APIHandler):
         self.finish(json.dumps({"message": "Access token removed successfully"}))
 
 
+class ZenodoRecordsHandler(APIHandler):
+    def initialize(self, token_store: TokenStore):
+        self.token_store = token_store
+
+    @tornado.web.authenticated
+    def get(self):
+        token_id = _get_user_token_id(self)
+        token = self.token_store.get_token(token_id)
+
+        filters = {
+            key: self.get_query_argument(key, None)
+            for key in ("communities", "type", "subtype", "bounds", "custom")
+        }
+        filters = {key: value for key, value in filters.items() if value}
+
+        try:
+            # TODO refactor so we do not specify defaults twice (here and in zenodo.py)
+            records = search_zenodo_records(
+                self.get_query_argument("q", ""),
+                access_token=token.access_token if token is not None else None,
+                sandbox=token.sandbox if token is not None else False,
+                page=int(self.get_query_argument("page", "1")),
+                size=int(self.get_query_argument("size", "10")),
+                sort=self.get_query_argument("sort", "bestmatch"),
+                all_versions=self.get_query_argument("all_versions", "false").lower()
+                in ("1", "true"),
+                filters=filters,
+            )
+        except ValueError:
+            self.set_status(400)
+            self.finish(json.dumps({"message": "Invalid page or size"}))
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps(records))
+
+
 def setup_route_handlers(web_app):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
@@ -106,6 +147,11 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "access-token"),
             ZenodoAccessTokenHandler,
+            {"token_store": token_store},
+        ),
+        (
+            url_path_join(zenodo_base_url, "records"),
+            ZenodoRecordsHandler,
             {"token_store": token_store},
         ),
     ]

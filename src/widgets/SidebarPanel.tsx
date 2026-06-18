@@ -2,7 +2,11 @@ import React from 'react';
 import { VDomRenderer } from '@jupyterlab/apputils';
 import { ServerConnection } from '@jupyterlab/services';
 
-import { deleteAccessToken, putAccessToken } from '../api_calls';
+import {
+  deleteAccessToken,
+  putAccessToken,
+  searchZenodoRecords
+} from '../api_calls';
 import { LoginStatusPill } from '../components/LoginStatusPill';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
@@ -10,6 +14,57 @@ const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
 interface IPanelProps {
   serverSettings: ServerConnection.ISettings;
 }
+
+const ZenodoSearch: React.FC<IPanelProps> = ({ serverSettings }) => {
+  const [query, setQuery] = React.useState('');
+  const [results, setResults] = React.useState<unknown>(null);
+  const [isSearching, setIsSearching] = React.useState(false);
+
+  const submitSearch = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    event.preventDefault();
+    setIsSearching(true);
+
+    try {
+      setResults(await searchZenodoRecords(serverSettings, query));
+    } catch (reason) {
+      setResults({ error: String(reason) });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  return (
+    <div>
+      <form onSubmit={submitSearch}>
+        <input
+          aria-label="Search Zenodo"
+          onChange={event => setQuery(event.target.value)}
+          placeholder="Search Zenodo"
+          type="search"
+          value={query}
+        />
+        <button disabled={isSearching} type="submit">
+          {isSearching ? 'Searching...' : 'Search'}
+        </button>
+      </form>
+      {results ? (
+        <pre
+          style={{
+            maxHeight: '320px',
+            maxWidth: '100%',
+            overflow: 'auto',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word'
+          }}
+        >
+          {JSON.stringify(results, null, 2)}
+        </pre>
+      ) : null}
+    </div>
+  );
+};
 
 const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
   const [accessToken, setAccessToken] = React.useState('');
@@ -89,6 +144,8 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
         </button>
       </form>
       {message ? <p>{message}</p> : null}
+      <hr />
+      <ZenodoSearch serverSettings={serverSettings} />
     </div>
   );
 };
