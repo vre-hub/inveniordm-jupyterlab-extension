@@ -23,11 +23,16 @@ def is_zenodo_access_token_valid(access_token: str, sandbox: bool = False) -> bo
     server_url = ZENODO_SANDBOX_SERVER_URL if sandbox else ZENODO_SERVER_URL
     try:
         response = requests.get(
-            f"{server_url}/api/deposit/depositions",
+            f"{server_url}/api/me",
             headers=_headers(access_token),
             timeout=5,
         )
-        return response.status_code == 200
+        if response.status_code == 200:
+            return True
+        if response.status_code == 401:
+            return False
+        response.raise_for_status()
+        return False # never reached
     except requests.RequestException:
         return False
 
