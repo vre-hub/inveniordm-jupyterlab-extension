@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 from jupyter_server.base.handlers import APIHandler
@@ -147,6 +148,37 @@ class ZenodoRecordsHandler(APIHandler):
         self.finish(json.dumps(records))
 
 
+class WhoAmIHandler(APIHandler):
+    @tornado.web.authenticated
+    def get(self):
+        """
+        Call this to make the extension backend make a dummy request to the JupyterHub service 
+        to see if the current user is correctly authenticated at the service.
+        """
+        # call e.g. http://127.0.0.1:8000/user/elisabeth/zenodo-jupyterlab/whoami
+        print("calling Zenodo JupyterHub service to check if user is authenticated")
+        try:
+            response = requests.get(
+                "http://127.0.0.1:8000/services/zenodo-jupyterhub-service/whoami",
+                headers={
+                    "Authorization": f"token {os.environ['JUPYTERHUB_API_TOKEN']}"
+                },
+                timeout=5,
+            )
+            print(f"Zenodo JupyterHub service response: {response.status_code} {response.text}")
+            response.raise_for_status()
+        except KeyError:
+            self.set_status(503)
+            self.finish(json.dumps({"message": "JUPYTERHUB_API_TOKEN is not set"}))
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(response.text)
+
+
 class ZenodoDepositionsHandler(APIHandler):
     def initialize(self, token_store: TokenStore):
         self.token_store = token_store
@@ -197,6 +229,7 @@ def setup_route_handlers(web_app):
             ZenodoRecordsHandler,
             {"token_store": token_store},
         ),
+        (url_path_join(zenodo_base_url, "whoami"), WhoAmIHandler),
         (
             url_path_join(zenodo_base_url, "depositions"),
             ZenodoDepositionsHandler,
