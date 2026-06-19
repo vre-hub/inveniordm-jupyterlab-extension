@@ -37,6 +37,29 @@ def is_zenodo_access_token_valid(access_token: str, sandbox: bool = False) -> bo
         return False
 
 
+def get_zenodo_me(
+    *,
+    access_token: str,
+    sandbox: bool = False,
+) -> dict[str, Any]:
+    """
+    Fetch the authenticated user's Zenodo profile and return the public fields
+    needed by the JupyterLab frontend.
+    """
+    server_url = ZENODO_SANDBOX_SERVER_URL if sandbox else ZENODO_SERVER_URL
+    response = requests.get(
+        f"{server_url}/api/me",
+        headers=_headers(access_token),
+        timeout=10,
+    )
+    response.raise_for_status()
+    data = response.json()
+    return {
+        "email": data["email"],
+        "id": data["id"],
+    }
+
+
 def search_zenodo_records(
     query: str,
     *,

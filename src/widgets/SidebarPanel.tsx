@@ -6,6 +6,7 @@ import { ZenodoDepositions } from '../components/ZenodoDepositions';
 import { ZenodoLoginForm } from '../components/ZenodoLoginForm';
 import { ZenodoSandboxOverrideSetting } from '../components/ZenodoSandboxOverrideSetting';
 import { ZenodoSearch } from '../components/ZenodoSearch';
+import { ZenodoUserProfile } from '../components/ZenodoUserProfile';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
 
@@ -17,6 +18,8 @@ const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
   return (
     <div className={PANEL_CLASS}>
       <ZenodoLoginForm serverSettings={serverSettings} />
+      <hr />
+      <ZenodoUserProfile serverSettings={serverSettings} />
       <hr />
       <ZenodoSandboxOverrideSetting />
       <hr />

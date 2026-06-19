@@ -10,6 +10,7 @@ import requests
 
 from .token_store import FileTokenStore, TokenStore
 from .zenodo import (
+    get_zenodo_me,
     is_zenodo_access_token_valid,
     list_zenodo_depositions,
     search_zenodo_records,
@@ -148,6 +149,39 @@ class ZenodoRecordsHandler(APIHandler):
         self.finish(json.dumps(records))
 
 
+class ZenodoMeHandler(APIHandler):
+    def initialize(self, token_store: TokenStore):
+        self.token_store = token_store
+
+    @tornado.web.authenticated
+    def get(self):
+        token_id = _get_user_token_id(self)
+        token = self.token_store.get_token(token_id)
+
+        if token is None:
+            self.set_status(401)
+            self.finish(json.dumps({"message": "Missing Zenodo access token"}))
+            return
+
+        try:
+            profile = get_zenodo_me(
+                access_token=token.access_token,
+                sandbox=token.sandbox,
+            )
+        except KeyError as error:
+            self.set_status(502)
+            self.finish(
+                json.dumps({"message": f"Missing field in Zenodo profile: {error}"})
+            )
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps(profile))
+
+
 class WhoAmIHandler(APIHandler):
     @tornado.web.authenticated
     def get(self):
@@ -227,6 +261,11 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "records"),
             ZenodoRecordsHandler,
+            {"token_store": token_store},
+        ),
+        (
+            url_path_join(zenodo_base_url, "me"),
+            ZenodoMeHandler,
             {"token_store": token_store},
         ),
         (url_path_join(zenodo_base_url, "whoami"), WhoAmIHandler),

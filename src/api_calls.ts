@@ -18,6 +18,17 @@ export type PutDeleteAccessTokenResponse = {
   message: string;
 };
 
+export type ZenodoMeResponse = {
+  email: string;
+  id: number;
+};
+
+export async function getZenodoMe(
+  serverSettings: ServerConnection.ISettings
+): Promise<ZenodoMeResponse> {
+  return await requestAPI<ZenodoMeResponse>('me', serverSettings);
+}
+
 export async function putAccessToken(
   serverSettings: ServerConnection.ISettings,
   token: string,
