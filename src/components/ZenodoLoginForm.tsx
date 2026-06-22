@@ -12,7 +12,6 @@ export const ZenodoLoginForm: React.FC<IZenodoLoginFormProps> = ({
   serverSettings
 }) => {
   const [accessToken, setAccessToken] = React.useState('');
-  const [sandbox, setSandbox] = React.useState(false);
   const [message, setMessage] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -31,7 +30,7 @@ export const ZenodoLoginForm: React.FC<IZenodoLoginFormProps> = ({
     setMessage('');
 
     try {
-      const response = await putAccessToken(serverSettings, token, sandbox);
+      const response = await putAccessToken(serverSettings, token);
       setMessage(response.message);
       setAccessToken('');
     } catch (reason) {
@@ -75,14 +74,6 @@ export const ZenodoLoginForm: React.FC<IZenodoLoginFormProps> = ({
           type="password"
           value={accessToken}
         />
-        <label>
-          <input
-            checked={sandbox}
-            onChange={event => setSandbox(event.target.checked)}
-            type="checkbox"
-          />
-          Sandbox
-        </label>
         <button disabled={isLoading || !accessToken.trim()} type="submit">
           {isLoading ? 'Saving...' : 'Save'}
         </button>

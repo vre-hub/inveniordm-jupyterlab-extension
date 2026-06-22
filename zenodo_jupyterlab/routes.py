@@ -62,20 +62,13 @@ class ZenodoAccessTokenHandler(APIHandler):
     def put(self):
         data = self.get_json_body() or {}
         access_token = data.get("access_token")
-        sandbox = data.get("sandbox")
         if not access_token:
             self.set_status(400)
             self.finish(json.dumps({"message": "Missing 'access_token' in request body"}))
             return
-        if not isinstance(sandbox, bool):
-            self.set_status(400)
-            self.finish(
-                json.dumps({"message": "Missing boolean 'sandbox' in request body"})
-            )
-            return
 
         access_token_valid = self.get_zenodo_requests(self).set_access_token(
-            access_token, sandbox
+            access_token
         )
         if not access_token_valid:
             self.set_status(400)

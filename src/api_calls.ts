@@ -31,13 +31,12 @@ export async function getZenodoMe(
 
 export async function putAccessToken(
   serverSettings: ServerConnection.ISettings,
-  token: string,
-  sandbox: boolean
+  token: string
 ): Promise<PutDeleteAccessTokenResponse> {
   return await requestAPI('access-token', serverSettings, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ access_token: token, sandbox })
+    body: JSON.stringify({ access_token: token })
   });
 }
 

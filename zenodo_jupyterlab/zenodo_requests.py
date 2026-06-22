@@ -41,9 +41,15 @@ class ZenodoRequests:
     def set_access_token(
         self,
         access_token: str,
-        sandbox: bool,
     ) -> bool:
-        access_token_valid = is_zenodo_access_token_valid(access_token, sandbox)
+        sandbox = False
+        access_token_valid = False
+        for candidate_sandbox in (False, True):
+            if is_zenodo_access_token_valid(access_token, candidate_sandbox):
+                sandbox = candidate_sandbox
+                access_token_valid = True
+                break
+
         if not access_token_valid:
             return False
 
