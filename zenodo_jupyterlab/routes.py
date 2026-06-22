@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Callable
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_core.paths import jupyter_data_dir
@@ -10,6 +11,9 @@ import requests
 
 from .token_store import FileTokenStore
 from .zenodo_requests import ZenodoRequests
+
+
+GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 
 
 def _default_token_store_path() -> Path:
@@ -43,16 +47,15 @@ class HelloRouteHandler(APIHandler):
         }))
 
 class ZenodoAccessTokenHandler(APIHandler):
-    def initialize(self, zenodo_requests: ZenodoRequests):
-        self.zenodo_requests = zenodo_requests
+    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+        self.get_zenodo_requests = get_zenodo_requests
 
     # The following decorator should be present on all verb methods (head, get, post,
     # patch, put, delete, options) to ensure only authorized user can request the
     # Jupyter server
     @tornado.web.authenticated
     def get(self):
-        token_id = _get_user_token_id(self)
-        status = self.zenodo_requests.get_access_token_status(token_id)
+        status = self.get_zenodo_requests(self).get_access_token_status()
         self.finish(json.dumps(status.__dict__))
 
     @tornado.web.authenticated
@@ -66,12 +69,13 @@ class ZenodoAccessTokenHandler(APIHandler):
             return
         if not isinstance(sandbox, bool):
             self.set_status(400)
-            self.finish(json.dumps({"message": "Missing boolean 'sandbox' in request body"}))
+            self.finish(
+                json.dumps({"message": "Missing boolean 'sandbox' in request body"})
+            )
             return
 
-        token_id = _get_user_token_id(self)
-        access_token_valid = self.zenodo_requests.set_access_token(
-            token_id, access_token, sandbox
+        access_token_valid = self.get_zenodo_requests(self).set_access_token(
+            access_token, sandbox
         )
         if not access_token_valid:
             self.set_status(400)
@@ -82,19 +86,16 @@ class ZenodoAccessTokenHandler(APIHandler):
 
     @tornado.web.authenticated
     def delete(self):
-        token_id = _get_user_token_id(self)
-        self.zenodo_requests.remove_access_token(token_id)
+        self.get_zenodo_requests(self).remove_access_token()
         self.finish(json.dumps({"message": "Access token removed successfully"}))
 
 
 class ZenodoRecordsHandler(APIHandler):
-    def initialize(self, zenodo_requests: ZenodoRequests):
-        self.zenodo_requests = zenodo_requests
+    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+        self.get_zenodo_requests = get_zenodo_requests
 
     @tornado.web.authenticated
     def get(self):
-        token_id = _get_user_token_id(self)
-
         sandbox_override = None
         if self.get_query_argument("sandbox", None) is not None:
             sandbox_override = self.get_query_argument("sandbox", "false").lower() in (
@@ -109,8 +110,7 @@ class ZenodoRecordsHandler(APIHandler):
 
         try:
             # TODO refactor so we do not specify defaults twice (here and in zenodo.py)
-            records = self.zenodo_requests.search_zenodo_records(
-                token_id,
+            records = self.get_zenodo_requests(self).search_zenodo_records(
                 query=self.get_query_argument("q", ""),
                 sandbox_override=sandbox_override,
                 page=int(self.get_query_argument("page", "1")),
@@ -133,15 +133,13 @@ class ZenodoRecordsHandler(APIHandler):
 
 
 class ZenodoMeHandler(APIHandler):
-    def initialize(self, zenodo_requests: ZenodoRequests):
-        self.zenodo_requests = zenodo_requests
+    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+        self.get_zenodo_requests = get_zenodo_requests
 
     @tornado.web.authenticated
     def get(self):
-        token_id = _get_user_token_id(self)
-
         try:
-            profile = self.zenodo_requests.get_zenodo_me(token_id)
+            profile = self.get_zenodo_requests(self).get_zenodo_me()
         except ValueError as error:
             self.set_status(401)
             self.finish(json.dumps({"message": str(error)}))
@@ -164,7 +162,7 @@ class WhoAmIHandler(APIHandler):
     @tornado.web.authenticated
     def get(self):
         """
-        Call this to make the extension backend make a dummy request to the JupyterHub service 
+        Call this to make the extension backend make a dummy request to the JupyterHub service
         to see if the current user is correctly authenticated at the service.
         """
         # call e.g. http://127.0.0.1:8000/user/elisabeth/zenodo-jupyterlab/whoami
@@ -192,13 +190,11 @@ class WhoAmIHandler(APIHandler):
 
 
 class ZenodoDepositionsHandler(APIHandler):
-    def initialize(self, zenodo_requests: ZenodoRequests):
-        self.zenodo_requests = zenodo_requests
+    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+        self.get_zenodo_requests = get_zenodo_requests
 
     @tornado.web.authenticated
     def get(self):
-        token_id = _get_user_token_id(self)
-
         sandbox_override = None
         if self.get_query_argument("sandbox", None) is not None:
             sandbox_override = self.get_query_argument("sandbox", "false").lower() in (
@@ -207,8 +203,7 @@ class ZenodoDepositionsHandler(APIHandler):
             )
 
         try:
-            depositions = self.zenodo_requests.list_zenodo_depositions(
-                token_id,
+            depositions = self.get_zenodo_requests(self).list_zenodo_depositions(
                 sandbox_override=sandbox_override,
                 page=int(self.get_query_argument("page", "1")),
                 size=int(self.get_query_argument("size", "10")),
@@ -229,7 +224,12 @@ def setup_route_handlers(web_app):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
     token_store = FileTokenStore(_default_token_store_path())
-    zenodo_requests = ZenodoRequests(token_store)
+
+    def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
+        return ZenodoRequests(
+            token_store,
+            token_id=_get_user_token_id(handler),
+        )
 
     zenodo_base_url = url_path_join(base_url, "zenodo-jupyterlab")
     handlers = [
@@ -237,23 +237,23 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "access-token"),
             ZenodoAccessTokenHandler,
-            {"zenodo_requests": zenodo_requests},
+            {"get_zenodo_requests": get_zenodo_requests},
         ),
         (
             url_path_join(zenodo_base_url, "records"),
             ZenodoRecordsHandler,
-            {"zenodo_requests": zenodo_requests},
+            {"get_zenodo_requests": get_zenodo_requests},
         ),
         (
             url_path_join(zenodo_base_url, "me"),
             ZenodoMeHandler,
-            {"zenodo_requests": zenodo_requests},
+            {"get_zenodo_requests": get_zenodo_requests},
         ),
         (url_path_join(zenodo_base_url, "whoami"), WhoAmIHandler),
         (
             url_path_join(zenodo_base_url, "depositions"),
             ZenodoDepositionsHandler,
-            {"zenodo_requests": zenodo_requests},
+            {"get_zenodo_requests": get_zenodo_requests},
         ),
     ]
 

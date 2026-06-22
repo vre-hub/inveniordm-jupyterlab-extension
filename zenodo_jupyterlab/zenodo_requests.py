@@ -18,11 +18,16 @@ class AccessTokenStatus:
 
 
 class ZenodoRequests:
-    def __init__(self, token_store: TokenStore):
+    """
+    Wrapper around Zenodo API requests for a specific user/token,
+    using a TokenStore to manage the access token.
+    """
+    def __init__(self, token_store: TokenStore, token_id: str):
         self.token_store = token_store
+        self.token_id = token_id
 
-    def get_access_token_status(self, token_id: str) -> AccessTokenStatus:
-        token = self.token_store.get_token(token_id)
+    def get_access_token_status(self) -> AccessTokenStatus:
+        token = self.token_store.get_token(self.token_id)
         return AccessTokenStatus(
             access_token_present=token is not None,
             access_token_valid=(
@@ -35,7 +40,6 @@ class ZenodoRequests:
 
     def set_access_token(
         self,
-        token_id: str,
         access_token: str,
         sandbox: bool,
     ) -> bool:
@@ -44,15 +48,15 @@ class ZenodoRequests:
             return False
 
         self.token_store.set_access_token(
-            token_id, access_token, access_token_valid, sandbox
+            self.token_id, access_token, access_token_valid, sandbox
         )
         return True
 
-    def remove_access_token(self, token_id: str) -> None:
-        self.token_store.remove_access_token(token_id)
+    def remove_access_token(self) -> None:
+        self.token_store.remove_access_token(self.token_id)
 
-    def get_zenodo_me(self, token_id: str) -> dict[str, Any]:
-        token = self.token_store.get_token(token_id)
+    def get_zenodo_me(self) -> dict[str, Any]:
+        token = self.token_store.get_token(self.token_id)
         if token is None:
             raise ValueError("Missing Zenodo access token")
 
@@ -63,7 +67,6 @@ class ZenodoRequests:
 
     def search_zenodo_records(
         self,
-        token_id: str,
         *,
         query: str,
         sandbox_override: bool | None = None,
@@ -73,7 +76,7 @@ class ZenodoRequests:
         all_versions: bool = False,
         filters: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        token = self.token_store.get_token(token_id)
+        token = self.token_store.get_token(self.token_id)
         sandbox = (
             sandbox_override
             if sandbox_override is not None
@@ -93,13 +96,12 @@ class ZenodoRequests:
 
     def list_zenodo_depositions(
         self,
-        token_id: str,
         *,
         sandbox_override: bool | None = None,
         page: int = 1,
         size: int = 10,
     ) -> dict[str, Any]:
-        token = self.token_store.get_token(token_id)
+        token = self.token_store.get_token(self.token_id)
         sandbox = (
             sandbox_override
             if sandbox_override is not None
