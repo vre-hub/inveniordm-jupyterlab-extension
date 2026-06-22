@@ -16,6 +16,28 @@ def _headers(access_token: str | None) -> dict[str, str]:
         headers["Authorization"] = f"Bearer {access_token}"
     return headers
 
+def _include_files(
+    items: list[dict[str, Any]],
+    *,
+    access_token: str | None,
+) -> None:
+    """
+    Expand Zenodo resources in place with their file list, if Zenodo provides
+    a canonical files link.
+    """
+    for item in items:
+        files_url = item.get("links", {}).get("files")
+        if not files_url:
+            continue
+
+        response = requests.get(
+            files_url,
+            headers=_headers(access_token),
+            timeout=10,
+        )
+        response.raise_for_status()
+        item["files"] = response.json()
+
 def is_zenodo_access_token_valid(access_token: str, sandbox: bool = False) -> bool:
     """
     Perform a dummy API call to Zenodo using the provided access token to check if it's valid.
@@ -70,6 +92,7 @@ def search_zenodo_records(
     sort: str = "bestmatch",
     all_versions: bool = False,
     filters: dict[str, str] | None = None,
+    include_files: bool = False,
 ) -> dict[str, Any]:
     """
     Search published Zenodo records.
@@ -92,7 +115,12 @@ def search_zenodo_records(
         timeout=10,
     )
     response.raise_for_status()
-    return response.json()
+    data = response.json()
+
+    if include_files:
+        _include_files(data.get("hits", {}).get("hits", []), access_token=access_token)
+
+    return data
 
 
 def list_zenodo_depositions(
@@ -101,7 +129,8 @@ def list_zenodo_depositions(
     sandbox: bool = False,
     page: int = 1,
     size: int = 10,
-) -> dict[str, Any]:
+    include_files: bool = False,
+) -> list[dict[str, Any]]:
     """
     List depositions owned by the authenticated user.
     """
@@ -113,4 +142,9 @@ def list_zenodo_depositions(
         timeout=10,
     )
     response.raise_for_status()
-    return response.json()
+    depositions = response.json()
+
+    if include_files:
+        _include_files(depositions, access_token=access_token)
+
+    return depositions

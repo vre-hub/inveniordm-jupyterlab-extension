@@ -81,6 +81,7 @@ class ZenodoRequests:
         sort: str = "bestmatch",
         all_versions: bool = False,
         filters: dict[str, str] | None = None,
+        include_files: bool = False,
     ) -> dict[str, Any]:
         token = self.token_store.get_token(self.token_id)
         sandbox = (
@@ -98,6 +99,7 @@ class ZenodoRequests:
             sort=sort,
             all_versions=all_versions,
             filters=filters,
+            include_files=include_files,
         )
 
     def list_zenodo_depositions(
@@ -106,7 +108,8 @@ class ZenodoRequests:
         sandbox_override: bool | None = None,
         page: int = 1,
         size: int = 10,
-    ) -> dict[str, Any]:
+        include_files: bool = False,
+    ) -> list[dict[str, Any]]:
         token = self.token_store.get_token(self.token_id)
         sandbox = (
             sandbox_override
@@ -119,4 +122,5 @@ class ZenodoRequests:
             sandbox=sandbox,
             page=page,
             size=size,
+            include_files=include_files,
         )

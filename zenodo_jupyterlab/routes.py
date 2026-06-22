@@ -100,6 +100,10 @@ class ZenodoRecordsHandler(APIHandler):
             for key in ("communities", "type", "subtype", "bounds", "custom")
         }
         filters = {key: value for key, value in filters.items() if value}
+        include_files = self.get_query_argument("include_files", "false").lower() in (
+            "1",
+            "true",
+        )
 
         try:
             # TODO refactor so we do not specify defaults twice (here and in zenodo.py)
@@ -112,6 +116,7 @@ class ZenodoRecordsHandler(APIHandler):
                 all_versions=self.get_query_argument("all_versions", "false").lower()
                 in ("1", "true"),
                 filters=filters,
+                include_files=include_files,
             )
         except ValueError:
             self.set_status(400)
@@ -194,12 +199,17 @@ class ZenodoDepositionsHandler(APIHandler):
                 "1",
                 "true",
             )
+        include_files = self.get_query_argument("include_files", "false").lower() in (
+            "1",
+            "true",
+        )
 
         try:
             depositions = self.get_zenodo_requests(self).list_zenodo_depositions(
                 sandbox_override=sandbox_override,
                 page=int(self.get_query_argument("page", "1")),
                 size=int(self.get_query_argument("size", "10")),
+                include_files=include_files,
             )
         except ValueError:
             self.set_status(400)

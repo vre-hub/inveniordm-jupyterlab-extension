@@ -54,6 +54,7 @@ export async function searchZenodoRecords(
   options?: { sandbox?: boolean }
 ): Promise<unknown> {
   const params = new URLSearchParams({ q: query });
+  params.append('include_files', 'true');
   if (options?.sandbox !== undefined) {
     params.append('sandbox', options.sandbox.toString());
   }
@@ -65,6 +66,7 @@ export async function listZenodoDepositions(
   options?: { sandbox?: boolean }
 ): Promise<unknown> {
   const params = new URLSearchParams();
+  params.append('include_files', 'true');
   if (options?.sandbox !== undefined) {
     params.append('sandbox', options.sandbox.toString());
   }
