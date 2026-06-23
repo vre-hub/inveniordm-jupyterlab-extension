@@ -1,5 +1,6 @@
 import { ServerConnection } from '@jupyterlab/services';
 
+import type { InsertZenodoCellAction } from './insertCell';
 import { requestAPI } from './request';
 
 export type AccessTokenResponse = {
@@ -94,6 +95,27 @@ export async function downloadZenodoFile(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
+    }
+  );
+}
+
+export async function getZenodoFileImportCell(
+  serverSettings: ServerConnection.ISettings,
+  depositionId: number,
+  fileId: string,
+  framework = 'pandas'
+): Promise<InsertZenodoCellAction> {
+  return await requestAPI<InsertZenodoCellAction>(
+    'files/import-cell',
+    serverSettings,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        deposition_id: depositionId,
+        file_id: fileId,
+        framework
+      })
     }
   );
 }

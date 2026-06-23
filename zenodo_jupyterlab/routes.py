@@ -9,6 +9,7 @@ from jupyter_server.utils import url_path_join
 import tornado
 import requests
 
+from .cell_actions import make_zenodo_import_cell_action
 from .download_manager import DownloadManager
 from .token_store import FileTokenStore
 from .zenodo_requests import ZenodoRequests
@@ -261,6 +262,54 @@ class ZenodoFileDownloadHandler(APIHandler):
         self.finish(json.dumps({"path": str(destination)}))
 
 
+class ZenodoFileImportCellHandler(APIHandler):
+    def initialize(
+        self,
+        get_zenodo_requests: GetZenodoRequests,
+        get_download_manager: GetDownloadManager,
+    ):
+        self.get_zenodo_requests = get_zenodo_requests
+        self.get_download_manager = get_download_manager
+
+    @tornado.web.authenticated
+    def post(self):
+        data = self.get_json_body() or {}
+        deposition_id = data.get("deposition_id")
+        file_id = data.get("file_id")
+        framework = data.get("framework", "pandas")
+        if deposition_id is None or not file_id:
+            self.set_status(400)
+            self.finish(
+                json.dumps({"message": "Missing deposition_id or file_id"})
+            )
+            return
+
+        try:
+            destination = self.get_download_manager().get_zenodo_download_location(
+                self.get_zenodo_requests(self),
+                deposition_id=deposition_id,
+                file_id=file_id,
+            )
+            if not destination.exists():
+                raise ValueError("Zenodo file has not been downloaded yet")
+            action = make_zenodo_import_cell_action(
+                path=destination,
+                deposition_id=deposition_id,
+                file_id=file_id,
+                framework=framework,
+            )
+        except ValueError as error:
+            self.set_status(400)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps(action))
+
+
 def setup_route_handlers(web_app):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
@@ -303,6 +352,14 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "files", "download"),
             ZenodoFileDownloadHandler,
+            {
+                "get_zenodo_requests": get_zenodo_requests,
+                "get_download_manager": get_download_manager,
+            },
+        ),
+        (
+            url_path_join(zenodo_base_url, "files", "import-cell"),
+            ZenodoFileImportCellHandler,
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_download_manager": get_download_manager,

@@ -2,7 +2,9 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
+import { INotebookTracker } from '@jupyterlab/notebook';
 
+import { insertZenodoCell } from './insertCell';
 import { requestAPI } from './request';
 import { initializeZenodoStore } from './store';
 import { SidebarPanel } from './widgets/SidebarPanel';
@@ -14,10 +16,12 @@ const plugin: JupyterFrontEndPlugin<void> = {
   id: 'zenodo_jupyterlab:plugin',
   description: 'Integrates Zenodo into JupyterLab.',
   autoStart: true,
-  activate: (app: JupyterFrontEnd) => {
+  requires: [INotebookTracker],
+  activate: (app: JupyterFrontEnd, notebooks: INotebookTracker) => {
     console.log('JupyterLab extension zenodo_jupyterlab is activated!');
 
     initializeZenodoStore({
+      insertZenodoCell: action => insertZenodoCell(action, notebooks),
       serverSettings: app.serviceManager.serverSettings
     });
 

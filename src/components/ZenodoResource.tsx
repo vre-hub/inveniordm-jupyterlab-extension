@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { downloadZenodoFile } from '../api_calls';
-import { useServerSettings } from '../store';
+import { downloadZenodoFile, getZenodoFileImportCell } from '../api_calls';
+import { useInsertZenodoCell, useServerSettings } from '../store';
 
 export type ZenodoFile = {
   id?: string;
-  file_id?: string;
+  file_id: string;
   key?: string;
   filename?: string;
   size?: number;
@@ -37,13 +37,16 @@ export const ZenodoFileInfo: React.FC<{
   depositionId: number;
 }> = ({ file, depositionId }) => {
   const serverSettings = useServerSettings();
+  const insertZenodoCell = useInsertZenodoCell();
   const filename = file.key ?? file.filename ?? file.id ?? 'download';
-  const fileId = file.file_id ?? file.id;
+  const fileId = file.file_id;
   const download = async (): Promise<void> => {
-    if (!fileId) {
-      return;
-    }
     await downloadZenodoFile(serverSettings, depositionId, fileId);
+  };
+  const insertImportCell = async (): Promise<void> => {
+    insertZenodoCell(
+      await getZenodoFileImportCell(serverSettings, depositionId, fileId)
+    );
   };
 
   return (
@@ -55,6 +58,9 @@ export const ZenodoFileInfo: React.FC<{
       </div>
       <button disabled={!fileId} onClick={download} type="button">
         Download in JupyterServer
+      </button>
+      <button disabled={!fileId} onClick={insertImportCell} type="button">
+        Insert import cell
       </button>
     </div>
   );
