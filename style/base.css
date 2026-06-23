@@ -3,3 +3,9 @@
 
     https://jupyterlab.readthedocs.io/en/stable/developer/css.html
 */
+
+.jp-ZenodoExtensionPanel {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
