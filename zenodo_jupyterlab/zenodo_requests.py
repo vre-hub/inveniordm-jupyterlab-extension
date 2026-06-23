@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .token_store import TokenStore
+from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
     get_zenodo_me,
     is_zenodo_access_token_valid,
@@ -90,7 +91,7 @@ class ZenodoRequests:
             else token.sandbox if token is not None else False
         )
 
-        return search_zenodo_records(
+        records = search_zenodo_records(
             query,
             access_token=token.access_token if token is not None else None,
             sandbox=sandbox,
@@ -99,8 +100,14 @@ class ZenodoRequests:
             sort=sort,
             all_versions=all_versions,
             filters=filters,
-            include_files=include_files,
         )
+        if include_files:
+            include_zenodo_files(
+                records.get("hits", {}).get("hits", []),
+                access_token=token.access_token if token is not None else None,
+            )
+
+        return records
 
     def list_zenodo_depositions(
         self,
@@ -117,10 +124,16 @@ class ZenodoRequests:
             else token.sandbox if token is not None else False
         )
 
-        return list_zenodo_depositions(
+        depositions = list_zenodo_depositions(
             access_token=token.access_token if token is not None else None,
             sandbox=sandbox,
             page=page,
             size=size,
-            include_files=include_files,
         )
+        if include_files:
+            include_zenodo_files(
+                depositions,
+                access_token=token.access_token if token is not None else None,
+            )
+
+        return depositions
