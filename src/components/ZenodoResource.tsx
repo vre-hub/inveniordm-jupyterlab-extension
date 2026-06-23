@@ -4,7 +4,6 @@ export type ZenodoFile = {
   id?: string;
   key?: string;
   filename?: string;
-  filesize?: number;
   size?: number;
 };
 
@@ -29,7 +28,8 @@ const getFiles = (files: ZenodoResourceData['files']): ZenodoFile[] => {
 export const ZenodoFileInfo: React.FC<{ file: ZenodoFile }> = ({ file }) => (
   <li>
     {file.filename ?? file.key ?? file.id ?? 'Untitled file'}
-    {file.filesize ?? file.size ? ` (${file.filesize ?? file.size} bytes)` : null}
+    {/* TODO display file size in a reasonable unit */}
+    {file.size ? ` (${(file.size / 1024 / 1024).toFixed(2)} MB)` : null}
   </li>
 );
 
