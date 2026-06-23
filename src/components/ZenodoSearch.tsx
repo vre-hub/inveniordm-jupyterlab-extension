@@ -1,13 +1,8 @@
 import React from 'react';
-import { ServerConnection } from '@jupyterlab/services';
 
 import { searchZenodoRecords } from '../api_calls';
-import { ZenodoStore } from '../store';
+import { useServerSettings, ZenodoStore } from '../store';
 import { ZenodoResource, ZenodoResourceData } from './ZenodoResource';
-
-interface IZenodoSearchProps {
-  serverSettings: ServerConnection.ISettings;
-}
 
 type ZenodoSearchResults = {
   hits?: {
@@ -15,9 +10,8 @@ type ZenodoSearchResults = {
   };
 };
 
-export const ZenodoSearch: React.FC<IZenodoSearchProps> = ({
-  serverSettings
-}) => {
+export const ZenodoSearch: React.FC = () => {
+  const serverSettings = useServerSettings();
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<
     ZenodoSearchResults | { error: string } | null
@@ -25,7 +19,8 @@ export const ZenodoSearch: React.FC<IZenodoSearchProps> = ({
   const [isSearching, setIsSearching] = React.useState(false);
   const sandboxOverride = ZenodoStore.useState(state => state.sandboxOverride);
   const error = results && 'error' in results ? results.error : null;
-  const hits = results && !('error' in results) ? results.hits?.hits ?? [] : [];
+  const hits =
+    results && !('error' in results) ? (results.hits?.hits ?? []) : [];
 
   const submitSearch = async (
     event: React.FormEvent<HTMLFormElement>
@@ -62,11 +57,7 @@ export const ZenodoSearch: React.FC<IZenodoSearchProps> = ({
       </form>
       {error}
       {hits.map(result => (
-        <ZenodoResource
-          resource={result}
-          key={result.id}
-          serverSettings={serverSettings}
-        />
+        <ZenodoResource resource={result} key={result.id} />
       ))}
     </div>
   );

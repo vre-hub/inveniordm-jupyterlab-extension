@@ -1,7 +1,7 @@
 import React from 'react';
-import { ServerConnection } from '@jupyterlab/services';
 
 import { downloadZenodoFile } from '../api_calls';
+import { useServerSettings } from '../store';
 
 export type ZenodoFile = {
   id?: string;
@@ -35,8 +35,8 @@ const getFiles = (files: ZenodoResourceData['files']): ZenodoFile[] => {
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;
   depositionId: number;
-  serverSettings: ServerConnection.ISettings;
-}> = ({ file, depositionId, serverSettings }) => {
+}> = ({ file, depositionId }) => {
+  const serverSettings = useServerSettings();
   const filename = file.key ?? file.filename ?? file.id ?? 'download';
   const fileId = file.file_id ?? file.id;
   const download = async (): Promise<void> => {
@@ -62,8 +62,7 @@ export const ZenodoFileInfo: React.FC<{
 
 export const ZenodoResource: React.FC<{
   resource: ZenodoResourceData;
-  serverSettings: ServerConnection.ISettings;
-}> = ({ resource, serverSettings }) => {
+}> = ({ resource }) => {
   return (
     <section>
       <h4>{resource.title ?? resource.metadata?.title ?? resource.id}</h4>
@@ -76,7 +75,6 @@ export const ZenodoResource: React.FC<{
             file={file}
             key={file.file_id ?? file.id ?? file.key ?? file.filename}
             depositionId={resource.id}
-            serverSettings={serverSettings}
           />
         ))}
       </div>

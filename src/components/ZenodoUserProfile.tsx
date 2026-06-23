@@ -1,15 +1,10 @@
 import React from 'react';
-import { ServerConnection } from '@jupyterlab/services';
 
 import { getZenodoMe, ZenodoMeResponse } from '../api_calls';
+import { useServerSettings } from '../store';
 
-interface IZenodoUserProfileProps {
-  serverSettings: ServerConnection.ISettings;
-}
-
-export const ZenodoUserProfile: React.FC<IZenodoUserProfileProps> = ({
-  serverSettings
-}) => {
+export const ZenodoUserProfile: React.FC = () => {
+  const serverSettings = useServerSettings();
   const [profile, setProfile] = React.useState<ZenodoMeResponse | null>(null);
   const [message, setMessage] = React.useState('');
 
@@ -26,15 +21,12 @@ export const ZenodoUserProfile: React.FC<IZenodoUserProfileProps> = ({
   React.useEffect(() => {
     loadProfile();
     // TODO instead of polling log in status, use SSE
-    setInterval(loadProfile, 1 * 1000);
+    const interval = setInterval(loadProfile, 1 * 1000);
+    return () => clearInterval(interval);
   }, [serverSettings]);
 
   if (profile === null) {
-    return (
-      <div>
-        {message ? <p>{message}</p> : null}
-      </div>
-    );
+    return <div>{message ? <p>{message}</p> : null}</div>;
   }
 
   return (

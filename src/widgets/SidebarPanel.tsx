@@ -1,6 +1,5 @@
 import React from 'react';
 import { VDomRenderer } from '@jupyterlab/apputils';
-import { ServerConnection } from '@jupyterlab/services';
 
 import { ZenodoDepositions } from '../components/ZenodoDepositions';
 import { ZenodoLoginForm } from '../components/ZenodoLoginForm';
@@ -10,28 +9,24 @@ import { ZenodoUserProfile } from '../components/ZenodoUserProfile';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
 
-interface IPanelProps {
-  serverSettings: ServerConnection.ISettings;
-}
-
-const Panel: React.FC<IPanelProps> = ({ serverSettings }) => {
+const Panel: React.FC = () => {
   return (
     <div className={PANEL_CLASS}>
-      <ZenodoLoginForm serverSettings={serverSettings} />
+      <ZenodoLoginForm />
       <hr />
-      <ZenodoUserProfile serverSettings={serverSettings} />
+      <ZenodoUserProfile />
       <hr />
       <ZenodoSandboxOverrideSetting />
       <hr />
-      <ZenodoDepositions serverSettings={serverSettings} />
+      <ZenodoDepositions />
       <hr />
-      <ZenodoSearch serverSettings={serverSettings} />
+      <ZenodoSearch />
     </div>
   );
 };
 
 export class SidebarPanel extends VDomRenderer {
-  constructor(private serverSettings: ServerConnection.ISettings) {
+  constructor() {
     super();
     super.addClass(PANEL_CLASS);
     super.title.label = 'Zenodo';
@@ -40,6 +35,6 @@ export class SidebarPanel extends VDomRenderer {
   }
 
   render(): React.ReactElement {
-    return <Panel serverSettings={this.serverSettings} />;
+    return <Panel />;
   }
 }

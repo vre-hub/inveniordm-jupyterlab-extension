@@ -1,8 +1,7 @@
 import React from 'react';
-import { ServerConnection } from '@jupyterlab/services';
 
 import { checkAccessStatus, AccessTokenResponse } from '../api_calls';
-
+import { useServerSettings } from '../store';
 
 export type LoginStatus = 'Logged In' | 'Invalid Login' | 'Not Logged In';
 
@@ -14,13 +13,8 @@ function formatAccessStatus(status: AccessTokenResponse): LoginStatus {
   return status.access_token_valid ? 'Logged In' : 'Invalid Login';
 }
 
-interface ILoginStatusPillProps {
-  serverSettings: ServerConnection.ISettings;
-}
-
-export const LoginStatusPill: React.FC<ILoginStatusPillProps> = ({
-  serverSettings
-}) => {
+export const LoginStatusPill: React.FC = () => {
+  const serverSettings = useServerSettings();
   const [status, setStatus] = React.useState<LoginStatus>('Not Logged In');
   const [isSandbox, setIsSandbox] = React.useState<boolean>(false);
 
@@ -37,7 +31,8 @@ export const LoginStatusPill: React.FC<ILoginStatusPillProps> = ({
   React.useEffect(() => {
     updateStatus();
     // TODO instead of polling log in status, use SSE
-    setInterval(updateStatus, 1 * 1000);
+    const interval = setInterval(updateStatus, 1 * 1000);
+    return () => clearInterval(interval);
   }, [serverSettings]);
 
   return (

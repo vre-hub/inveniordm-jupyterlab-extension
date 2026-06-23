@@ -4,6 +4,7 @@ import {
 } from '@jupyterlab/application';
 
 import { requestAPI } from './request';
+import { initializeZenodoStore } from './store';
 import { SidebarPanel } from './widgets/SidebarPanel';
 
 /**
@@ -16,7 +17,11 @@ const plugin: JupyterFrontEndPlugin<void> = {
   activate: (app: JupyterFrontEnd) => {
     console.log('JupyterLab extension zenodo_jupyterlab is activated!');
 
-    const sidebarPanel = new SidebarPanel(app.serviceManager.serverSettings);
+    initializeZenodoStore({
+      serverSettings: app.serviceManager.serverSettings
+    });
+
+    const sidebarPanel = new SidebarPanel();
     sidebarPanel.id = 'zenodo_jupyterlab:panel';
     app.shell.add(sidebarPanel, 'left', { rank: 900 });
     app.shell.activateById(sidebarPanel.id);

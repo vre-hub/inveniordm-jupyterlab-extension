@@ -1,16 +1,11 @@
 import React from 'react';
-import { ServerConnection } from '@jupyterlab/services';
 
 import { deleteAccessToken, putAccessToken } from '../api_calls';
+import { useServerSettings } from '../store';
 import { LoginStatusPill } from './LoginStatusPill';
 
-interface IZenodoLoginFormProps {
-  serverSettings: ServerConnection.ISettings;
-}
-
-export const ZenodoLoginForm: React.FC<IZenodoLoginFormProps> = ({
-  serverSettings
-}) => {
+export const ZenodoLoginForm: React.FC = () => {
+  const serverSettings = useServerSettings();
   const [accessToken, setAccessToken] = React.useState('');
   const [message, setMessage] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
@@ -56,7 +51,7 @@ export const ZenodoLoginForm: React.FC<IZenodoLoginFormProps> = ({
 
   return (
     <>
-      <LoginStatusPill serverSettings={serverSettings} />
+      <LoginStatusPill />
       <button
         disabled={isLoading}
         onClick={deleteAccessTokenCall}

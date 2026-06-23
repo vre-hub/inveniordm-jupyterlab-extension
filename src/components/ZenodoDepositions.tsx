@@ -1,17 +1,11 @@
 import React from 'react';
-import { ServerConnection } from '@jupyterlab/services';
 
 import { listZenodoDepositions } from '../api_calls';
-import { ZenodoStore } from '../store';
+import { useServerSettings, ZenodoStore } from '../store';
 import { ZenodoResource, ZenodoResourceData } from './ZenodoResource';
 
-interface IZenodoDepositionsProps {
-  serverSettings: ServerConnection.ISettings;
-}
-
-export const ZenodoDepositions: React.FC<IZenodoDepositionsProps> = ({
-  serverSettings
-}) => {
+export const ZenodoDepositions: React.FC = () => {
+  const serverSettings = useServerSettings();
   const [depositions, setDepositions] = React.useState<
     ZenodoResourceData[] | { error: string } | null
   >(null);
@@ -41,11 +35,7 @@ export const ZenodoDepositions: React.FC<IZenodoDepositionsProps> = ({
       </button>
       {Array.isArray(depositions)
         ? depositions.map(deposition => (
-            <ZenodoResource
-              resource={deposition}
-              key={deposition.id}
-              serverSettings={serverSettings}
-            />
+            <ZenodoResource resource={deposition} key={deposition.id} />
           ))
         : depositions?.error}
     </div>
