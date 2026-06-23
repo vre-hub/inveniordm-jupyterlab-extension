@@ -5,6 +5,7 @@ import { downloadZenodoFile } from '../api_calls';
 
 export type ZenodoFile = {
   id?: string;
+  file_id?: string;
   key?: string;
   filename?: string;
   size?: number;
@@ -33,14 +34,16 @@ const getFiles = (files: ZenodoResourceData['files']): ZenodoFile[] => {
 
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;
+  depositionId: number;
   serverSettings: ServerConnection.ISettings;
-}> = ({ file, serverSettings }) => {
+}> = ({ file, depositionId, serverSettings }) => {
   const filename = file.key ?? file.filename ?? file.id ?? 'download';
+  const fileId = file.file_id ?? file.id;
   const download = async (): Promise<void> => {
-    if (!file.links?.content) {
+    if (!fileId) {
       return;
     }
-    await downloadZenodoFile(serverSettings, file.links.content, filename);
+    await downloadZenodoFile(serverSettings, depositionId, fileId);
   };
 
   return (
@@ -50,7 +53,7 @@ export const ZenodoFileInfo: React.FC<{
         {/* TODO display file size in a reasonable unit */}
         {file.size ? ` (${(file.size / 1024 / 1024).toFixed(2)} MB)` : null}
       </div>
-      <button disabled={!file.links?.content} onClick={download} type="button">
+      <button disabled={!fileId} onClick={download} type="button">
         Download in JupyterServer
       </button>
     </div>
@@ -60,20 +63,23 @@ export const ZenodoFileInfo: React.FC<{
 export const ZenodoResource: React.FC<{
   resource: ZenodoResourceData;
   serverSettings: ServerConnection.ISettings;
-}> = ({ resource, serverSettings }) => (
-  <section>
-    <h4>{resource.title ?? resource.metadata?.title ?? resource.id}</h4>
-    <div>ID: {resource.id}</div>
-    {resource.doi ? <div>DOI: {resource.doi}</div> : null}
-    {resource.state ? <div>State: {resource.state}</div> : null}
-    <div>
-      {getFiles(resource.files).map(file => (
-        <ZenodoFileInfo
-          file={file}
-          key={file.id ?? file.key ?? file.filename}
-          serverSettings={serverSettings}
-        />
-      ))}
-    </div>
-  </section>
-);
+}> = ({ resource, serverSettings }) => {
+  return (
+    <section>
+      <h4>{resource.title ?? resource.metadata?.title ?? resource.id}</h4>
+      <div>ID: {resource.id}</div>
+      {resource.doi ? <div>DOI: {resource.doi}</div> : null}
+      {resource.state ? <div>State: {resource.state}</div> : null}
+      <div>
+        {getFiles(resource.files).map(file => (
+          <ZenodoFileInfo
+            file={file}
+            key={file.file_id ?? file.id ?? file.key ?? file.filename}
+            depositionId={resource.id}
+            serverSettings={serverSettings}
+          />
+        ))}
+      </div>
+    </section>
+  );
+};

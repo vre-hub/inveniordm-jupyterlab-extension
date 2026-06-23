@@ -84,8 +84,8 @@ export type DownloadZenodoFileResponse = {
 
 export async function downloadZenodoFile(
   serverSettings: ServerConnection.ISettings,
-  fileUrl: string,
-  filename: string
+  depositionId: number,
+  fileId: string
 ): Promise<DownloadZenodoFileResponse> {
   return await requestAPI<DownloadZenodoFileResponse>(
     'files/download',
@@ -93,7 +93,7 @@ export async function downloadZenodoFile(
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file_url: fileUrl, filename })
+      body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
     }
   );
 }

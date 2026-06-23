@@ -153,6 +153,26 @@ def get_zenodo_files(
     return response.json()
 
 
+def get_zenodo_deposition_file(
+    deposition_id: int | str,
+    file_id: str,
+    *,
+    access_token: str | None = None,
+    sandbox: bool = False,
+) -> dict[str, Any]:
+    """
+    Fetch one file for a Zenodo deposition.
+    """
+    server_url = ZENODO_SANDBOX_SERVER_URL if sandbox else ZENODO_SERVER_URL
+    response = requests.get(
+        f"{server_url}/api/deposit/depositions/{deposition_id}/files/{file_id}",
+        headers=_headers(access_token),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 def open_zenodo_file(
     file_url: str,
     *,

@@ -241,18 +241,20 @@ class ZenodoFileDownloadHandler(APIHandler):
     @tornado.web.authenticated
     def post(self):
         data = self.get_json_body() or {}
-        file_url = data.get("file_url")
-        filename = data.get("filename")
-        if not file_url or not filename:
+        deposition_id = data.get("deposition_id")
+        file_id = data.get("file_id")
+        if deposition_id is None or not file_id:
             self.set_status(400)
-            self.finish(json.dumps({"message": "Missing file_url or filename"}))
+            self.finish(
+                json.dumps({"message": "Missing deposition_id or file_id"})
+            )
             return
 
         try:
             destination = self.get_download_manager().download_zenodo_file(
                 self.get_zenodo_requests(self),
-                file_url=file_url,
-                filename=filename,
+                deposition_id=deposition_id,
+                file_id=file_id,
             )
         except ValueError as error:
             self.set_status(400)

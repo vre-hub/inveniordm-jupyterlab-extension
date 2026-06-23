@@ -5,6 +5,7 @@ from .token_store import TokenStore
 from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
     ZenodoFileResponse,
+    get_zenodo_deposition_file,
     get_zenodo_me,
     is_zenodo_access_token_valid,
     list_zenodo_depositions,
@@ -152,4 +153,21 @@ class ZenodoRequests:
         return open_zenodo_file(
             file_url,
             access_token=token.access_token,
+        )
+
+    def get_zenodo_deposition_file(
+        self,
+        *,
+        deposition_id: int | str,
+        file_id: str,
+    ) -> dict[str, Any]:
+        token = self.token_store.get_token(self.token_id)
+        if token is None:
+            raise ValueError("Missing Zenodo access token")
+
+        return get_zenodo_deposition_file(
+            deposition_id,
+            file_id,
+            access_token=token.access_token,
+            sandbox=token.sandbox,
         )
