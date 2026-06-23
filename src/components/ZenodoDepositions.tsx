@@ -41,7 +41,11 @@ export const ZenodoDepositions: React.FC<IZenodoDepositionsProps> = ({
       </button>
       {Array.isArray(depositions)
         ? depositions.map(deposition => (
-            <ZenodoResource resource={deposition} key={deposition.id} />
+            <ZenodoResource
+              resource={deposition}
+              key={deposition.id}
+              serverSettings={serverSettings}
+            />
           ))
         : depositions?.error}
     </div>

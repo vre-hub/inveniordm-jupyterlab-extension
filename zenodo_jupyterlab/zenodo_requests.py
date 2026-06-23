@@ -4,9 +4,11 @@ from typing import Any
 from .token_store import TokenStore
 from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
+    ZenodoFileResponse,
     get_zenodo_me,
     is_zenodo_access_token_valid,
     list_zenodo_depositions,
+    open_zenodo_file,
     search_zenodo_records,
 )
 
@@ -137,3 +139,17 @@ class ZenodoRequests:
             )
 
         return depositions
+
+    def open_zenodo_file(
+        self,
+        *,
+        file_url: str,
+    ) -> ZenodoFileResponse:
+        token = self.token_store.get_token(self.token_id)
+        if token is None:
+            raise ValueError("Missing Zenodo access token")
+
+        return open_zenodo_file(
+            file_url,
+            access_token=token.access_token,
+        )

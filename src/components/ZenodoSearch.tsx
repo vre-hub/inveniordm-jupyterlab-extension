@@ -62,7 +62,11 @@ export const ZenodoSearch: React.FC<IZenodoSearchProps> = ({
       </form>
       {error}
       {hits.map(result => (
-        <ZenodoResource resource={result} key={result.id} />
+        <ZenodoResource
+          resource={result}
+          key={result.id}
+          serverSettings={serverSettings}
+        />
       ))}
     </div>
   );

@@ -1,14 +1,42 @@
 """
 Wrapper for the raw Zenodo API requests, using the requests library.
+TODO consider using httpx instead of requests, for async support.
 """
 
-from typing import Any
+from collections.abc import Iterable
+from typing import Any, Protocol
+from urllib.parse import urlparse
 
 import requests
 
 
 ZENODO_SERVER_URL = "https://zenodo.org"
 ZENODO_SANDBOX_SERVER_URL = "https://sandbox.zenodo.org"
+
+
+class ZenodoFileResponse(Protocol):
+    """
+    Response object for a Zenodo file download
+    """
+    def iter_bytes(self, chunk_size: int) -> Iterable[bytes]:
+        ...
+
+    def close(self) -> None:
+        ...
+
+
+class _RequestsZenodoFileResponse:
+    """
+    Response object for a Zenodo file download using the requests library.
+    """
+    def __init__(self, response: requests.Response):
+        self.response = response
+
+    def iter_bytes(self, chunk_size: int) -> Iterable[bytes]:
+        return self.response.iter_content(chunk_size=chunk_size)
+
+    def close(self) -> None:
+        self.response.close()
 
 def _headers(access_token: str | None) -> dict[str, str]:
     """
@@ -19,6 +47,15 @@ def _headers(access_token: str | None) -> dict[str, str]:
     if access_token:
         headers["Authorization"] = f"Bearer {access_token}"
     return headers
+
+
+def _is_zenodo_url(url: str) -> bool:
+    hostname = urlparse(url).hostname
+    return hostname in {
+        urlparse(ZENODO_SERVER_URL).hostname,
+        urlparse(ZENODO_SANDBOX_SERVER_URL).hostname,
+    }
+
 
 def is_zenodo_access_token_valid(access_token: str, sandbox: bool = False) -> bool:
     """
@@ -114,6 +151,31 @@ def get_zenodo_files(
     )
     response.raise_for_status()
     return response.json()
+
+
+def open_zenodo_file(
+    file_url: str,
+    *,
+    access_token: str | None = None,
+) -> ZenodoFileResponse:
+    """
+    Open a streaming response for a Zenodo file URL.
+    """
+    if not _is_zenodo_url(file_url):
+        raise ValueError("File URL must be a Zenodo URL")
+
+    response = requests.get(
+        file_url,
+        headers=_headers(access_token),
+        stream=True,
+        timeout=30,
+    )
+    try:
+        response.raise_for_status()
+    except requests.RequestException:
+        response.close()
+        raise
+    return _RequestsZenodoFileResponse(response)
 
 
 def list_zenodo_depositions(

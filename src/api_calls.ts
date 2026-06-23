@@ -77,3 +77,23 @@ export async function listZenodoDepositions(
     serverSettings
   );
 }
+
+export type DownloadZenodoFileResponse = {
+  path: string;
+};
+
+export async function downloadZenodoFile(
+  serverSettings: ServerConnection.ISettings,
+  fileUrl: string,
+  filename: string
+): Promise<DownloadZenodoFileResponse> {
+  return await requestAPI<DownloadZenodoFileResponse>(
+    'files/download',
+    serverSettings,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_url: fileUrl, filename })
+    }
+  );
+}

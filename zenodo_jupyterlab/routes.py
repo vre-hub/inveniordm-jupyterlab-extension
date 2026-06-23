@@ -9,15 +9,21 @@ from jupyter_server.utils import url_path_join
 import tornado
 import requests
 
+from .download_manager import DownloadManager
 from .token_store import FileTokenStore
 from .zenodo_requests import ZenodoRequests
 
 
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
+GetDownloadManager = Callable[[], DownloadManager]
 
 
 def _default_token_store_path() -> Path:
     return Path(jupyter_data_dir()) / "zenodo_jupyterlab" / "tokens.json"
+
+
+def _default_downloads_dir() -> Path:
+    return Path(jupyter_data_dir()) / "zenodo_jupyterlab" / "downloads"
 
 
 def _get_user_token_id(handler: APIHandler) -> str:
@@ -223,6 +229,43 @@ class ZenodoDepositionsHandler(APIHandler):
         self.finish(json.dumps(depositions))
 
 
+class ZenodoFileDownloadHandler(APIHandler):
+    def initialize(
+        self,
+        get_zenodo_requests: GetZenodoRequests,
+        get_download_manager: GetDownloadManager,
+    ):
+        self.get_zenodo_requests = get_zenodo_requests
+        self.get_download_manager = get_download_manager
+
+    @tornado.web.authenticated
+    def post(self):
+        data = self.get_json_body() or {}
+        file_url = data.get("file_url")
+        filename = data.get("filename")
+        if not file_url or not filename:
+            self.set_status(400)
+            self.finish(json.dumps({"message": "Missing file_url or filename"}))
+            return
+
+        try:
+            destination = self.get_download_manager().download_zenodo_file(
+                self.get_zenodo_requests(self),
+                file_url=file_url,
+                filename=filename,
+            )
+        except ValueError as error:
+            self.set_status(400)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps({"path": str(destination)}))
+
+
 def setup_route_handlers(web_app):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
@@ -233,6 +276,9 @@ def setup_route_handlers(web_app):
             token_store,
             token_id=_get_user_token_id(handler),
         )
+
+    def get_download_manager() -> DownloadManager:
+        return DownloadManager(_default_downloads_dir())
 
     zenodo_base_url = url_path_join(base_url, "zenodo-jupyterlab")
     handlers = [
@@ -257,6 +303,14 @@ def setup_route_handlers(web_app):
             url_path_join(zenodo_base_url, "depositions"),
             ZenodoDepositionsHandler,
             {"get_zenodo_requests": get_zenodo_requests},
+        ),
+        (
+            url_path_join(zenodo_base_url, "files", "download"),
+            ZenodoFileDownloadHandler,
+            {
+                "get_zenodo_requests": get_zenodo_requests,
+                "get_download_manager": get_download_manager,
+            },
         ),
     ]
 
