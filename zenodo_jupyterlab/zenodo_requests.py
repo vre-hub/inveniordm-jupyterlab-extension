@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from .token_store import TokenStore
+from .token_store import StoredToken, TokenStore
 from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
     ZenodoFileResponse,
@@ -37,15 +37,19 @@ class ZenodoRequests:
         self.sandbox_override = sandbox_override
 
     @property
+    def token(self) -> StoredToken | None:
+        return self.token_store.get_token(self.token_id)
+
+    @property
     def sandbox(self) -> bool:
         if self.sandbox_override is not None:
             return self.sandbox_override
 
-        token = self.token_store.get_token(self.token_id)
+        token = self.token
         return token.sandbox if token is not None else False
 
     def get_access_token_status(self) -> AccessTokenStatus:
-        token = self.token_store.get_token(self.token_id)
+        token = self.token
         return AccessTokenStatus(
             access_token_present=token is not None,
             access_token_valid=(
@@ -80,7 +84,7 @@ class ZenodoRequests:
         self.token_store.remove_access_token(self.token_id)
 
     def get_zenodo_me(self) -> dict[str, Any]:
-        token = self.token_store.get_token(self.token_id)
+        token = self.token
         if token is None:
             raise ValueError("Missing Zenodo access token")
 
@@ -100,7 +104,7 @@ class ZenodoRequests:
         filters: dict[str, str] | None = None,
         include_files: bool = False,
     ) -> dict[str, Any]:
-        token = self.token_store.get_token(self.token_id)
+        token = self.token
 
         records = search_zenodo_records(
             query,
@@ -127,7 +131,7 @@ class ZenodoRequests:
         size: int = 10,
         include_files: bool = False,
     ) -> list[dict[str, Any]]:
-        token = self.token_store.get_token(self.token_id)
+        token = self.token
 
         depositions = list_zenodo_depositions(
             access_token=token.access_token if token is not None else None,
@@ -148,7 +152,7 @@ class ZenodoRequests:
         *,
         file_url: str,
     ) -> ZenodoFileResponse:
-        token = self.token_store.get_token(self.token_id)
+        token = self.token
         if token is None:
             raise ValueError("Missing Zenodo access token")
 
@@ -163,7 +167,7 @@ class ZenodoRequests:
         deposition_id: int | str,
         file_id: str,
     ) -> dict[str, Any]:
-        token = self.token_store.get_token(self.token_id)
+        token = self.token
         if token is None:
             raise ValueError("Missing Zenodo access token")
 
