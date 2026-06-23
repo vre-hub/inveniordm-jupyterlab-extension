@@ -1,3 +1,7 @@
+"""
+Wrapper for the raw Zenodo API requests, using the requests library.
+"""
+
 from typing import Any
 
 import requests
