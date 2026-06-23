@@ -26,9 +26,23 @@ class ZenodoRequests:
     Wrapper around Zenodo API requests for a specific user/token,
     using a TokenStore to manage the access token.
     """
-    def __init__(self, token_store: TokenStore, token_id: str):
+    def __init__(
+        self,
+        token_store: TokenStore,
+        token_id: str,
+        sandbox_override: bool | None = None,
+    ):
         self.token_store = token_store
         self.token_id = token_id
+        self.sandbox_override = sandbox_override
+
+    @property
+    def sandbox(self) -> bool:
+        if self.sandbox_override is not None:
+            return self.sandbox_override
+
+        token = self.token_store.get_token(self.token_id)
+        return token.sandbox if token is not None else False
 
     def get_access_token_status(self) -> AccessTokenStatus:
         token = self.token_store.get_token(self.token_id)
@@ -72,14 +86,13 @@ class ZenodoRequests:
 
         return get_zenodo_me(
             access_token=token.access_token,
-            sandbox=token.sandbox,
+            sandbox=self.sandbox,
         )
 
     def search_zenodo_records(
         self,
         *,
         query: str,
-        sandbox_override: bool | None = None,
         page: int = 1,
         size: int = 10,
         sort: str = "bestmatch",
@@ -88,16 +101,11 @@ class ZenodoRequests:
         include_files: bool = False,
     ) -> dict[str, Any]:
         token = self.token_store.get_token(self.token_id)
-        sandbox = (
-            sandbox_override
-            if sandbox_override is not None
-            else token.sandbox if token is not None else False
-        )
 
         records = search_zenodo_records(
             query,
             access_token=token.access_token if token is not None else None,
-            sandbox=sandbox,
+            sandbox=self.sandbox,
             page=page,
             size=size,
             sort=sort,
@@ -115,21 +123,15 @@ class ZenodoRequests:
     def list_zenodo_depositions(
         self,
         *,
-        sandbox_override: bool | None = None,
         page: int = 1,
         size: int = 10,
         include_files: bool = False,
     ) -> list[dict[str, Any]]:
         token = self.token_store.get_token(self.token_id)
-        sandbox = (
-            sandbox_override
-            if sandbox_override is not None
-            else token.sandbox if token is not None else False
-        )
 
         depositions = list_zenodo_depositions(
             access_token=token.access_token if token is not None else None,
-            sandbox=sandbox,
+            sandbox=self.sandbox,
             page=page,
             size=size,
         )
@@ -169,5 +171,5 @@ class ZenodoRequests:
             deposition_id,
             file_id,
             access_token=token.access_token,
-            sandbox=token.sandbox,
+            sandbox=self.sandbox,
         )

@@ -38,6 +38,13 @@ def _get_user_token_id(handler: APIHandler) -> str:
     return handler.current_user.username
 
 
+def _get_sandbox_override(handler: APIHandler) -> bool | None:
+    if handler.get_query_argument("sandbox", None) is None:
+        return None
+
+    return handler.get_query_argument("sandbox", "false").lower() in ("1", "true")
+
+
 class HelloRouteHandler(APIHandler):
     # The following decorator should be present on all verb methods (head, get, post,
     # patch, put, delete, options) to ensure only authorized user can request the
@@ -95,12 +102,6 @@ class ZenodoRecordsHandler(APIHandler):
 
     @tornado.web.authenticated
     def get(self):
-        sandbox_override = None
-        if self.get_query_argument("sandbox", None) is not None:
-            sandbox_override = self.get_query_argument("sandbox", "false").lower() in (
-                "1",
-                "true",
-            )
         filters = {
             key: self.get_query_argument(key, None)
             for key in ("communities", "type", "subtype", "bounds", "custom")
@@ -115,7 +116,6 @@ class ZenodoRecordsHandler(APIHandler):
             # TODO refactor so we do not specify defaults twice (here and in zenodo.py)
             records = self.get_zenodo_requests(self).search_zenodo_records(
                 query=self.get_query_argument("q", ""),
-                sandbox_override=sandbox_override,
                 page=int(self.get_query_argument("page", "1")),
                 size=int(self.get_query_argument("size", "10")),
                 sort=self.get_query_argument("sort", "bestmatch"),
@@ -199,12 +199,6 @@ class ZenodoDepositionsHandler(APIHandler):
 
     @tornado.web.authenticated
     def get(self):
-        sandbox_override = None
-        if self.get_query_argument("sandbox", None) is not None:
-            sandbox_override = self.get_query_argument("sandbox", "false").lower() in (
-                "1",
-                "true",
-            )
         include_files = self.get_query_argument("include_files", "false").lower() in (
             "1",
             "true",
@@ -212,7 +206,6 @@ class ZenodoDepositionsHandler(APIHandler):
 
         try:
             depositions = self.get_zenodo_requests(self).list_zenodo_depositions(
-                sandbox_override=sandbox_override,
                 page=int(self.get_query_argument("page", "1")),
                 size=int(self.get_query_argument("size", "10")),
                 include_files=include_files,
@@ -277,6 +270,7 @@ def setup_route_handlers(web_app):
         return ZenodoRequests(
             token_store,
             token_id=_get_user_token_id(handler),
+            sandbox_override=_get_sandbox_override(handler),
         )
 
     def get_download_manager() -> DownloadManager:
