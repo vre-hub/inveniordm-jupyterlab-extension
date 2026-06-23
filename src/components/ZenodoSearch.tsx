@@ -3,18 +3,29 @@ import { ServerConnection } from '@jupyterlab/services';
 
 import { searchZenodoRecords } from '../api_calls';
 import { ZenodoStore } from '../store';
+import { ZenodoResource, ZenodoResourceData } from './ZenodoResource';
 
 interface IZenodoSearchProps {
   serverSettings: ServerConnection.ISettings;
 }
 
+type ZenodoSearchResults = {
+  hits?: {
+    hits?: ZenodoResourceData[];
+  };
+};
+
 export const ZenodoSearch: React.FC<IZenodoSearchProps> = ({
   serverSettings
 }) => {
   const [query, setQuery] = React.useState('');
-  const [results, setResults] = React.useState<unknown>(null);
+  const [results, setResults] = React.useState<
+    ZenodoSearchResults | { error: string } | null
+  >(null);
   const [isSearching, setIsSearching] = React.useState(false);
   const sandboxOverride = ZenodoStore.useState(state => state.sandboxOverride);
+  const error = results && 'error' in results ? results.error : null;
+  const hits = results && !('error' in results) ? results.hits?.hits ?? [] : [];
 
   const submitSearch = async (
     event: React.FormEvent<HTMLFormElement>
@@ -24,9 +35,9 @@ export const ZenodoSearch: React.FC<IZenodoSearchProps> = ({
 
     try {
       setResults(
-        await searchZenodoRecords(serverSettings, query, {
+        (await searchZenodoRecords(serverSettings, query, {
           sandbox: sandboxOverride
-        })
+        })) as ZenodoSearchResults
       );
     } catch (reason) {
       setResults({ error: String(reason) });
@@ -49,19 +60,10 @@ export const ZenodoSearch: React.FC<IZenodoSearchProps> = ({
           {isSearching ? 'Searching...' : 'Search'}
         </button>
       </form>
-      {results ? (
-        <pre
-          style={{
-            maxHeight: '320px',
-            maxWidth: '100%',
-            overflow: 'auto',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word'
-          }}
-        >
-          {JSON.stringify(results, null, 2)}
-        </pre>
-      ) : null}
+      {error}
+      {hits.map(result => (
+        <ZenodoResource resource={result} key={result.id} />
+      ))}
     </div>
   );
 };

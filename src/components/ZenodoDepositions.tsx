@@ -3,6 +3,7 @@ import { ServerConnection } from '@jupyterlab/services';
 
 import { listZenodoDepositions } from '../api_calls';
 import { ZenodoStore } from '../store';
+import { ZenodoResource, ZenodoResourceData } from './ZenodoResource';
 
 interface IZenodoDepositionsProps {
   serverSettings: ServerConnection.ISettings;
@@ -11,7 +12,9 @@ interface IZenodoDepositionsProps {
 export const ZenodoDepositions: React.FC<IZenodoDepositionsProps> = ({
   serverSettings
 }) => {
-  const [depositions, setDepositions] = React.useState<unknown>(null);
+  const [depositions, setDepositions] = React.useState<
+    ZenodoResourceData[] | { error: string } | null
+  >(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const sandboxOverride = ZenodoStore.useState(state => state.sandboxOverride);
 
@@ -20,9 +23,9 @@ export const ZenodoDepositions: React.FC<IZenodoDepositionsProps> = ({
 
     try {
       setDepositions(
-        await listZenodoDepositions(serverSettings, {
+        (await listZenodoDepositions(serverSettings, {
           sandbox: sandboxOverride
-        })
+        })) as ZenodoResourceData[]
       );
     } catch (reason) {
       setDepositions({ error: String(reason) });
@@ -36,19 +39,11 @@ export const ZenodoDepositions: React.FC<IZenodoDepositionsProps> = ({
       <button disabled={isLoading} onClick={loadDepositions} type="button">
         {isLoading ? 'Loading...' : 'Load depositions'}
       </button>
-      {depositions ? (
-        <pre
-          style={{
-            maxHeight: '320px',
-            maxWidth: '100%',
-            overflow: 'auto',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word'
-          }}
-        >
-          {JSON.stringify(depositions, null, 2)}
-        </pre>
-      ) : null}
+      {Array.isArray(depositions)
+        ? depositions.map(deposition => (
+            <ZenodoResource resource={deposition} key={deposition.id} />
+          ))
+        : depositions?.error}
     </div>
   );
 };
