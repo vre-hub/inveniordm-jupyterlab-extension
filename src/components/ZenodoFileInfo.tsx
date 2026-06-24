@@ -6,6 +6,7 @@ import {
 } from '../api_calls';
 import { useInsertZenodoCell, useServerSettings } from '../store';
 import { ZenodoDownloadProgress } from './ZenodoDownloadProgress';
+import { ZenodoFileDownloadStatus } from './ZenodoFileDownloadStatus';
 import type { ZenodoFile } from './ZenodoResource';
 
 export const ZenodoFileInfo: React.FC<{
@@ -45,6 +46,9 @@ export const ZenodoFileInfo: React.FC<{
       <button disabled={!fileId} onClick={insertImportCell} type="button">
         Insert import cell
       </button>
+      {fileId ? (
+        <ZenodoFileDownloadStatus depositionId={depositionId} fileId={fileId} />
+      ) : null}
       {downloadId ? <ZenodoDownloadProgress downloadId={downloadId} /> : null}
     </div>
   );

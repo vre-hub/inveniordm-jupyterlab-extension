@@ -283,6 +283,35 @@ class ZenodoDownloadCancelHandler(APIHandler):
         self.finish(json.dumps(progress))
 
 
+class ZenodoFileDownloadStatusHandler(APIHandler):
+    def initialize(self, get_zenodo_download_manager: GetZenodoDownloadManager):
+        self.get_zenodo_download_manager = get_zenodo_download_manager
+
+    @tornado.web.authenticated
+    def post(self):
+        data = self.get_json_body() or {}
+        deposition_id = data.get("deposition_id")
+        file_id = data.get("file_id")
+        if deposition_id is None or not file_id:
+            self.set_status(400)
+            self.finish(
+                json.dumps({"message": "Missing deposition_id or file_id"})
+            )
+            return
+
+        try:
+            status = self.get_zenodo_download_manager().get_download_status(
+                deposition_id=deposition_id,
+                file_id=file_id,
+            )
+        except ValueError as error:
+            self.set_status(400)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps(status))
+
+
 class ZenodoFileImportCellHandler(APIHandler):
     def initialize(
         self,
@@ -382,6 +411,11 @@ def setup_route_handlers(web_app):
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_zenodo_download_manager": get_zenodo_download_manager,
             },
+        ),
+        (
+            url_path_join(zenodo_base_url, "files", "status"),
+            ZenodoFileDownloadStatusHandler,
+            {"get_zenodo_download_manager": get_zenodo_download_manager},
         ),
         (
             url_path_join(

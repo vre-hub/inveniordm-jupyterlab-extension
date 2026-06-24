@@ -92,6 +92,11 @@ export type DownloadProgressResponse = {
   cancel_requested: boolean;
 };
 
+export type ZenodoFileDownloadStatusResponse = {
+  downloaded: boolean;
+  path: string | null;
+};
+
 export async function downloadZenodoFile(
   serverSettings: ServerConnection.ISettings,
   depositionId: number,
@@ -99,6 +104,22 @@ export async function downloadZenodoFile(
 ): Promise<DownloadZenodoFileResponse> {
   return await requestAPI<DownloadZenodoFileResponse>(
     'files/download',
+    serverSettings,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
+    }
+  );
+}
+
+export async function getZenodoFileDownloadStatus(
+  serverSettings: ServerConnection.ISettings,
+  depositionId: number,
+  fileId: string
+): Promise<ZenodoFileDownloadStatusResponse> {
+  return await requestAPI<ZenodoFileDownloadStatusResponse>(
+    'files/status',
     serverSettings,
     {
       method: 'POST',

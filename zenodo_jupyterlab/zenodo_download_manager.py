@@ -41,6 +41,17 @@ class ZenodoDownloadManager:
     def cancel(self, download_id: str) -> dict[str, object] | None:
         return self.download_job_manager.cancel(download_id)
 
+    def get_download_status(
+        self,
+        *,
+        deposition_id: int | str,
+        file_id: str,
+    ) -> dict[str, object]:
+        return self.zenodo_downloads.get_download_status(
+            deposition_id=deposition_id,
+            file_id=file_id,
+        )
+
     def get_download_location(
         self,
         zenodo_requests: ZenodoFileSource,

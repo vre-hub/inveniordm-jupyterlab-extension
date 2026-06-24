@@ -46,6 +46,21 @@ class ZenodoDownloads:
             file_id=file_id,
         )
 
+    def get_download_status(
+        self,
+        *,
+        deposition_id: int | str,
+        file_id: str,
+    ) -> dict[str, object]:
+        existing_file = self._find_downloaded_file(
+            deposition_id=deposition_id,
+            file_id=file_id,
+        )
+        return {
+            "downloaded": existing_file is not None,
+            "path": str(existing_file) if existing_file is not None else None,
+        }
+
     def download_file(
         self,
         zenodo_requests: ZenodoFileSource,
@@ -103,13 +118,51 @@ class ZenodoDownloads:
         safe_deposition_id = Path(str(deposition_id)).name
         if not safe_deposition_id:
             raise ValueError("Missing deposition_id")
+        filestem = self._download_filestem(file_id)
+
+        file_ending = "".join(Path(safe_filename).suffixes)
+
+        return self.downloads_dir / safe_deposition_id / f"{filestem}{file_ending}"
+
+    def _find_downloaded_file(
+        self,
+        *,
+        deposition_id: int | str,
+        file_id: str,
+    ) -> Path | None:
+        """
+        Find a downloaded zenodo file on disk, based on the deposition_id and file_id.
+        Returns the path to the file if found, or None if not found.
+        """
+        safe_deposition_id = Path(str(deposition_id)).name
+        if not safe_deposition_id:
+            raise ValueError("Missing deposition_id")
+        filestem = self._download_filestem(file_id)
+
+        deposition_dir = self.downloads_dir / safe_deposition_id
+        if not deposition_dir.is_dir():
+            return None
+
+        for candidate in deposition_dir.iterdir():
+            if not candidate.is_file() or candidate.suffix == ".part":
+                continue
+            if candidate.name == filestem or candidate.name.startswith(
+                f"{filestem}."
+            ):
+                return candidate
+
+        return None
+
+    def _download_filestem(self, file_id: str) -> str:
+        """
+        Get the file stem for a Zenodo file download, based on the file_id.
+        Currently, this is just the file id.
+        """
         safe_file_id = Path(str(file_id)).name
         if not safe_file_id:
             raise ValueError("Missing file_id")
 
-        file_ending = "".join(Path(safe_filename).suffixes)
-
-        return self.downloads_dir / safe_deposition_id / f"{safe_file_id}{file_ending}"
+        return safe_file_id
 
     def _save_response(
         self,
