@@ -22,16 +22,14 @@ class ZenodoFileSource(Protocol):
         ...
 
 
-class DownloadManager:
+class ZenodoDownloads:
     """
-    Manages Zenodo file downloads:
-    Provides methods to download files using ZenodoRequests
-    and writes them to disk.
+    Resolves Zenodo file download locations and writes downloaded files to disk.
     """
     def __init__(self, downloads_dir: Path):
         self.downloads_dir = downloads_dir
 
-    def get_zenodo_download_location(
+    def get_download_location(
         self,
         zenodo_requests: ZenodoFileSource,
         *,
@@ -44,7 +42,7 @@ class DownloadManager:
         )
         return self._download_location_from_metadata(file_metadata, deposition_id)
 
-    def download_zenodo_file(
+    def download_file(
         self,
         zenodo_requests: ZenodoFileSource,
         *,
@@ -84,10 +82,6 @@ class DownloadManager:
         file_metadata: dict[str, Any],
         deposition_id: int | str,
     ) -> Path:
-        """
-        Compute the destination path for a Zenodo file download
-        from its metadata.
-        """
         filename = (
             file_metadata.get("filename")
             or file_metadata.get("key")
@@ -113,11 +107,6 @@ class DownloadManager:
         on_progress: ProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
     ) -> Path:
-        """
-        Save a streaming response to a file,
-        with optional progress reporting and cancellation.
-        Writes to a temporary file first so that incomplete downloads do not overwrite existing files.
-        """
         bytes_downloaded = 0
         total_bytes = response.content_length
         destination.parent.mkdir(parents=True, exist_ok=True)
