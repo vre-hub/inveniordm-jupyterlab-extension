@@ -2,6 +2,20 @@ import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
 
+import { ZenodoStore } from './store';
+
+function withSandboxOverride(endPoint: string): string {
+  const sandboxOverride = ZenodoStore.getRawState().sandboxOverride;
+  if (sandboxOverride === undefined) {
+    return endPoint;
+  }
+
+  const [path, queryString = ''] = endPoint.split('?');
+  const params = new URLSearchParams(queryString);
+  params.set('sandbox', sandboxOverride.toString());
+  return `${path}?${params.toString()}`;
+}
+
 /**
  * Call the server extension
  *
@@ -15,11 +29,12 @@ export async function requestAPI<T>(
   serverSettings: ServerConnection.ISettings,
   init: RequestInit = {}
 ): Promise<T> {
+  const endPointWithSandboxOverride = withSandboxOverride(endPoint);
   // Make request to Jupyter API
   const requestUrl = URLExt.join(
     serverSettings.baseUrl,
     'zenodo-jupyterlab', // our server extension's API namespace
-    endPoint
+    endPointWithSandboxOverride
   );
 
   let response: Response;

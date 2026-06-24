@@ -51,26 +51,18 @@ export async function deleteAccessToken(
 
 export async function searchZenodoRecords(
   serverSettings: ServerConnection.ISettings,
-  query: string,
-  options?: { sandbox?: boolean }
+  query: string
 ): Promise<unknown> {
   const params = new URLSearchParams({ q: query });
   params.append('include_files', 'true');
-  if (options?.sandbox !== undefined) {
-    params.append('sandbox', options.sandbox.toString());
-  }
   return await requestAPI(`records?${params.toString()}`, serverSettings);
 }
 
 export async function listZenodoDepositions(
-  serverSettings: ServerConnection.ISettings,
-  options?: { sandbox?: boolean }
+  serverSettings: ServerConnection.ISettings
 ): Promise<unknown> {
   const params = new URLSearchParams();
   params.append('include_files', 'true');
-  if (options?.sandbox !== undefined) {
-    params.append('sandbox', options.sandbox.toString());
-  }
 
   const queryString = params.toString();
   return await requestAPI(
@@ -153,7 +145,7 @@ export async function cancelDownload(
 export async function getZenodoFileImportCell(
   serverSettings: ServerConnection.ISettings,
   depositionId: number,
-  fileId: string,
+  fileId: string
 ): Promise<InsertZenodoCellAction> {
   return await requestAPI<InsertZenodoCellAction>(
     'files/import-cell',

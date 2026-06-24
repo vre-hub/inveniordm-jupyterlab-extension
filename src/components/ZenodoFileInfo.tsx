@@ -1,9 +1,6 @@
 import React from 'react';
 
-import {
-  downloadZenodoFile,
-  getZenodoFileImportCell
-} from '../api_calls';
+import { downloadZenodoFile, getZenodoFileImportCell } from '../api_calls';
 import { useInsertZenodoCell, useServerSettings } from '../store';
 import { ZenodoDownloadProgress } from './ZenodoDownloadProgress';
 import { ZenodoFileDownloadStatus } from './ZenodoFileDownloadStatus';
@@ -34,7 +31,13 @@ export const ZenodoFileInfo: React.FC<{
   };
 
   return (
-    <div style={{ border: '1px solid #000000', padding: '3px', marginBottom: '2px' }}>
+    <div
+      style={{
+        border: '1px solid #000000',
+        padding: '3px',
+        marginBottom: '2px'
+      }}
+    >
       <div>
         {filename}
         {/* TODO display file size in a reasonable unit */}

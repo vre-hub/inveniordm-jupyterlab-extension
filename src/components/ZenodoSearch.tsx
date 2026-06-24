@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { searchZenodoRecords } from '../api_calls';
-import { useServerSettings, ZenodoStore } from '../store';
+import { useServerSettings } from '../store';
 import { ZenodoResource, ZenodoResourceData } from './ZenodoResource';
 
 type ZenodoSearchResults = {
@@ -17,7 +17,6 @@ export const ZenodoSearch: React.FC = () => {
     ZenodoSearchResults | { error: string } | null
   >(null);
   const [isSearching, setIsSearching] = React.useState(false);
-  const sandboxOverride = ZenodoStore.useState(state => state.sandboxOverride);
   const error = results && 'error' in results ? results.error : null;
   const hits =
     results && !('error' in results) ? (results.hits?.hits ?? []) : [];
@@ -30,9 +29,10 @@ export const ZenodoSearch: React.FC = () => {
 
     try {
       setResults(
-        (await searchZenodoRecords(serverSettings, query, {
-          sandbox: sandboxOverride
-        })) as ZenodoSearchResults
+        (await searchZenodoRecords(
+          serverSettings,
+          query
+        )) as ZenodoSearchResults
       );
     } catch (reason) {
       setResults({ error: String(reason) });

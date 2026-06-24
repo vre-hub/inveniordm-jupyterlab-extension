@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { listZenodoDepositions } from '../api_calls';
-import { useServerSettings, ZenodoStore } from '../store';
+import { useServerSettings } from '../store';
 import { ZenodoResource, ZenodoResourceData } from './ZenodoResource';
 
 export const ZenodoDepositions: React.FC = () => {
@@ -10,16 +10,13 @@ export const ZenodoDepositions: React.FC = () => {
     ZenodoResourceData[] | { error: string } | null
   >(null);
   const [isLoading, setIsLoading] = React.useState(false);
-  const sandboxOverride = ZenodoStore.useState(state => state.sandboxOverride);
 
   const loadDepositions = async (): Promise<void> => {
     setIsLoading(true);
 
     try {
       setDepositions(
-        (await listZenodoDepositions(serverSettings, {
-          sandbox: sandboxOverride
-        })) as ZenodoResourceData[]
+        (await listZenodoDepositions(serverSettings)) as ZenodoResourceData[]
       );
     } catch (reason) {
       setDepositions({ error: String(reason) });
