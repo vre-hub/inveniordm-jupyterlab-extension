@@ -9,29 +9,51 @@ interface IZenodoState {
   serverSettings: unknown;
 }
 
-export const ZenodoStore = new Store<IZenodoState>({
+const ZenodoStore = new Store<IZenodoState>({
   insertZenodoCell: undefined,
   sandboxOverride: undefined,
   serverSettings: undefined
 });
 
-export function setSandboxOverride(sandboxOverride: boolean | undefined): void {
+function getSandboxOverride(): boolean | undefined {
+  return ZenodoStore.getRawState().sandboxOverride;
+}
+
+function useSandboxOverride(): boolean | undefined {
+  return ZenodoStore.useState(state => state.sandboxOverride);
+}
+
+function setSandboxOverride(sandboxOverride: boolean | undefined): void {
   ZenodoStore.update(state => {
     state.sandboxOverride = sandboxOverride;
   });
 }
 
-export function initializeZenodoStore(options: {
-  insertZenodoCell: (action: InsertZenodoCellAction) => void;
-  serverSettings: ServerConnection.ISettings;
-}): void {
+function setInsertZenodoCell(
+  insertZenodoCell: (action: InsertZenodoCellAction) => void
+): void {
   ZenodoStore.update(state => {
-    state.insertZenodoCell = options.insertZenodoCell;
-    state.serverSettings = options.serverSettings;
+    state.insertZenodoCell = insertZenodoCell;
   });
 }
 
-export function useServerSettings(): ServerConnection.ISettings {
+function setServerSettings(
+  serverSettings: ServerConnection.ISettings
+): void {
+  ZenodoStore.update(state => {
+    state.serverSettings = serverSettings;
+  });
+}
+
+function initializeZenodoStore(options: {
+  insertZenodoCell: (action: InsertZenodoCellAction) => void;
+  serverSettings: ServerConnection.ISettings;
+}): void {
+  setInsertZenodoCell(options.insertZenodoCell);
+  setServerSettings(options.serverSettings);
+}
+
+function useServerSettings(): ServerConnection.ISettings {
   const serverSettings = ZenodoStore.useState(state => state.serverSettings);
 
   if (!serverSettings) {
@@ -41,7 +63,7 @@ export function useServerSettings(): ServerConnection.ISettings {
   return serverSettings as ServerConnection.ISettings;
 }
 
-export function useInsertZenodoCell(): (
+function useInsertZenodoCell(): (
   action: InsertZenodoCellAction
 ) => void {
   const insertZenodoCell = ZenodoStore.useState(state => state.insertZenodoCell);
@@ -52,3 +74,21 @@ export function useInsertZenodoCell(): (
 
   return insertZenodoCell;
 }
+
+// export hooks
+export {
+  useInsertZenodoCell,
+  useSandboxOverride,
+  useServerSettings
+};
+
+// export getters and setters
+export {
+  setInsertZenodoCell,
+  getSandboxOverride,
+  setSandboxOverride,
+  setServerSettings
+};
+
+// export initialize function
+export { initializeZenodoStore };

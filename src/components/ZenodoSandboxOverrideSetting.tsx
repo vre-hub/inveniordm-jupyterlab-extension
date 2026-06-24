@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { setSandboxOverride, ZenodoStore } from '../store';
+import { setSandboxOverride, useSandboxOverride } from '../store';
 
 type SandboxOverrideValue = 'default' | 'production' | 'sandbox';
 
@@ -23,7 +23,7 @@ function fromSelectValue(value: SandboxOverrideValue): boolean | undefined {
 }
 
 export const ZenodoSandboxOverrideSetting: React.FC = () => {
-  const sandboxOverride = ZenodoStore.useState(state => state.sandboxOverride);
+  const sandboxOverride = useSandboxOverride();
 
   return (
     <label>

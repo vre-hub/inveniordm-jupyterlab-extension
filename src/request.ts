@@ -2,10 +2,10 @@ import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
 
-import { ZenodoStore } from './store';
+import { getSandboxOverride } from './store';
 
 function withSandboxOverride(endPoint: string): string {
-  const sandboxOverride = ZenodoStore.getRawState().sandboxOverride;
+  const sandboxOverride = getSandboxOverride();
   if (sandboxOverride === undefined) {
     return endPoint;
   }
