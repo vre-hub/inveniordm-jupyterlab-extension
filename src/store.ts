@@ -1,5 +1,6 @@
 import { ServerConnection } from '@jupyterlab/services';
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 import type { InsertZenodoCellAction } from './insertCell';
 
@@ -9,11 +10,27 @@ interface IZenodoState {
   serverSettings: unknown;
 }
 
-const useZenodoStore = create<IZenodoState>()(() => ({
-  insertZenodoCell: undefined,
-  sandboxOverride: undefined,
-  serverSettings: undefined
-}));
+type IZenodoPersistedState = Omit<
+  IZenodoState,
+  'insertZenodoCell' | 'serverSettings'
+>;
+
+const useZenodoStore = create<IZenodoState>()(
+  persist<IZenodoState, [], [], IZenodoPersistedState>(
+    () => ({
+      insertZenodoCell: undefined,
+      sandboxOverride: undefined,
+      serverSettings: undefined
+    }),
+    {
+      name: 'zenodo-jupyterlab-store',
+      partialize: state => {
+        const { insertZenodoCell, serverSettings, ...persistedState } = state;
+        return persistedState;
+      }
+    }
+  )
+);
 
 function getSandboxOverride(): boolean | undefined {
   return useZenodoStore.getState().sandboxOverride;
