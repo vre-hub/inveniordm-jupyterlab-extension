@@ -40,7 +40,11 @@ class ZenodoDownloads:
             deposition_id=deposition_id,
             file_id=file_id,
         )
-        return self._download_location_from_metadata(file_metadata, deposition_id)
+        return self._download_location_from_metadata(
+            file_metadata,
+            deposition_id=deposition_id,
+            file_id=file_id,
+        )
 
     def download_file(
         self,
@@ -63,7 +67,8 @@ class ZenodoDownloads:
             raise ValueError("Missing file download metadata")
         destination = self._download_location_from_metadata(
             file_metadata,
-            deposition_id,
+            deposition_id=deposition_id,
+            file_id=file_id,
         )
 
         response = zenodo_requests.open_zenodo_file(file_url=file_url)
@@ -80,7 +85,9 @@ class ZenodoDownloads:
     def _download_location_from_metadata(
         self,
         file_metadata: dict[str, Any],
+        *,
         deposition_id: int | str,
+        file_id: str,
     ) -> Path:
         filename = (
             file_metadata.get("filename")
@@ -96,8 +103,13 @@ class ZenodoDownloads:
         safe_deposition_id = Path(str(deposition_id)).name
         if not safe_deposition_id:
             raise ValueError("Missing deposition_id")
+        safe_file_id = Path(str(file_id)).name
+        if not safe_file_id:
+            raise ValueError("Missing file_id")
 
-        return self.downloads_dir / safe_deposition_id / safe_filename
+        file_ending = "".join(Path(safe_filename).suffixes)
+
+        return self.downloads_dir / safe_deposition_id / f"{safe_file_id}{file_ending}"
 
     def _save_response(
         self,
