@@ -297,7 +297,6 @@ class ZenodoFileImportCellHandler(APIHandler):
         data = self.get_json_body() or {}
         deposition_id = data.get("deposition_id")
         file_id = data.get("file_id")
-        framework = data.get("framework", "pandas")
         if deposition_id is None or not file_id:
             self.set_status(400)
             self.finish(
@@ -317,7 +316,6 @@ class ZenodoFileImportCellHandler(APIHandler):
                 path=destination,
                 deposition_id=deposition_id,
                 file_id=file_id,
-                framework=framework,
             )
         except ValueError as error:
             self.set_status(400)

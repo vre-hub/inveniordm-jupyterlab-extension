@@ -133,7 +133,6 @@ export async function getZenodoFileImportCell(
   serverSettings: ServerConnection.ISettings,
   depositionId: number,
   fileId: string,
-  framework = 'pandas'
 ): Promise<InsertZenodoCellAction> {
   return await requestAPI<InsertZenodoCellAction>(
     'files/import-cell',
@@ -143,8 +142,7 @@ export async function getZenodoFileImportCell(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deposition_id: depositionId,
-        file_id: fileId,
-        framework
+        file_id: fileId
       })
     }
   );
