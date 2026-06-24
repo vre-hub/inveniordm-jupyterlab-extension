@@ -10,6 +10,7 @@ import tornado
 import requests
 
 from .cell_actions import make_zenodo_import_cell_action
+from .download_job_manager import DownloadJobManager
 from .download_manager import DownloadManager
 from .token_store import FileTokenStore
 from .zenodo_requests import ZenodoRequests
@@ -17,6 +18,7 @@ from .zenodo_requests import ZenodoRequests
 
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 GetDownloadManager = Callable[[], DownloadManager]
+GetDownloadJobManager = Callable[[], DownloadJobManager]
 
 
 def _default_token_store_path() -> Path:
@@ -228,9 +230,11 @@ class ZenodoFileDownloadHandler(APIHandler):
         self,
         get_zenodo_requests: GetZenodoRequests,
         get_download_manager: GetDownloadManager,
+        get_download_job_manager: GetDownloadJobManager,
     ):
         self.get_zenodo_requests = get_zenodo_requests
         self.get_download_manager = get_download_manager
+        self.get_download_job_manager = get_download_job_manager
 
     @tornado.web.authenticated
     def post(self):
@@ -244,22 +248,48 @@ class ZenodoFileDownloadHandler(APIHandler):
             )
             return
 
-        try:
-            destination = self.get_download_manager().download_zenodo_file(
-                self.get_zenodo_requests(self),
+        zenodo_requests = self.get_zenodo_requests(self)
+        download_manager = self.get_download_manager()
+        download_id = self.get_download_job_manager().start_download(
+            lambda on_progress, should_cancel: download_manager.download_zenodo_file(
+                zenodo_requests,
                 deposition_id=deposition_id,
                 file_id=file_id,
+                on_progress=on_progress,
+                should_cancel=should_cancel,
             )
-        except ValueError as error:
-            self.set_status(400)
-            self.finish(json.dumps({"message": str(error)}))
-            return
-        except requests.RequestException as error:
-            self.set_status(getattr(error.response, "status_code", 502))
-            self.finish(json.dumps({"message": str(error)}))
+        )
+        self.finish(json.dumps({"download_id": download_id}))
+
+
+class ZenodoDownloadProgressHandler(APIHandler):
+    def initialize(self, get_download_job_manager: GetDownloadJobManager):
+        self.get_download_job_manager = get_download_job_manager
+
+    @tornado.web.authenticated
+    def get(self, download_id: str):
+        progress = self.get_download_job_manager().get_progress(download_id)
+        if progress is None:
+            self.set_status(404)
+            self.finish(json.dumps({"message": "Unknown download"}))
             return
 
-        self.finish(json.dumps({"path": str(destination)}))
+        self.finish(json.dumps(progress))
+
+
+class ZenodoDownloadCancelHandler(APIHandler):
+    def initialize(self, get_download_job_manager: GetDownloadJobManager):
+        self.get_download_job_manager = get_download_job_manager
+
+    @tornado.web.authenticated
+    def post(self, download_id: str):
+        progress = self.get_download_job_manager().cancel(download_id)
+        if progress is None:
+            self.set_status(404)
+            self.finish(json.dumps({"message": "Unknown download"}))
+            return
+
+        self.finish(json.dumps(progress))
 
 
 class ZenodoFileImportCellHandler(APIHandler):
@@ -314,6 +344,7 @@ def setup_route_handlers(web_app):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
     token_store = FileTokenStore(_default_token_store_path())
+    download_job_manager = DownloadJobManager()
 
     def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
         return ZenodoRequests(
@@ -324,6 +355,9 @@ def setup_route_handlers(web_app):
 
     def get_download_manager() -> DownloadManager:
         return DownloadManager(_default_downloads_dir())
+
+    def get_download_job_manager() -> DownloadJobManager:
+        return download_job_manager
 
     zenodo_base_url = url_path_join(base_url, "zenodo-jupyterlab")
     handlers = [
@@ -355,7 +389,30 @@ def setup_route_handlers(web_app):
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_download_manager": get_download_manager,
+                "get_download_job_manager": get_download_job_manager,
             },
+        ),
+        (
+            url_path_join(
+                zenodo_base_url,
+                "files",
+                "downloads",
+                r"([^/]+)",
+                "progress",
+            ),
+            ZenodoDownloadProgressHandler,
+            {"get_download_job_manager": get_download_job_manager},
+        ),
+        (
+            url_path_join(
+                zenodo_base_url,
+                "files",
+                "downloads",
+                r"([^/]+)",
+                "cancel",
+            ),
+            ZenodoDownloadCancelHandler,
+            {"get_download_job_manager": get_download_job_manager},
         ),
         (
             url_path_join(zenodo_base_url, "files", "import-cell"),

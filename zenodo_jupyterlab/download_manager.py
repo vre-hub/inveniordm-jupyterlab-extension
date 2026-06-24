@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, Protocol
 
+from .download_types import CancelCheck, DownloadCancelled, ProgressCallback
 from .zenodo import ZenodoFileResponse
 
 
@@ -22,6 +23,11 @@ class ZenodoFileSource(Protocol):
 
 
 class DownloadManager:
+    """
+    Manages Zenodo file downloads:
+    Provides methods to download files using ZenodoRequests
+    and writes them to disk.
+    """
     def __init__(self, downloads_dir: Path):
         self.downloads_dir = downloads_dir
 
@@ -44,6 +50,8 @@ class DownloadManager:
         *,
         deposition_id: int | str,
         file_id: str,
+        on_progress: ProgressCallback | None = None,
+        should_cancel: CancelCheck | None = None,
     ) -> Path:
         file_metadata = zenodo_requests.get_zenodo_deposition_file(
             deposition_id=deposition_id,
@@ -62,7 +70,12 @@ class DownloadManager:
 
         response = zenodo_requests.open_zenodo_file(file_url=file_url)
         try:
-            return self._save_response(response, destination)
+            return self._save_response(
+                response,
+                destination,
+                on_progress=on_progress,
+                should_cancel=should_cancel,
+            )
         finally:
             response.close()
 
@@ -96,11 +109,33 @@ class DownloadManager:
         self,
         response: ZenodoFileResponse,
         destination: Path,
+        *,
+        on_progress: ProgressCallback | None = None,
+        should_cancel: CancelCheck | None = None,
     ) -> Path:
+        """
+        Save a streaming response to a file,
+        with optional progress reporting and cancellation.
+        Writes to a temporary file first so that incomplete downloads do not overwrite existing files.
+        """
+        bytes_downloaded = 0
+        total_bytes = response.content_length
         destination.parent.mkdir(parents=True, exist_ok=True)
-        with destination.open("wb") as file:
-            for chunk in response.iter_bytes(chunk_size=1024 * 1024):
-                if chunk:
-                    file.write(chunk)
+        temporary_destination = destination.with_name(f"{destination.name}.part")
+
+        try:
+            with temporary_destination.open("wb") as file:
+                for chunk in response.iter_bytes(chunk_size=1024 * 1024):
+                    if should_cancel is not None and should_cancel():
+                        raise DownloadCancelled("Download canceled")
+                    if chunk:
+                        file.write(chunk)
+                        bytes_downloaded += len(chunk)
+                        if on_progress is not None:
+                            on_progress(bytes_downloaded, total_bytes)
+            temporary_destination.replace(destination)
+        except DownloadCancelled:
+            temporary_destination.unlink(missing_ok=True)
+            raise
 
         return destination

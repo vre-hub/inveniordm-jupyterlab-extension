@@ -80,7 +80,16 @@ export async function listZenodoDepositions(
 }
 
 export type DownloadZenodoFileResponse = {
-  path: string;
+  download_id: string;
+};
+
+export type DownloadProgressResponse = {
+  status: 'pending' | 'running' | 'canceling' | 'canceled' | 'done' | 'error';
+  bytes_downloaded: number;
+  total_bytes: number | null;
+  path: string | null;
+  message: string | null;
+  cancel_requested: boolean;
 };
 
 export async function downloadZenodoFile(
@@ -96,6 +105,27 @@ export async function downloadZenodoFile(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
     }
+  );
+}
+
+export async function getDownloadProgress(
+  serverSettings: ServerConnection.ISettings,
+  downloadId: string
+): Promise<DownloadProgressResponse> {
+  return await requestAPI<DownloadProgressResponse>(
+    `files/downloads/${downloadId}/progress`,
+    serverSettings
+  );
+}
+
+export async function cancelDownload(
+  serverSettings: ServerConnection.ISettings,
+  downloadId: string
+): Promise<DownloadProgressResponse> {
+  return await requestAPI<DownloadProgressResponse>(
+    `files/downloads/${downloadId}/cancel`,
+    serverSettings,
+    { method: 'POST' }
   );
 }
 

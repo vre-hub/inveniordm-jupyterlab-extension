@@ -18,6 +18,10 @@ class ZenodoFileResponse(Protocol):
     """
     Response object for a Zenodo file download
     """
+    @property
+    def content_length(self) -> int | None:
+        ...
+
     def iter_bytes(self, chunk_size: int) -> Iterable[bytes]:
         ...
 
@@ -31,6 +35,11 @@ class _RequestsZenodoFileResponse:
     """
     def __init__(self, response: requests.Response):
         self.response = response
+
+    @property
+    def content_length(self) -> int | None:
+        value = self.response.headers.get("Content-Length")
+        return int(value) if value else None
 
     def iter_bytes(self, chunk_size: int) -> Iterable[bytes]:
         return self.response.iter_content(chunk_size=chunk_size)
