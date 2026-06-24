@@ -34,7 +34,7 @@ export const ZenodoFileInfo: React.FC<{
   };
 
   return (
-    <div>
+    <div style={{ border: '1px solid #000000', padding: '3px', marginBottom: '2px' }}>
       <div>
         {filename}
         {/* TODO display file size in a reasonable unit */}
