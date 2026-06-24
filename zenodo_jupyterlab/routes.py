@@ -305,17 +305,23 @@ class ZenodoFileImportCellHandler(APIHandler):
             return
 
         try:
+            zenodo_requests = self.get_zenodo_requests(self)
             destination = self.get_zenodo_download_manager().get_download_location(
-                self.get_zenodo_requests(self),
+                zenodo_requests,
                 deposition_id=deposition_id,
                 file_id=file_id,
             )
             if not destination.exists():
                 raise ValueError("Zenodo file has not been downloaded yet")
+            file_metadata = zenodo_requests.get_zenodo_deposition_file(
+                deposition_id=deposition_id,
+                file_id=file_id,
+            )
             action = make_zenodo_import_cell_action(
                 path=destination,
                 deposition_id=deposition_id,
                 file_id=file_id,
+                file_metadata=file_metadata,
             )
         except ValueError as error:
             self.set_status(400)
