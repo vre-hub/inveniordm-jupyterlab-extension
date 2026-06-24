@@ -1,0 +1,51 @@
+import React from 'react';
+
+import {
+  downloadZenodoFile,
+  getZenodoFileImportCell
+} from '../api_calls';
+import { useInsertZenodoCell, useServerSettings } from '../store';
+import { ZenodoDownloadProgress } from './ZenodoDownloadProgress';
+import type { ZenodoFile } from './ZenodoResource';
+
+export const ZenodoFileInfo: React.FC<{
+  file: ZenodoFile;
+  depositionId: number;
+}> = ({ file, depositionId }) => {
+  const serverSettings = useServerSettings();
+  const insertZenodoCell = useInsertZenodoCell();
+  const [downloadId, setDownloadId] = React.useState<string | null>(null);
+  const filename = file.key ?? file.filename ?? file.id ?? 'download';
+  const fileId = file.file_id;
+
+  const download = async (): Promise<void> => {
+    const response = await downloadZenodoFile(
+      serverSettings,
+      depositionId,
+      fileId
+    );
+    setDownloadId(response.download_id);
+  };
+  const insertImportCell = async (): Promise<void> => {
+    insertZenodoCell(
+      await getZenodoFileImportCell(serverSettings, depositionId, fileId)
+    );
+  };
+
+  return (
+    <div>
+      <div>
+        {filename}
+        {/* TODO display file size in a reasonable unit */}
+        {file.size ? ` (${(file.size / 1024 / 1024).toFixed(2)} MB)` : null}
+      </div>
+      <button disabled={!fileId} onClick={download} type="button">
+        Download in JupyterServer
+      </button>
+      <button disabled={!fileId} onClick={insertImportCell} type="button">
+        Insert import cell
+      </button>
+      {downloadId ? <ZenodoDownloadProgress downloadId={downloadId} /> : null}
+    </div>
+  );
+};
