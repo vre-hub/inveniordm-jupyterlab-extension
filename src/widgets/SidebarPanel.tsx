@@ -1,26 +1,40 @@
 import React from 'react';
 import { VDomRenderer } from '@jupyterlab/apputils';
 
+import { Tabs, TabItem } from '../components/Tabs';
 import { ZenodoDepositions } from '../components/ZenodoDepositions';
 import { ZenodoLoginForm } from '../components/ZenodoLoginForm';
 import { ZenodoSandboxOverrideSetting } from '../components/ZenodoSandboxOverrideSetting';
 import { ZenodoSearch } from '../components/ZenodoSearch';
-import { ZenodoUserProfile } from '../components/ZenodoUserProfile';
+import { setCurrentTabID, useCurrentTabID } from '../store';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
 
+type SidebarTab = TabItem<string> & {
+  Component: React.FC;
+};
+
+const TABS: SidebarTab[] = [
+  { id: 'login', label: 'Login', Component: ZenodoLoginForm },
+  { id: 'search', label: 'Search', Component: ZenodoSearch },
+  {
+    id: 'settings',
+    label: 'Settings',
+    Component: ZenodoSandboxOverrideSetting
+  },
+  { id: 'account', label: 'My Account', Component: ZenodoDepositions }
+];
+
+
 const Panel: React.FC = () => {
+  const currentTabID = useCurrentTabID();
+  const SelectedTabComponent = (TABS.find(tab => tab.id === currentTabID) ?? TABS[0]).Component;
+
   return (
     <div className={PANEL_CLASS}>
-      <ZenodoLoginForm />
+      <Tabs currentTab={currentTabID} onChange={setCurrentTabID} tabs={TABS} />
       <hr />
-      <ZenodoUserProfile />
-      <hr />
-      <ZenodoSandboxOverrideSetting />
-      <hr />
-      <ZenodoDepositions />
-      <hr />
-      <ZenodoSearch />
+      <SelectedTabComponent />
     </div>
   );
 };
