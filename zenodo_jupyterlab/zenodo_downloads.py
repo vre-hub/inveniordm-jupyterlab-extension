@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Protocol
 
-from .download_types import CancelCheck, DownloadCancelled, ProgressCallback
+from .util.download_types import CancelCheck, DownloadCancelled, ProgressCallback
 from .zenodo import ZenodoFileResponse
 
 

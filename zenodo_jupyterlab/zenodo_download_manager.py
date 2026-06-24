@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .download_job_manager import DownloadJobManager
+from .util.download_job_manager import DownloadJobManager
 from .zenodo_downloads import ZenodoDownloads, ZenodoFileSource
 
 
