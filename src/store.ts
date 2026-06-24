@@ -1,5 +1,5 @@
 import { ServerConnection } from '@jupyterlab/services';
-import { Store } from 'pullstate';
+import { create } from 'zustand';
 
 import type { InsertZenodoCellAction } from './insertCell';
 
@@ -9,40 +9,32 @@ interface IZenodoState {
   serverSettings: unknown;
 }
 
-const ZenodoStore = new Store<IZenodoState>({
+const useZenodoStore = create<IZenodoState>()(() => ({
   insertZenodoCell: undefined,
   sandboxOverride: undefined,
   serverSettings: undefined
-});
+}));
 
 function getSandboxOverride(): boolean | undefined {
-  return ZenodoStore.getRawState().sandboxOverride;
+  return useZenodoStore.getState().sandboxOverride;
 }
 
 function useSandboxOverride(): boolean | undefined {
-  return ZenodoStore.useState(state => state.sandboxOverride);
+  return useZenodoStore(state => state.sandboxOverride);
 }
 
 function setSandboxOverride(sandboxOverride: boolean | undefined): void {
-  ZenodoStore.update(state => {
-    state.sandboxOverride = sandboxOverride;
-  });
+  useZenodoStore.setState({ sandboxOverride });
 }
 
 function setInsertZenodoCell(
   insertZenodoCell: (action: InsertZenodoCellAction) => void
 ): void {
-  ZenodoStore.update(state => {
-    state.insertZenodoCell = insertZenodoCell;
-  });
+  useZenodoStore.setState({ insertZenodoCell });
 }
 
-function setServerSettings(
-  serverSettings: ServerConnection.ISettings
-): void {
-  ZenodoStore.update(state => {
-    state.serverSettings = serverSettings;
-  });
+function setServerSettings(serverSettings: ServerConnection.ISettings): void {
+  useZenodoStore.setState({ serverSettings });
 }
 
 function initializeZenodoStore(options: {
@@ -54,7 +46,7 @@ function initializeZenodoStore(options: {
 }
 
 function useServerSettings(): ServerConnection.ISettings {
-  const serverSettings = ZenodoStore.useState(state => state.serverSettings);
+  const serverSettings = useZenodoStore(state => state.serverSettings);
 
   if (!serverSettings) {
     throw new Error('Zenodo server settings have not been initialized.');
@@ -66,7 +58,7 @@ function useServerSettings(): ServerConnection.ISettings {
 function useInsertZenodoCell(): (
   action: InsertZenodoCellAction
 ) => void {
-  const insertZenodoCell = ZenodoStore.useState(state => state.insertZenodoCell);
+  const insertZenodoCell = useZenodoStore(state => state.insertZenodoCell);
 
   if (!insertZenodoCell) {
     throw new Error('Zenodo cell insertion has not been initialized.');
