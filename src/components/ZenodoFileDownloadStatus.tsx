@@ -4,7 +4,26 @@ import {
   getZenodoFileDownloadStatus,
   ZenodoFileDownloadStatusResponse
 } from '../api_calls';
+import { useEventListener } from '../sse';
 import { useServerSettings } from '../store';
+
+function encodeTopicPart(value: string): string {
+  return encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    character => `%${character.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+}
+
+function downloadStatusChangedTopic(
+  depositionId: number,
+  fileId: string
+): string {
+  return [
+    'file.download-status.changed',
+    encodeTopicPart(String(depositionId)),
+    encodeTopicPart(fileId)
+  ].join('.');
+}
 
 export const ZenodoFileDownloadStatus: React.FC<{
   depositionId: number;
@@ -14,29 +33,19 @@ export const ZenodoFileDownloadStatus: React.FC<{
   const [status, setStatus] =
     React.useState<ZenodoFileDownloadStatusResponse | null>(null);
 
-  React.useEffect(() => {
-    let isMounted = true;
-
-    const poll = async (): Promise<void> => {
-      const nextStatus = await getZenodoFileDownloadStatus(
-        serverSettings,
-        depositionId,
-        fileId
-      );
-      if (isMounted) {
-        setStatus(nextStatus);
-      }
-    };
-
-    setStatus(null);
-    const interval = window.setInterval(poll, 2000);
-    poll();
-
-    return () => {
-      isMounted = false;
-      window.clearInterval(interval);
-    };
+  const reloadStatus = React.useCallback(async (): Promise<void> => {
+    setStatus(
+      await getZenodoFileDownloadStatus(serverSettings, depositionId, fileId)
+    );
   }, [depositionId, fileId, serverSettings]);
+
+  React.useEffect(() => {
+    void reloadStatus();
+  }, [reloadStatus]);
+
+  useEventListener(downloadStatusChangedTopic(depositionId, fileId), () => {
+    void reloadStatus();
+  });
 
   if (status === null) {
     return <div>Checking download status...</div>;

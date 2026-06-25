@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 from typing import Callable
+from urllib.parse import quote
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_core.paths import jupyter_data_dir
@@ -45,6 +46,14 @@ def _get_sandbox_override(handler: APIHandler) -> bool | None:
         return None
 
     return handler.get_query_argument("sandbox", "false").lower() in ("1", "true")
+
+
+def _download_status_changed_topic(deposition_id: int | str, file_id: str) -> str:
+    return (
+        "file.download-status.changed."
+        f"{quote(str(deposition_id), safe='')}."
+        f"{quote(file_id, safe='')}"
+    )
 
 
 class HelloRouteHandler(APIHandler):
@@ -293,6 +302,11 @@ class ZenodoFileDownloadHandler(APIHandler):
                 f"download.progress.{download_id}",
                 progress,
             )
+            if progress.get("status") == "done":
+                self.event_bus.publish(
+                    user_id,
+                    _download_status_changed_topic(deposition_id, file_id),
+                )
 
         download_id = self.get_zenodo_download_manager().start_download(
             zenodo_requests,
