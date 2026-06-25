@@ -13,6 +13,11 @@ export function useEventListener(
   onEvent: (event: any) => void
 ): void {
   const serverSettings = useServerSettings();
+  const onEventRef = React.useRef(onEvent);
+
+  React.useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -25,7 +30,7 @@ export function useEventListener(
           return;
         }
 
-        onEvent(event);
+        onEventRef.current(event);
       },
       controller.signal
     ).catch(reason => {
