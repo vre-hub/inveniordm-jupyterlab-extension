@@ -310,21 +310,6 @@ class ZenodoFileDownloadHandler(APIHandler):
         self.finish(json.dumps({"download_id": download_id}))
 
 
-class ZenodoDownloadProgressHandler(APIHandler):
-    def initialize(self, get_zenodo_download_manager: GetZenodoDownloadManager):
-        self.get_zenodo_download_manager = get_zenodo_download_manager
-
-    @tornado.web.authenticated
-    def get(self, download_id: str):
-        progress = self.get_zenodo_download_manager().get_progress(download_id)
-        if progress is None:
-            self.set_status(404)
-            self.finish(json.dumps({"message": "Unknown download"}))
-            return
-
-        self.finish(json.dumps(progress))
-
-
 class ZenodoDownloadCancelHandler(APIHandler):
     def initialize(self, get_zenodo_download_manager: GetZenodoDownloadManager):
         self.get_zenodo_download_manager = get_zenodo_download_manager
@@ -482,17 +467,6 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "files", "status"),
             ZenodoFileDownloadStatusHandler,
-            {"get_zenodo_download_manager": get_zenodo_download_manager},
-        ),
-        (
-            url_path_join(
-                zenodo_base_url,
-                "files",
-                "downloads",
-                r"([^/]+)",
-                "progress",
-            ),
-            ZenodoDownloadProgressHandler,
             {"get_zenodo_download_manager": get_zenodo_download_manager},
         ),
         (
