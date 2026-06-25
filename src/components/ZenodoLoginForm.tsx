@@ -3,6 +3,7 @@ import React from 'react';
 import { deleteAccessToken, putAccessToken } from '../api_calls';
 import { useServerSettings } from '../store';
 import { LoginStatusPill } from './LoginStatusPill';
+import { ZenodoUserProfile } from './ZenodoUserProfile';
 
 export const ZenodoLoginForm: React.FC = () => {
   const serverSettings = useServerSettings();
@@ -59,6 +60,8 @@ export const ZenodoLoginForm: React.FC = () => {
       >
         Delete token
       </button>
+      <hr />
+      <ZenodoUserProfile />
       <hr />
       <form onSubmit={submitAccessToken}>
         <input
