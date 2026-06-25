@@ -1,6 +1,7 @@
 import React from 'react';
 
 import {
+  deleteZenodoFileDownload,
   getZenodoFileDownloadStatus,
   ZenodoFileDownloadStatusResponse
 } from '../api_calls';
@@ -47,6 +48,10 @@ export const ZenodoFileDownloadStatus: React.FC<{
     void reloadStatus();
   });
 
+  const deleteDownload = async (): Promise<void> => {
+    await deleteZenodoFileDownload(serverSettings, depositionId, fileId);
+  };
+
   if (status === null) {
     return <div>Checking download status...</div>;
   }
@@ -55,6 +60,11 @@ export const ZenodoFileDownloadStatus: React.FC<{
     <div>
       {status.downloaded ? 'Downloaded' : 'Not downloaded'}
       {status.path ? `: ${status.path}` : null}
+      {status.downloaded ? (
+        <button onClick={deleteDownload} type="button">
+          Delete download
+        </button>
+      ) : null}
     </div>
   );
 };

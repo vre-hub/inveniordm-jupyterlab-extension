@@ -54,6 +54,17 @@ class ZenodoDownloadManager:
             file_id=file_id,
         )
 
+    def delete_download(
+        self,
+        *,
+        deposition_id: int | str,
+        file_id: str,
+    ) -> dict[str, object]:
+        return self.zenodo_downloads.delete_download(
+            deposition_id=deposition_id,
+            file_id=file_id,
+        )
+
     def get_download_location(
         self,
         zenodo_requests: ZenodoFileSource,

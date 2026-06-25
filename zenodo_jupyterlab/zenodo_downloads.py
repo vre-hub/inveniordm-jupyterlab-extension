@@ -61,6 +61,23 @@ class ZenodoDownloads:
             "path": str(existing_file) if existing_file is not None else None,
         }
 
+    def delete_download(
+        self,
+        *,
+        deposition_id: int | str,
+        file_id: str,
+    ) -> dict[str, object]:
+        existing_file = self._find_downloaded_file(
+            deposition_id=deposition_id,
+            file_id=file_id,
+        )
+        if existing_file is None:
+            return {"deleted": False, "path": None}
+
+        existing_file.unlink()
+        self._remove_empty_parent(existing_file)
+        return {"deleted": True, "path": str(existing_file)}
+
     def download_file(
         self,
         zenodo_requests: ZenodoFileSource,
@@ -152,6 +169,13 @@ class ZenodoDownloads:
                 return candidate
 
         return None
+
+    def _remove_empty_parent(self, path: Path) -> None:
+        parent = path.parent
+        try:
+            parent.rmdir()
+        except OSError:
+            pass
 
     def _download_filestem(self, file_id: str) -> str:
         """

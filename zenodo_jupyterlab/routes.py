@@ -316,6 +316,36 @@ class ZenodoFileDownloadHandler(APIHandler):
         )
         self.finish(json.dumps({"download_id": download_id}))
 
+    @tornado.web.authenticated
+    def delete(self):
+        data = self.get_json_body() or {}
+        deposition_id = data.get("deposition_id")
+        file_id = data.get("file_id")
+        if deposition_id is None or not file_id:
+            self.set_status(400)
+            self.finish(
+                json.dumps({"message": "Missing deposition_id or file_id"})
+            )
+            return
+
+        try:
+            result = self.get_zenodo_download_manager().delete_download(
+                deposition_id=deposition_id,
+                file_id=file_id,
+            )
+        except ValueError as error:
+            self.set_status(400)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        if result.get("deleted"):
+            self.event_bus.publish(
+                _get_user_token_id(self),
+                _download_status_changed_topic(deposition_id, file_id),
+            )
+
+        self.finish(json.dumps(result))
+
 
 class ZenodoDownloadCancelHandler(APIHandler):
     def initialize(self, get_zenodo_download_manager: GetZenodoDownloadManager):

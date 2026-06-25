@@ -17,7 +17,12 @@ export function useAccessTokenStatus(): AccessTokenResponse | undefined {
   const [status, setStatus] = React.useState<AccessTokenResponse>();
 
   const updateStatus = React.useCallback(async (): Promise<void> => {
-    setStatus(await await requestAPI<AccessTokenResponse>('access-token', serverSettings));
+    setStatus(
+      await await requestAPI<AccessTokenResponse>(
+        'access-token',
+        serverSettings
+      )
+    );
   }, [serverSettings]);
 
   React.useEffect(() => {
@@ -31,9 +36,7 @@ export function useAccessTokenStatus(): AccessTokenResponse | undefined {
   return status;
 }
 
-export function useAccessTokenEventListener(
-  onEvent: () => void
-): void {
+export function useAccessTokenEventListener(onEvent: () => void): void {
   return useEventListener('auth.status.changed', onEvent);
 }
 
@@ -111,6 +114,11 @@ export type ZenodoFileDownloadStatusResponse = {
   path: string | null;
 };
 
+export type DeleteZenodoFileDownloadResponse = {
+  deleted: boolean;
+  path: string | null;
+};
+
 export async function downloadZenodoFile(
   serverSettings: ServerConnection.ISettings,
   depositionId: number,
@@ -143,10 +151,27 @@ export async function getZenodoFileDownloadStatus(
   );
 }
 
-export function useDownloadProgress(
-  downloadId: string
-) {
-  return useEventData<DownloadProgressResponse | null>(`download.progress.${downloadId}`, null);
+export async function deleteZenodoFileDownload(
+  serverSettings: ServerConnection.ISettings,
+  depositionId: number,
+  fileId: string
+): Promise<DeleteZenodoFileDownloadResponse> {
+  return await requestAPI<DeleteZenodoFileDownloadResponse>(
+    'files/download',
+    serverSettings,
+    {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
+    }
+  );
+}
+
+export function useDownloadProgress(downloadId: string) {
+  return useEventData<DownloadProgressResponse | null>(
+    `download.progress.${downloadId}`,
+    null
+  );
 }
 
 export async function cancelDownload(
