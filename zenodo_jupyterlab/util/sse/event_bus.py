@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
@@ -12,18 +13,33 @@ class DomainEvent:
 
 class EventBus:
     def __init__(self):
-        self._queues_by_user: dict[
-            str,
+        self._queues_by_subscription: dict[
+            tuple[str, str],
             set[asyncio.Queue[DomainEvent]],
         ] = defaultdict(set)
 
-    def subscribe(self, user_id: str) -> asyncio.Queue[DomainEvent]:
+    def subscribe(
+        self,
+        user_id: str,
+        topics: Iterable[str],
+    ) -> asyncio.Queue[DomainEvent]:
+        topics = set(topics)
+        if not topics:
+            raise ValueError("At least one topic is required")
+
         queue: asyncio.Queue[DomainEvent] = asyncio.Queue()
-        self._queues_by_user[user_id].add(queue)
+        for topic in topics:
+            self._queues_by_subscription[(user_id, topic)].add(queue)
         return queue
 
-    def unsubscribe(self, user_id: str, queue: asyncio.Queue[DomainEvent]) -> None:
-        self._queues_by_user[user_id].discard(queue)
+    def unsubscribe(
+        self,
+        user_id: str,
+        topics: Iterable[str],
+        queue: asyncio.Queue[DomainEvent],
+    ) -> None:
+        for topic in topics:
+            self._queues_by_subscription[(user_id, topic)].discard(queue)
 
     def publish(
         self,
@@ -32,5 +48,5 @@ class EventBus:
         data: dict[str, Any] | None = None,
     ) -> None:
         event = DomainEvent(topic=topic, data=data)
-        for queue in list(self._queues_by_user[user_id]):
+        for queue in list(self._queues_by_subscription[(user_id, topic)]):
             queue.put_nowait(event)

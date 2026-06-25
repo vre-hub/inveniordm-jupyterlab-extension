@@ -20,6 +20,7 @@ async def stream_user_events(
     *,
     event_bus: EventBus,
     user_id: str,
+    topics: Iterable[str],
     initial_events: Iterable[DomainEvent] = (),
     keep_alive_seconds: int = 25,
 ) -> None:
@@ -27,7 +28,8 @@ async def stream_user_events(
     Stream the events for a specific user over a Server-Sent Events (SSE) connection.
     Use the jupyter server APIHandler to write events to the response stream.
     """
-    queue = event_bus.subscribe(user_id)
+    topics = set(topics)
+    queue = event_bus.subscribe(user_id, topics)
 
     handler.set_header("Content-Type", "text/event-stream")
     handler.set_header("Cache-Control", "no-cache")
@@ -54,4 +56,4 @@ async def stream_user_events(
         except tornado.iostream.StreamClosedError:
             pass
     finally:
-        event_bus.unsubscribe(user_id, queue)
+        event_bus.unsubscribe(user_id, topics, queue)

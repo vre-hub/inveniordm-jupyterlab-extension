@@ -1,6 +1,6 @@
 import React from "react";
 import { useServerSettings } from "../store";
-import { subscribeToEvents } from "./sse_events";
+import { subscribeToEvents, ZenodoEvent } from "./sse_events";
 
 /**
  * Subscribe to a Zenodo extension SSE event topic and call onEvent for each event received.
@@ -10,7 +10,7 @@ import { subscribeToEvents } from "./sse_events";
  */
 export function useEventListener(
   topic: string,
-  onEvent: (event: any) => void
+  onEvent: (event: ZenodoEvent) => void
 ): void {
   const serverSettings = useServerSettings();
   const onEventRef = React.useRef(onEvent);
@@ -25,6 +25,7 @@ export function useEventListener(
     const controller = new AbortController();
     void subscribeToEvents(
       serverSettings,
+      [topic],
       event => {
         if (!isMounted || event.topic !== topic) {
           return;

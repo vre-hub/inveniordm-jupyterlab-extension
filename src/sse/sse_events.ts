@@ -5,16 +5,24 @@ import { ServerConnection } from '@jupyterlab/services';
 * Get the URL for the Zenodo extension SSE event stream.
 */
 function eventSourceUrl(
-  serverSettings: ServerConnection.ISettings
+  serverSettings: ServerConnection.ISettings,
+  topics: string[]
 ): string {
-  return URLExt.join(
+  const url = URLExt.join(
     serverSettings.baseUrl,
     'zenodo-jupyterlab',
     'events'
   );
+  const params = new URLSearchParams();
+
+  for (const topic of topics) {
+    params.append('topic', topic);
+  }
+
+  return params.size > 0 ? `${url}?${params.toString()}` : url;
 }
 
-type ZenodoEvent = {
+export type ZenodoEvent = {
   topic: string;
   data?: unknown;
 };
@@ -31,11 +39,12 @@ type ZenodoEvent = {
  */
 export async function subscribeToEvents(
   serverSettings: ServerConnection.ISettings,
+  topics: string[],
   onEvent: (event: ZenodoEvent) => void,
   signal: AbortSignal
 ): Promise<void> {
   const response = await ServerConnection.makeRequest(
-    eventSourceUrl(serverSettings),
+    eventSourceUrl(serverSettings, topics),
     {
       cache: 'no-store',
       headers: { Accept: 'text/event-stream' },
