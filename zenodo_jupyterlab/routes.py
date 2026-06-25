@@ -14,8 +14,7 @@ from .token_store import FileTokenStore
 from .zenodo_download_manager import ZenodoDownloadManager
 from .zenodo_requests import ZenodoRequests
 
-# SSE event bus and streaming
-from .util.sse import DomainEvent, EventBus, stream_user_events
+from .util.sse import EventBus, stream_user_events
 
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 GetZenodoDownloadManager = Callable[[], ZenodoDownloadManager]
@@ -76,12 +75,15 @@ class ZenodoAccessTokenHandler(APIHandler):
         Notify the frontend that the access token status has changed
         (e.g. after a token has been added or removed).
         """
-        status = self.get_zenodo_requests(self).get_access_token_status()
         self.event_bus.publish(
             self.current_user.username,
-            "auth.status",
-            status.__dict__,
+            "auth.status.changed",
         )
+
+    @tornado.web.authenticated
+    def get(self):
+        status = self.get_zenodo_requests(self).get_access_token_status()
+        self.finish(json.dumps(status.__dict__))
 
     @tornado.web.authenticated
     def put(self):
@@ -211,10 +213,8 @@ class ZenodoEventsHandler(APIHandler):
     def initialize(
         self,
         event_bus: EventBus,
-        get_zenodo_requests: GetZenodoRequests,
     ):
         self.event_bus = event_bus
-        self.get_zenodo_requests = get_zenodo_requests
 
     @tornado.web.authenticated
     async def get(self):
@@ -226,14 +226,6 @@ class ZenodoEventsHandler(APIHandler):
             self,
             event_bus=self.event_bus,
             user_id=self.current_user.username,
-            initial_events=[
-                DomainEvent(
-                    topic="auth.status",
-                    data=self.get_zenodo_requests(
-                        self
-                    ).get_access_token_status().__dict__,
-                ),
-            ],
         )
 
 
@@ -448,10 +440,7 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "events"),
             ZenodoEventsHandler,
-            {
-                "event_bus": event_bus,
-                "get_zenodo_requests": get_zenodo_requests,
-            },
+            {"event_bus": event_bus},
         ),
         (url_path_join(zenodo_base_url, "whoami"), WhoAmIHandler),
         (

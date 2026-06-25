@@ -16,7 +16,7 @@ function eventSourceUrl(
 
 type ZenodoEvent = {
   topic: string;
-  data: unknown;
+  data?: unknown;
 };
 
 /**
@@ -104,12 +104,8 @@ function parseRawEvent(
     }
   }
 
-  if (data.length === 0) {
-    return;
-  }
-
   onEvent({
     topic,
-    data: JSON.parse(data.join('\n'))
+    data: data.length > 0 ? JSON.parse(data.join('\n')) : undefined
   });
 }

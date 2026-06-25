@@ -1,8 +1,10 @@
+import React from 'react';
 import { ServerConnection } from '@jupyterlab/services';
 
 import type { InsertZenodoCellAction } from './insertCell';
 import { requestAPI } from './request';
-import { useEventData, useEventListener } from './sse';
+import { useEventListener } from './sse';
+import { useServerSettings } from './store';
 
 export type AccessTokenResponse = {
   access_token_present: boolean;
@@ -11,16 +13,28 @@ export type AccessTokenResponse = {
 };
 
 export function useAccessTokenStatus(): AccessTokenResponse | undefined {
-  return useEventData<AccessTokenResponse | undefined>(
-    'auth.status',
-    undefined
-  );
-};
+  const serverSettings = useServerSettings();
+  const [status, setStatus] = React.useState<AccessTokenResponse>();
+
+  const updateStatus = React.useCallback(async (): Promise<void> => {
+    setStatus(await await requestAPI<AccessTokenResponse>('access-token', serverSettings));
+  }, [serverSettings]);
+
+  React.useEffect(() => {
+    void updateStatus();
+  }, [updateStatus]);
+
+  useEventListener('auth.status.changed', () => {
+    void updateStatus();
+  });
+
+  return status;
+}
 
 export function useAccessTokenEventListener(
-  onEvent: (event: AccessTokenResponse) => void
+  onEvent: () => void
 ): void {
-  return useEventListener('auth.status', onEvent);
+  return useEventListener('auth.status.changed', onEvent);
 }
 
 export type PutDeleteAccessTokenResponse = {

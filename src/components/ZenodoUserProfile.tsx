@@ -18,6 +18,12 @@ export const ZenodoUserProfile: React.FC = () => {
     }
   }
 
+  // Load the profile initially.
+  React.useEffect(() => {
+    void loadProfile();
+  }, [serverSettings]);
+
+  // Update the profile when the access token changes, which may change the user.
   useAccessTokenEventListener(() => {
     loadProfile();
   });

@@ -7,7 +7,7 @@ from typing import Any
 @dataclass(frozen=True)
 class DomainEvent:
     topic: str
-    data: dict[str, Any]
+    data: dict[str, Any] | None = None
 
 
 class EventBus:
@@ -25,7 +25,12 @@ class EventBus:
     def unsubscribe(self, user_id: str, queue: asyncio.Queue[DomainEvent]) -> None:
         self._queues_by_user[user_id].discard(queue)
 
-    def publish(self, user_id: str, topic: str, data: dict[str, Any]) -> None:
+    def publish(
+        self,
+        user_id: str,
+        topic: str,
+        data: dict[str, Any] | None = None,
+    ) -> None:
         event = DomainEvent(topic=topic, data=data)
         for queue in list(self._queues_by_user[user_id]):
             queue.put_nowait(event)

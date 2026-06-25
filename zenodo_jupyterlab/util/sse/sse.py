@@ -8,6 +8,13 @@ import tornado.iostream
 from .event_bus import DomainEvent, EventBus
 
 
+def _write_event(handler: APIHandler, event: DomainEvent) -> None:
+    handler.write(f"event: {event.topic}\n")
+    if event.data is not None:
+        handler.write(f"data: {json.dumps(event.data)}\n")
+    handler.write("\n")
+
+
 async def stream_user_events(
     handler: APIHandler,
     *,
@@ -29,8 +36,7 @@ async def stream_user_events(
     try:
         try:
             for event in initial_events:
-                handler.write(f"event: {event.topic}\n")
-                handler.write(f"data: {json.dumps(event.data)}\n\n")
+                _write_event(handler, event)
             await handler.flush()
 
             while True:
@@ -42,8 +48,7 @@ async def stream_user_events(
                 except asyncio.TimeoutError:
                     handler.write(": keep-alive\n\n")
                 else:
-                    handler.write(f"event: {event.topic}\n")
-                    handler.write(f"data: {json.dumps(event.data)}\n\n")
+                    _write_event(handler, event)
 
                 await handler.flush()
         except tornado.iostream.StreamClosedError:
