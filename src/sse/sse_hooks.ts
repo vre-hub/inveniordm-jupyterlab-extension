@@ -1,6 +1,7 @@
-import React from "react";
-import { useServerSettings } from "../store";
-import { subscribeToEvents, ZenodoEvent } from "./sse_events";
+import React from 'react';
+import { useServerSettings } from '../store';
+import { ZenodoEvent } from './sse_events';
+import { subscribeToEventStream } from './sse_eventstream';
 
 /**
  * Subscribe to a Zenodo extension SSE event topic and call onEvent for each event received.
@@ -22,30 +23,19 @@ export function useEventListener(
   React.useEffect(() => {
     let isMounted = true;
 
-    const controller = new AbortController();
-    void subscribeToEvents(
-      serverSettings,
-      [topic],
-      event => {
-        if (!isMounted || event.topic !== topic) {
-          return;
-        }
-
-        onEventRef.current(event);
-      },
-      controller.signal
-    ).catch(reason => {
-      if (isMounted && reason.name !== 'AbortError') {
-        console.error('Zenodo event stream failed.', reason);
+    const unsubscribe = subscribeToEventStream(serverSettings, event => {
+      if (!isMounted || event.topic !== topic) {
+        return;
       }
+
+      onEventRef.current(event);
     });
 
     return () => {
       isMounted = false;
-      controller.abort();
+      unsubscribe();
     };
   }, [serverSettings, topic]);
-
 }
 
 /**

@@ -219,20 +219,13 @@ class ZenodoEventsHandler(APIHandler):
     @tornado.web.authenticated
     async def get(self):
         """
-        Allow clients to subscribe to specific SSE event topics for the current user.
+        Allow clients to subscribe to all SSE events for the current user.
         The connection will be kept open and events will be sent as they occur.
         """
-        topics = self.get_arguments("topic")
-        if not topics:
-            self.set_status(400)
-            self.finish(json.dumps({"message": "At least one topic is required"}))
-            return
-
         await stream_user_events(
             self,
             event_bus=self.event_bus,
             user_id=_get_user_token_id(self),
-            topics=topics,
         )
 
 
