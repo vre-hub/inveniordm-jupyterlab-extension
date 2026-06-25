@@ -270,9 +270,11 @@ class ZenodoFileDownloadHandler(APIHandler):
         self,
         get_zenodo_requests: GetZenodoRequests,
         get_zenodo_download_manager: GetZenodoDownloadManager,
+        event_bus: EventBus,
     ):
         self.get_zenodo_requests = get_zenodo_requests
         self.get_zenodo_download_manager = get_zenodo_download_manager
+        self.event_bus = event_bus
 
     @tornado.web.authenticated
     def post(self):
@@ -287,10 +289,23 @@ class ZenodoFileDownloadHandler(APIHandler):
             return
 
         zenodo_requests = self.get_zenodo_requests(self)
+        user_id = _get_user_token_id(self)
+
+        def publish_download_progress(
+            download_id: str,
+            progress: dict[str, object],
+        ) -> None:
+            self.event_bus.publish(
+                user_id,
+                f"download.progress.{download_id}",
+                progress,
+            )
+
         download_id = self.get_zenodo_download_manager().start_download(
             zenodo_requests,
             deposition_id=deposition_id,
             file_id=file_id,
+            on_progress_changed=publish_download_progress,
         )
         self.finish(json.dumps({"download_id": download_id}))
 
@@ -410,8 +425,8 @@ def setup_route_handlers(web_app):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
     token_store = FileTokenStore(_default_token_store_path())
-    zenodo_download_manager = ZenodoDownloadManager(_default_downloads_dir())
     event_bus = EventBus()
+    zenodo_download_manager = ZenodoDownloadManager(_default_downloads_dir())
 
     def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
         return ZenodoRequests(
@@ -461,6 +476,7 @@ def setup_route_handlers(web_app):
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_zenodo_download_manager": get_zenodo_download_manager,
+                "event_bus": event_bus,
             },
         ),
         (

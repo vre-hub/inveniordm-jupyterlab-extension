@@ -10,6 +10,7 @@ from .download_types import CancelCheck, DownloadCancelled, ProgressCallback
 
 
 DownloadCallable = Callable[[ProgressCallback, CancelCheck], Path]
+ProgressListener = Callable[[str, dict[str, object]], None]
 
 
 class DownloadJobManager:
@@ -19,18 +20,37 @@ class DownloadJobManager:
     """
     def __init__(self):
         self.progress_store = DownloadProgressStore()
+        self._progress_listeners: dict[str, ProgressListener] = {}
 
-    def start_download(self, download: DownloadCallable) -> str:
+    def start_download(
+        self,
+        download: DownloadCallable,
+        *,
+        on_progress_changed: ProgressListener | None = None,
+    ) -> str:
         download_id = self.progress_store.create()
+        io_loop = tornado.ioloop.IOLoop.current()
+        if on_progress_changed is not None:
+            self._progress_listeners[download_id] = on_progress_changed
 
         async def run_download():
             self.progress_store.update(download_id, status="running")
+            self._notify_progress_changed(
+                download_id,
+                io_loop,
+                on_progress_changed,
+            )
 
             def on_progress(bytes_downloaded: int, total_bytes: int | None) -> None:
                 self.progress_store.update(
                     download_id,
                     bytes_downloaded=bytes_downloaded,
                     total_bytes=total_bytes,
+                )
+                self._notify_progress_changed(
+                    download_id,
+                    io_loop,
+                    on_progress_changed,
                 )
 
             def should_cancel() -> bool:
@@ -47,6 +67,12 @@ class DownloadJobManager:
                     status="canceled",
                     message="Download canceled",
                 )
+                self._notify_progress_changed(
+                    download_id,
+                    io_loop,
+                    on_progress_changed,
+                )
+                self._progress_listeners.pop(download_id, None)
                 return
             except Exception as error:
                 self.progress_store.update(
@@ -54,6 +80,12 @@ class DownloadJobManager:
                     status="error",
                     message=str(error),
                 )
+                self._notify_progress_changed(
+                    download_id,
+                    io_loop,
+                    on_progress_changed,
+                )
+                self._progress_listeners.pop(download_id, None)
                 return
 
             self.progress_store.update(
@@ -61,6 +93,12 @@ class DownloadJobManager:
                 status="done",
                 path=str(destination),
             )
+            self._notify_progress_changed(
+                download_id,
+                io_loop,
+                on_progress_changed,
+            )
+            self._progress_listeners.pop(download_id, None)
 
         tornado.ioloop.IOLoop.current().spawn_callback(run_download)
         return download_id
@@ -69,7 +107,32 @@ class DownloadJobManager:
         return self.progress_store.get(download_id)
 
     def cancel(self, download_id: str) -> dict[str, object] | None:
-        return self.progress_store.request_cancel(download_id)
+        progress = self.progress_store.request_cancel(download_id)
+        if progress is not None:
+            self._notify_progress_changed(
+                download_id,
+                tornado.ioloop.IOLoop.current(),
+                self._progress_listeners.get(download_id),
+                progress=progress,
+            )
+        return progress
+
+    def _notify_progress_changed(
+        self,
+        download_id: str,
+        io_loop: tornado.ioloop.IOLoop,
+        on_progress_changed: ProgressListener | None,
+        *,
+        progress: dict[str, object] | None = None,
+    ) -> None:
+        if on_progress_changed is None:
+            return
+
+        progress = progress or self.progress_store.get(download_id)
+        if progress is None:
+            return
+
+        io_loop.add_callback(on_progress_changed, download_id, progress)
 
 
 

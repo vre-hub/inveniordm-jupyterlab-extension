@@ -3,7 +3,7 @@ import { ServerConnection } from '@jupyterlab/services';
 
 import type { InsertZenodoCellAction } from './insertCell';
 import { requestAPI } from './request';
-import { useEventListener } from './sse';
+import { useEventData, useEventListener } from './sse';
 import { useServerSettings } from './store';
 
 export type AccessTokenResponse = {
@@ -143,14 +143,10 @@ export async function getZenodoFileDownloadStatus(
   );
 }
 
-export async function getDownloadProgress(
-  serverSettings: ServerConnection.ISettings,
+export function useDownloadProgress(
   downloadId: string
-): Promise<DownloadProgressResponse> {
-  return await requestAPI<DownloadProgressResponse>(
-    `files/downloads/${downloadId}/progress`,
-    serverSettings
-  );
+) {
+  return useEventData<DownloadProgressResponse | null>(`download.progress.${downloadId}`, null);
 }
 
 export async function cancelDownload(

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .util.download_job_manager import DownloadJobManager
+from .util.download_job_manager import DownloadJobManager, ProgressListener
 from .zenodo_downloads import ZenodoDownloads, ZenodoFileSource
 
 
@@ -24,6 +24,7 @@ class ZenodoDownloadManager:
         *,
         deposition_id: int | str,
         file_id: str,
+        on_progress_changed: ProgressListener | None = None,
     ) -> str:
         return self.download_job_manager.start_download(
             lambda on_progress, should_cancel: self.zenodo_downloads.download_file(
@@ -32,7 +33,8 @@ class ZenodoDownloadManager:
                 file_id=file_id,
                 on_progress=on_progress,
                 should_cancel=should_cancel,
-            )
+            ),
+            on_progress_changed=on_progress_changed,
         )
 
     def get_progress(self, download_id: str) -> dict[str, object] | None:
