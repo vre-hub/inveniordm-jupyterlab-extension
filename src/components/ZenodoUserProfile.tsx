@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { getZenodoMe, ZenodoMeResponse } from '../api_calls';
+import { getZenodoMe, ZenodoMeResponse, useAccessTokenEventListener } from '../api_calls';
 import { useServerSettings } from '../store';
 
 export const ZenodoUserProfile: React.FC = () => {
@@ -18,12 +18,9 @@ export const ZenodoUserProfile: React.FC = () => {
     }
   }
 
-  React.useEffect(() => {
+  useAccessTokenEventListener(() => {
     loadProfile();
-    // TODO instead of polling log in status, use SSE
-    const interval = setInterval(loadProfile, 1 * 1000);
-    return () => clearInterval(interval);
-  }, [serverSettings]);
+  });
 
   if (profile === null) {
     return <div>{message ? <p>{message}</p> : null}</div>;
