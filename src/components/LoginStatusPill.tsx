@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { checkAccessStatus, AccessTokenResponse } from '../api_calls';
-import { useServerSettings } from '../store';
+import { AccessTokenResponse, useAccessTokenStatus } from '../api_calls';
 
 export type LoginStatus = 'Logged In' | 'Invalid Login' | 'Not Logged In';
 
@@ -14,31 +13,20 @@ function formatAccessStatus(status: AccessTokenResponse): LoginStatus {
 }
 
 export const LoginStatusPill: React.FC = () => {
-  const serverSettings = useServerSettings();
-  const [status, setStatus] = React.useState<LoginStatus>('Not Logged In');
-  const [isSandbox, setIsSandbox] = React.useState<boolean>(false);
+  const accessStatus = useAccessTokenStatus()
 
-  async function updateStatus(): Promise<void> {
-    try {
-      const accessStatus = await checkAccessStatus(serverSettings);
-      setStatus(formatAccessStatus(accessStatus));
-      setIsSandbox(accessStatus.sandbox);
-    } catch {
-      setStatus('Invalid Login');
-    }
+  if (!accessStatus) {
+    return <span>Loading...</span>;
   }
 
-  React.useEffect(() => {
-    updateStatus();
-    // TODO instead of polling log in status, use SSE
-    const interval = setInterval(updateStatus, 1 * 1000);
-    return () => clearInterval(interval);
-  }, [serverSettings]);
+  const status = formatAccessStatus(accessStatus);
+  const isSandbox = accessStatus.sandbox;
 
   return (
     <span
       style={{ border: '1px solid #aaa', borderRadius: 12, padding: '2px 8px' }}
     >
+
       {status} {isSandbox && '(Sandbox)'}
     </span>
   );

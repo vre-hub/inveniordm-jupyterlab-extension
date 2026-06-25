@@ -2,6 +2,7 @@ import { ServerConnection } from '@jupyterlab/services';
 
 import type { InsertZenodoCellAction } from './insertCell';
 import { requestAPI } from './request';
+import { useEventData } from './sse';
 
 export type AccessTokenResponse = {
   access_token_present: boolean;
@@ -9,11 +10,12 @@ export type AccessTokenResponse = {
   sandbox: boolean;
 };
 
-export async function checkAccessStatus(
-  serverSettings: ServerConnection.ISettings
-): Promise<AccessTokenResponse> {
-  return await requestAPI<AccessTokenResponse>('access-token', serverSettings);
-}
+export function useAccessTokenStatus(): AccessTokenResponse | undefined {
+  return useEventData<AccessTokenResponse | undefined>(
+    'auth.status',
+    undefined
+  );
+};
 
 export type PutDeleteAccessTokenResponse = {
   message: string;

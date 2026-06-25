@@ -14,6 +14,8 @@ from .token_store import FileTokenStore
 from .zenodo_download_manager import ZenodoDownloadManager
 from .zenodo_requests import ZenodoRequests
 
+# SSE event bus and streaming
+from .util.sse import DomainEvent, EventBus, stream_user_events
 
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 GetZenodoDownloadManager = Callable[[], ZenodoDownloadManager]
@@ -61,16 +63,25 @@ class HelloRouteHandler(APIHandler):
         }))
 
 class ZenodoAccessTokenHandler(APIHandler):
-    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+    def initialize(
+        self,
+        get_zenodo_requests: GetZenodoRequests,
+        event_bus: EventBus,
+    ):
         self.get_zenodo_requests = get_zenodo_requests
+        self.event_bus = event_bus
 
-    # The following decorator should be present on all verb methods (head, get, post,
-    # patch, put, delete, options) to ensure only authorized user can request the
-    # Jupyter server
-    @tornado.web.authenticated
-    def get(self):
+    def _publish_access_token_status(self) -> None:
+        """
+        Notify the frontend that the access token status has changed
+        (e.g. after a token has been added or removed).
+        """
         status = self.get_zenodo_requests(self).get_access_token_status()
-        self.finish(json.dumps(status.__dict__))
+        self.event_bus.publish(
+            self.current_user.username,
+            "auth.status",
+            status.__dict__,
+        )
 
     @tornado.web.authenticated
     def put(self):
@@ -89,11 +100,13 @@ class ZenodoAccessTokenHandler(APIHandler):
             self.finish(json.dumps({"message": "Invalid Zenodo access token"}))
             return
 
+        self._publish_access_token_status()
         self.finish(json.dumps({"message": "Access token received successfully"}))
 
     @tornado.web.authenticated
     def delete(self):
         self.get_zenodo_requests(self).remove_access_token()
+        self._publish_access_token_status()
         self.finish(json.dumps({"message": "Access token removed successfully"}))
 
 
@@ -192,6 +205,36 @@ class WhoAmIHandler(APIHandler):
             return
 
         self.finish(response.text)
+
+
+class ZenodoEventsHandler(APIHandler):
+    def initialize(
+        self,
+        event_bus: EventBus,
+        get_zenodo_requests: GetZenodoRequests,
+    ):
+        self.event_bus = event_bus
+        self.get_zenodo_requests = get_zenodo_requests
+
+    @tornado.web.authenticated
+    async def get(self):
+        """
+        Allow clients to subscribe to all kinds of SSE events for the current user.
+        The connection will be kept open and events will be sent as they occur.
+        """
+        await stream_user_events(
+            self,
+            event_bus=self.event_bus,
+            user_id=self.current_user.username,
+            initial_events=[
+                DomainEvent(
+                    topic="auth.status",
+                    data=self.get_zenodo_requests(
+                        self
+                    ).get_access_token_status().__dict__,
+                ),
+            ],
+        )
 
 
 class ZenodoDepositionsHandler(APIHandler):
@@ -369,6 +412,7 @@ def setup_route_handlers(web_app):
     base_url = web_app.settings["base_url"]
     token_store = FileTokenStore(_default_token_store_path())
     zenodo_download_manager = ZenodoDownloadManager(_default_downloads_dir())
+    event_bus = EventBus()
 
     def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
         return ZenodoRequests(
@@ -386,7 +430,10 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "access-token"),
             ZenodoAccessTokenHandler,
-            {"get_zenodo_requests": get_zenodo_requests},
+            {
+                "get_zenodo_requests": get_zenodo_requests,
+                "event_bus": event_bus,
+            },
         ),
         (
             url_path_join(zenodo_base_url, "records"),
@@ -397,6 +444,14 @@ def setup_route_handlers(web_app):
             url_path_join(zenodo_base_url, "me"),
             ZenodoMeHandler,
             {"get_zenodo_requests": get_zenodo_requests},
+        ),
+        (
+            url_path_join(zenodo_base_url, "events"),
+            ZenodoEventsHandler,
+            {
+                "event_bus": event_bus,
+                "get_zenodo_requests": get_zenodo_requests,
+            },
         ),
         (url_path_join(zenodo_base_url, "whoami"), WhoAmIHandler),
         (
