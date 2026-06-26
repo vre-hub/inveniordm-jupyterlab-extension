@@ -70,6 +70,19 @@ def _is_allowed_return_to(return_to: str, config: Config) -> bool:
     return parsed.hostname in config.allowed_return_hosts
 
 
+def _is_hop_by_hop_header(name: str) -> bool:
+    return name.lower() in {
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "te",
+        "trailer",
+        "transfer-encoding",
+        "upgrade",
+    }
+
+
 class BaseProxyHandler(tornado.web.RequestHandler):
     @property
     def config(self) -> Config:
@@ -85,7 +98,10 @@ class BaseProxyHandler(tornado.web.RequestHandler):
             self.set_header("Access-Control-Allow-Origin", origin)
             self.set_header("Access-Control-Allow-Credentials", "true")
             self.set_header("Vary", "Origin")
-        self.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.set_header(
+            "Access-Control-Allow-Methods",
+            "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        )
         self.set_header("Access-Control-Allow-Headers", "Content-Type")
         self.set_header("Cache-Control", "no-store")
 
@@ -293,6 +309,91 @@ class LogoutHandler(BaseProxyHandler):
         self.expire_proxy_cookie(SESSION_COOKIE_NAME)
         self.write_json({"authenticated": False})
 
+class ApiProxyHandler(BaseProxyHandler):
+    SUPPORTED_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+
+    def get(self, path: str | None = None) -> None:
+        self.forward(path)
+
+    def post(self, path: str | None = None) -> None:
+        self.forward(path)
+
+    def put(self, path: str | None = None) -> None:
+        self.forward(path)
+
+    def patch(self, path: str | None = None) -> None:
+        self.forward(path)
+
+    def delete(self, path: str | None = None) -> None:
+        self.forward(path)
+
+    def forward(self, path: str | None) -> None:
+        session = self.current_session()
+        if session is None:
+            self.write_json(
+                {"message": "Missing or expired proxy session"},
+                HTTPStatus.UNAUTHORIZED,
+            )
+            return
+
+        target_url = f"{self.config.zenodo_base_url}/api{path or ''}"
+        if self.request.query:
+            target_url = f"{target_url}?{self.request.query}"
+
+        request = Request(
+            target_url,
+            data=self.request.body or None,
+            headers=self.forward_request_headers(session["access_token"]),
+            method=self.request.method,
+        )
+
+        try:
+            with urlopen(request, timeout=30) as response:
+                self.write_proxied_response(
+                    response.status,
+                    dict(response.headers.items()),
+                    response.read(),
+                )
+        except HTTPError as error:
+            self.write_proxied_response(
+                error.code,
+                dict(error.headers.items()),
+                error.read(),
+            )
+        except URLError as error:
+            self.write_json(
+                {"message": f"Could not reach Zenodo: {error.reason}"},
+                HTTPStatus.BAD_GATEWAY,
+            )
+
+    def forward_request_headers(self, access_token: str) -> dict[str, str]:
+        headers: dict[str, str] = {
+            "Accept": self.request.headers.get("Accept", "application/json"),
+            "Authorization": f"Bearer {access_token}",
+        }
+        content_type = self.request.headers.get("Content-Type")
+        if content_type:
+            headers["Content-Type"] = content_type
+        return headers
+
+    def write_proxied_response(
+        self,
+        status: int,
+        headers: dict[str, str],
+        body: bytes,
+    ) -> None:
+        self.set_status(status)
+        for name, value in headers.items():
+            if _is_hop_by_hop_header(name):
+                continue
+            lower_name = name.lower()
+            if lower_name in {"content-length", "server", "date", "set-cookie"}:
+                continue
+            if lower_name.startswith("access-control-"):
+                continue
+            self.set_header(name, value)
+        self.finish(body)
+
 
 class JsonNotFoundHandler(BaseProxyHandler):
     def prepare(self) -> None:
@@ -319,6 +420,7 @@ def create_app(
             (r"/auth/callback", CallbackHandler),
             (r"/auth/status", StatusHandler),
             (r"/auth/logout", LogoutHandler),
+            (r"/api(/.*)?", ApiProxyHandler),
             (r"/.*", JsonNotFoundHandler),
         ],
         proxy_config=config,
