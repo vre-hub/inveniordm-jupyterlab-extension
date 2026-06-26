@@ -11,12 +11,14 @@ from dataclasses import dataclass, field
 import json
 import secrets
 from http import HTTPStatus
-from http.cookies import SimpleCookie
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
+
+import tornado.httpserver
+import tornado.ioloop
+import tornado.web
 
 from .config import Config
 
@@ -68,42 +70,74 @@ def _is_allowed_return_to(return_to: str, config: Config) -> bool:
     return parsed.hostname in config.allowed_return_hosts
 
 
-class ProxyHandler(BaseHTTPRequestHandler):
-    server_version = "ZenodoApiProxyMVP/0.1"
-
+class BaseProxyHandler(tornado.web.RequestHandler):
     @property
     def config(self) -> Config:
-        return self.server.config  # type: ignore[attr-defined]
+        return self.settings["proxy_config"]
 
     @property
     def state(self) -> ProxyState:
-        return self.server.state  # type: ignore[attr-defined]
+        return self.settings["proxy_state"]
 
-    def do_OPTIONS(self) -> None:
-        self._send_empty(HTTPStatus.NO_CONTENT)
+    def set_default_headers(self) -> None:
+        origin = self.request.headers.get("Origin")
+        if origin in self.config.allowed_cors_origins:
+            self.set_header("Access-Control-Allow-Origin", origin)
+            self.set_header("Access-Control-Allow-Credentials", "true")
+            self.set_header("Vary", "Origin")
+        self.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.set_header("Access-Control-Allow-Headers", "Content-Type")
+        self.set_header("Cache-Control", "no-store")
 
-    def do_GET(self) -> None:
-        path = urlparse(self.path).path
-        if path == "/health":
-            self._send_json({"ok": True, "zenodo_base_url": self.config.zenodo_base_url})
-            return
-        if path == "/auth/login":
-            self._handle_login()
-            return
-        if path == "/auth/callback":
-            self._handle_callback()
-            return
-        if path == "/auth/status":
-            self._handle_status()
-            return
-        if path == "/auth/logout":
-            self._handle_logout()
-            return
-        self._send_json({"message": "Not found"}, HTTPStatus.NOT_FOUND)
+    def options(self, *args: str, **kwargs: str) -> None:
+        self.set_status(HTTPStatus.NO_CONTENT)
+        self.finish()
 
-    def _handle_login(self) -> None:
+    def write_json(
+        self,
+        payload: dict[str, Any],
+        status: HTTPStatus = HTTPStatus.OK,
+    ) -> None:
+        self.set_status(status)
+        self.set_header("Content-Type", "application/json")
+        self.finish(json.dumps(payload, indent=2))
+
+    def set_proxy_cookie(
+        self,
+        name: str,
+        value: str,
+        *,
+        max_age: int,
+        same_site: str,
+    ) -> None:
+        self.set_cookie(
+            name,
+            value,
+            path="/",
+            max_age=max_age,
+            httponly=True,
+            samesite=same_site,
+        )
+
+    def expire_proxy_cookie(self, name: str) -> None:
+        self.set_proxy_cookie(name, "", max_age=0, same_site="Lax")
+
+    def current_session(self) -> dict[str, Any] | None:
+        session_id = self.get_cookie(SESSION_COOKIE_NAME)
+        if not session_id:
+            return None
+        return self.state.sessions.get(session_id)
+
+
+class HealthHandler(BaseProxyHandler):
+    def get(self) -> None:
+        self.write_json({"ok": True, "zenodo_base_url": self.config.zenodo_base_url})
+
+
+class LoginHandler(BaseProxyHandler):
+    def get(self) -> None:
         if not self.config.client_id or not self.config.client_secret:
-            self._send_json(
+            self.write_json(
                 {
                     "message": (
                         "Set ZENODO_CLIENT_ID and ZENODO_CLIENT_SECRET before "
@@ -114,10 +148,9 @@ class ProxyHandler(BaseHTTPRequestHandler):
             )
             return
 
-        query = parse_qs(urlparse(self.path).query)
-        return_to = query.get("return_to", [self.config.proxy_public_url])[0]
+        return_to = self.get_query_argument("return_to", self.config.proxy_public_url)
         if not _is_allowed_return_to(return_to, self.config):
-            self._send_json({"message": "Invalid return_to URL"}, HTTPStatus.BAD_REQUEST)
+            self.write_json({"message": "Invalid return_to URL"}, HTTPStatus.BAD_REQUEST)
             return
 
         state = secrets.token_urlsafe(32)
@@ -134,41 +167,44 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 }
             )
         )
-        self._redirect(
-            authorize_url,
-            cookies=[
-                self._cookie(
-                    OAUTH_STATE_COOKIE_NAME,
-                    state,
-                    max_age=600,
-                    same_site="Lax",
-                )
-            ],
+        self.set_proxy_cookie(
+            OAUTH_STATE_COOKIE_NAME,
+            state,
+            max_age=600,
+            same_site="Lax",
         )
+        self.redirect(authorize_url)
 
-    def _handle_callback(self) -> None:
-        query = parse_qs(urlparse(self.path).query)
-        error = query.get("error", [None])[0]
+
+class CallbackHandler(BaseProxyHandler):
+    def get(self) -> None:
+        error = self.get_query_argument("error", None)
         if error:
-            self._send_json(
+            self.write_json(
                 {"message": f"Zenodo OAuth returned an error: {error}"},
                 HTTPStatus.BAD_REQUEST,
             )
             return
 
-        code = query.get("code", [None])[0]
-        state = query.get("state", [None])[0]
+        code = self.get_query_argument("code", None)
+        state = self.get_query_argument("state", None)
         if not code or not state:
-            self._send_json({"message": "Missing code or state"}, HTTPStatus.BAD_REQUEST)
+            self.write_json({"message": "Missing code or state"}, HTTPStatus.BAD_REQUEST)
             return
 
-        if self._cookies().get(OAUTH_STATE_COOKIE_NAME) != state:
-            self._send_json({"message": "OAuth state cookie mismatch"}, HTTPStatus.BAD_REQUEST)
+        if self.get_cookie(OAUTH_STATE_COOKIE_NAME) != state:
+            self.write_json(
+                {"message": "OAuth state cookie mismatch"},
+                HTTPStatus.BAD_REQUEST,
+            )
             return
 
         return_to = self.state.oauth_states.pop(state, None)
         if return_to is None:
-            self._send_json({"message": "Unknown or expired OAuth state"}, HTTPStatus.BAD_REQUEST)
+            self.write_json(
+                {"message": "Unknown or expired OAuth state"},
+                HTTPStatus.BAD_REQUEST,
+            )
             return
 
         try:
@@ -182,19 +218,25 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     "redirect_uri": self.config.redirect_uri,
                 },
             )
+            """
+            print("Zenodo token response keys:", sorted(token_response.keys()))
+            print("Zenodo token response expires_in:", token_response.get("expires_in"))
+            print("Zenodo token response scope:", token_response.get("scope"))
+            print("Zenodo token response user:", token_response.get("user")) # {'id': '12345'}
+            """
             access_token = token_response["access_token"]
             me = _json_request(
                 f"{self.config.zenodo_base_url}/api/me",
                 access_token=access_token,
             )
         except KeyError:
-            self._send_json(
+            self.write_json(
                 {"message": "Zenodo token response did not include access_token"},
                 HTTPStatus.BAD_GATEWAY,
             )
             return
         except HTTPError as error:
-            self._send_json(
+            self.write_json(
                 {
                     "message": "Zenodo OAuth request failed",
                     "status": error.code,
@@ -204,7 +246,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
             )
             return
         except URLError as error:
-            self._send_json(
+            self.write_json(
                 {"message": f"Could not reach Zenodo: {error.reason}"},
                 HTTPStatus.BAD_GATEWAY,
             )
@@ -216,26 +258,24 @@ class ProxyHandler(BaseHTTPRequestHandler):
             "access_token": access_token,
             "me": me,
         }
-        self._redirect(
-            return_to,
-            cookies=[
-                self._cookie(
-                    SESSION_COOKIE_NAME,
-                    session_id,
-                    max_age=60 * 60 * 24 * 14,
-                    same_site="Lax",
-                ),
-                self._expired_cookie(OAUTH_STATE_COOKIE_NAME),
-            ],
+        self.set_proxy_cookie(
+            SESSION_COOKIE_NAME,
+            session_id,
+            max_age=60 * 60 * 24 * 14,
+            same_site="Lax",
         )
+        self.expire_proxy_cookie(OAUTH_STATE_COOKIE_NAME)
+        self.redirect(return_to)
 
-    def _handle_status(self) -> None:
-        session = self._current_session()
+
+class StatusHandler(BaseProxyHandler):
+    def get(self) -> None:
+        session = self.current_session()
         if session is None:
-            self._send_json({"authenticated": False})
+            self.write_json({"authenticated": False})
             return
 
-        self._send_json(
+        self.write_json(
             {
                 "authenticated": True,
                 "zenodo_base_url": self.config.zenodo_base_url,
@@ -244,102 +284,19 @@ class ProxyHandler(BaseHTTPRequestHandler):
             }
         )
 
-    def _handle_logout(self) -> None:
-        session_id = self._cookies().get(SESSION_COOKIE_NAME)
+
+class LogoutHandler(BaseProxyHandler):
+    def get(self) -> None:
+        session_id = self.get_cookie(SESSION_COOKIE_NAME)
         if session_id:
             self.state.sessions.pop(session_id, None)
-        self._send_json(
-            {"authenticated": False},
-            cookies=[self._expired_cookie(SESSION_COOKIE_NAME)],
-        )
+        self.expire_proxy_cookie(SESSION_COOKIE_NAME)
+        self.write_json({"authenticated": False})
 
-    def _current_session(self) -> dict[str, Any] | None:
-        session_id = self._cookies().get(SESSION_COOKIE_NAME)
-        if not session_id:
-            return None
-        return self.state.sessions.get(session_id)
 
-    def _cookies(self) -> dict[str, str]:
-        header = self.headers.get("Cookie")
-        if not header:
-            return {}
-        cookie = SimpleCookie()
-        cookie.load(header)
-        return {key: morsel.value for key, morsel in cookie.items()}
-
-    def _send_json(
-        self,
-        payload: dict[str, Any],
-        status: HTTPStatus = HTTPStatus.OK,
-        *,
-        cookies: list[str] | None = None,
-    ) -> None:
-        body = json.dumps(payload, indent=2).encode("utf-8")
-        self.send_response(status)
-        self._send_common_headers()
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        for cookie in cookies or []:
-            self.send_header("Set-Cookie", cookie)
-        self.end_headers()
-        self.wfile.write(body)
-
-    def _send_empty(
-        self,
-        status: HTTPStatus,
-        *,
-        cookies: list[str] | None = None,
-    ) -> None:
-        self.send_response(status)
-        self._send_common_headers()
-        self.send_header("Content-Length", "0")
-        for cookie in cookies or []:
-            self.send_header("Set-Cookie", cookie)
-        self.end_headers()
-
-    def _redirect(self, location: str, *, cookies: list[str] | None = None) -> None:
-        self.send_response(HTTPStatus.FOUND)
-        self._send_common_headers()
-        self.send_header("Location", location)
-        self.send_header("Content-Length", "0")
-        for cookie in cookies or []:
-            self.send_header("Set-Cookie", cookie)
-        self.end_headers()
-
-    def _send_common_headers(self) -> None:
-        origin = self.headers.get("Origin")
-        if origin in self.config.allowed_cors_origins:
-            self.send_header("Access-Control-Allow-Origin", origin)
-            self.send_header("Access-Control-Allow-Credentials", "true")
-            self.send_header("Vary", "Origin")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Cache-Control", "no-store")
-
-    def _cookie(
-        self,
-        name: str,
-        value: str,
-        *,
-        max_age: int,
-        same_site: str,
-    ) -> str:
-        cookie = SimpleCookie()
-        cookie[name] = value
-        cookie[name]["path"] = "/"
-        cookie[name]["max-age"] = str(max_age)
-        cookie[name]["httponly"] = True
-        cookie[name]["samesite"] = same_site
-        return cookie.output(header="").strip()
-
-    def _expired_cookie(self, name: str) -> str:
-        cookie = SimpleCookie()
-        cookie[name] = ""
-        cookie[name]["path"] = "/"
-        cookie[name]["max-age"] = "0"
-        cookie[name]["httponly"] = True
-        cookie[name]["samesite"] = "Lax"
-        return cookie.output(header="").strip()
+class JsonNotFoundHandler(BaseProxyHandler):
+    def prepare(self) -> None:
+        self.write_json({"message": "Not found"}, HTTPStatus.NOT_FOUND)
 
 
 def _public_me(me: dict[str, Any]) -> dict[str, Any]:
@@ -350,25 +307,44 @@ def _public_me(me: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-class ZenodoProxyServer(ThreadingHTTPServer):
-    config: Config
-    state: ProxyState
+def create_app(
+    config: Config,
+    state: ProxyState | None = None,
+) -> tornado.web.Application:
+    proxy_state = state or ProxyState()
+    return tornado.web.Application(
+        [
+            (r"/health", HealthHandler),
+            (r"/auth/login", LoginHandler),
+            (r"/auth/callback", CallbackHandler),
+            (r"/auth/status", StatusHandler),
+            (r"/auth/logout", LogoutHandler),
+            (r"/.*", JsonNotFoundHandler),
+        ],
+        proxy_config=config,
+        proxy_state=proxy_state,
+    )
 
 
-def create_server(config: Config, host: str, port: int) -> ZenodoProxyServer:
-    server = ZenodoProxyServer((host, port), ProxyHandler)
-    server.config = config
-    server.state = ProxyState()
+def create_server(
+    config: Config,
+    host: str,
+    port: int,
+    state: ProxyState | None = None,
+) -> tornado.httpserver.HTTPServer:
+    app = create_app(config, state)
+    server = tornado.httpserver.HTTPServer(app)
+    server.listen(port, address=host)
     return server
 
 
 def main() -> None:
     config = Config.from_environment()
-    server = create_server(config, config.proxy_host, config.proxy_port)
+    create_server(config, config.proxy_host, config.proxy_port)
     print(
         "Zenodo API proxy MVP listening on "
         f"http://{config.proxy_host}:{config.proxy_port}"
     )
     print(f"Zenodo base URL: {config.zenodo_base_url}")
     print(f"OAuth redirect URI: {config.redirect_uri}")
-    server.serve_forever()
+    tornado.ioloop.IOLoop.current().start()
