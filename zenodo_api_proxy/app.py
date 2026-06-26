@@ -31,18 +31,6 @@ class ProxyState:
     sessions: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
-def _json_request(url: str, *, access_token: str, timeout: int = 10) -> dict[str, Any]:
-    request = Request(
-        url,
-        headers={
-            "Accept": "application/json",
-            "Authorization": f"Bearer {access_token}",
-        },
-    )
-    with urlopen(request, timeout=timeout) as response:
-        return json.loads(response.read().decode("utf-8"))
-
-
 def _form_post_json(
     url: str,
     *,
@@ -241,13 +229,15 @@ class CallbackHandler(BaseProxyHandler):
             print("Zenodo token response user:", token_response.get("user")) # {'id': '12345'}
             """
             access_token = token_response["access_token"]
-            me = _json_request(
-                f"{self.config.zenodo_base_url}/api/me",
-                access_token=access_token,
-            )
+            zenodo_user_id = str(token_response["user"]["id"])
         except KeyError:
             self.write_json(
-                {"message": "Zenodo token response did not include access_token"},
+                {
+                    "message": (
+                        "Zenodo token response did not include access_token "
+                        "or user.id"
+                    )
+                },
                 HTTPStatus.BAD_GATEWAY,
             )
             return
@@ -270,9 +260,8 @@ class CallbackHandler(BaseProxyHandler):
 
         session_id = secrets.token_urlsafe(32)
         self.state.sessions[session_id] = {
-            "zenodo_user_id": str(me["id"]),
+            "zenodo_user_id": zenodo_user_id,
             "access_token": access_token,
-            "me": me,
         }
         self.set_proxy_cookie(
             SESSION_COOKIE_NAME,
@@ -296,7 +285,6 @@ class StatusHandler(BaseProxyHandler):
                 "authenticated": True,
                 "zenodo_base_url": self.config.zenodo_base_url,
                 "zenodo_user_id": session["zenodo_user_id"],
-                "me": _public_me(session["me"]),
             }
         )
 
@@ -398,14 +386,6 @@ class ApiProxyHandler(BaseProxyHandler):
 class JsonNotFoundHandler(BaseProxyHandler):
     def prepare(self) -> None:
         self.write_json({"message": "Not found"}, HTTPStatus.NOT_FOUND)
-
-
-def _public_me(me: dict[str, Any]) -> dict[str, Any]:
-    return {
-        key: me[key]
-        for key in ("id", "email", "username", "full_name", "displayname")
-        if key in me
-    }
 
 
 def create_app(
