@@ -14,6 +14,7 @@ here = os.path.dirname(__file__)
 root = os.path.dirname(here)
 
 c.JupyterHub.bind_url = "http://127.0.0.1:8000"
+c.ConfigurableHTTPProxy.api_url = "http://127.0.0.1:8002"
 c.JupyterHub.cookie_secret_file = os.path.join(here, "jupyterhub_cookie_secret")
 c.JupyterHub.db_url = f"sqlite:///{os.path.join(here, 'jupyterhub.sqlite')}"
 

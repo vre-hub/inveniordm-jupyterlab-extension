@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import Callable
 from urllib.parse import quote
+from http.cookies import SimpleCookie
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_core.paths import jupyter_data_dir
@@ -215,6 +216,56 @@ class WhoAmIHandler(APIHandler):
             self.finish(json.dumps({"message": str(error)}))
             return
 
+        self.finish(response.text)
+
+# Example on how to use the proxy
+
+ZENODO_API_PROXY_URL = os.environ.get(
+    "ZENODO_API_PROXY_URL",
+    "http://127.0.0.1:8001",
+).rstrip("/")
+ZENODO_PROXY_SESSION_COOKIE_NAME = "zenodo_proxy_session"
+class ProxyMeHandler(APIHandler):
+    @tornado.web.authenticated
+    def get(self):
+        cookies = self.request.cookies
+        print(
+            "Available cookies for /proxy-me:",
+            sorted(cookies.keys()),
+        )
+
+        proxy_session = cookies.get(ZENODO_PROXY_SESSION_COOKIE_NAME)
+        if proxy_session is None:
+            self.set_status(401)
+            self.finish(
+                json.dumps({
+                    "message": (
+                        f"Missing {ZENODO_PROXY_SESSION_COOKIE_NAME} cookie "
+                        "on the extension backend request"
+                    ),
+                    "cookies": sorted(cookies.keys()),
+                })
+            )
+            return
+
+        cookie = SimpleCookie()
+        cookie[ZENODO_PROXY_SESSION_COOKIE_NAME] = proxy_session.value
+        try:
+            response = requests.get(
+                f"{ZENODO_API_PROXY_URL}/api/me",
+                headers={"Cookie": cookie.output(header="", sep=";").strip()},
+                timeout=10,
+            )
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.set_status(response.status_code)
+        self.set_header(
+            "Content-Type",
+            response.headers.get("Content-Type", "application/json"),
+        )
         self.finish(response.text)
 
 
@@ -487,6 +538,7 @@ def setup_route_handlers(web_app):
             {"event_bus": event_bus},
         ),
         (url_path_join(zenodo_base_url, "whoami"), WhoAmIHandler),
+        (url_path_join(zenodo_base_url, "proxy-me"), ProxyMeHandler),
         (
             url_path_join(zenodo_base_url, "depositions"),
             ZenodoDepositionsHandler,
