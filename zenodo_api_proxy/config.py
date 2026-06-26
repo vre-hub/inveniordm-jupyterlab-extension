@@ -1,0 +1,63 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+import os
+
+
+DEFAULT_ZENODO_BASE_URL = "https://sandbox.zenodo.org"
+DEFAULT_PROXY_HOST = "127.0.0.1"
+DEFAULT_PROXY_PORT = 8001
+DEFAULT_PROXY_PUBLIC_URL = "http://127.0.0.1:8001"
+DEFAULT_SCOPE = "deposit:write deposit:actions"
+DEFAULT_ALLOWED_RETURN_HOSTS = ("localhost", "127.0.0.1", "::1")
+DEFAULT_ALLOWED_CORS_ORIGINS = ("http://localhost:8888", "http://127.0.0.1:8888")
+
+
+@dataclass(frozen=True)
+class Config:
+    zenodo_base_url: str = DEFAULT_ZENODO_BASE_URL
+    client_id: str = ""
+    client_secret: str = ""
+    proxy_host: str = DEFAULT_PROXY_HOST
+    proxy_port: int = DEFAULT_PROXY_PORT
+    proxy_public_url: str = DEFAULT_PROXY_PUBLIC_URL
+    scope: str = DEFAULT_SCOPE
+    allowed_return_hosts: tuple[str, ...] = DEFAULT_ALLOWED_RETURN_HOSTS
+    allowed_cors_origins: tuple[str, ...] = DEFAULT_ALLOWED_CORS_ORIGINS
+
+    @property
+    def redirect_uri(self) -> str:
+        return f"{self.proxy_public_url.rstrip('/')}/auth/callback"
+
+    @classmethod
+    def from_environment(cls) -> "Config":
+        return cls(
+            zenodo_base_url=os.environ.get(
+                "ZENODO_BASE_URL",
+                DEFAULT_ZENODO_BASE_URL,
+            ).rstrip("/"),
+            client_id=os.environ.get("ZENODO_CLIENT_ID", ""),
+            client_secret=os.environ.get("ZENODO_CLIENT_SECRET", ""),
+            proxy_host=os.environ.get("PROXY_HOST", DEFAULT_PROXY_HOST),
+            proxy_port=int(os.environ.get("PROXY_PORT", str(DEFAULT_PROXY_PORT))),
+            proxy_public_url=os.environ.get(
+                "PROXY_PUBLIC_URL",
+                DEFAULT_PROXY_PUBLIC_URL,
+            ).rstrip("/"),
+            scope=os.environ.get("ZENODO_OAUTH_SCOPE", DEFAULT_SCOPE),
+            allowed_return_hosts=_split_env(
+                "PROXY_ALLOWED_RETURN_HOSTS",
+                DEFAULT_ALLOWED_RETURN_HOSTS,
+            ),
+            allowed_cors_origins=_split_env(
+                "PROXY_ALLOWED_CORS_ORIGINS",
+                DEFAULT_ALLOWED_CORS_ORIGINS,
+            ),
+        )
+
+
+def _split_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
+    value = os.environ.get(name)
+    if not value:
+        return default
+    return tuple(part.strip() for part in value.split(",") if part.strip())
