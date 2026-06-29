@@ -11,6 +11,7 @@ DEFAULT_PROXY_PUBLIC_URL = "http://127.0.0.1:8001"
 DEFAULT_SCOPE = "deposit:write deposit:actions"
 DEFAULT_ALLOWED_RETURN_HOSTS = ("localhost", "127.0.0.1", "::1")
 DEFAULT_ALLOWED_CORS_ORIGINS = ("http://localhost:8888", "http://127.0.0.1:8888")
+DEFAULT_SESSION_COOKIE_NAME = "zenodo_sandbox_proxy_session"
 
 
 @dataclass(frozen=True)
@@ -24,10 +25,15 @@ class Config:
     scope: str = DEFAULT_SCOPE
     allowed_return_hosts: tuple[str, ...] = DEFAULT_ALLOWED_RETURN_HOSTS
     allowed_cors_origins: tuple[str, ...] = DEFAULT_ALLOWED_CORS_ORIGINS
+    session_cookie_name: str = DEFAULT_SESSION_COOKIE_NAME
 
     @property
     def redirect_uri(self) -> str:
         return f"{self.proxy_public_url.rstrip('/')}/auth/callback"
+
+    @property
+    def oauth_state_cookie_name(self) -> str:
+        return f"{self.session_cookie_name}_oauth_state"
 
     @classmethod
     def from_environment(cls) -> "Config":
@@ -52,6 +58,10 @@ class Config:
             allowed_cors_origins=_split_env(
                 "PROXY_ALLOWED_CORS_ORIGINS",
                 DEFAULT_ALLOWED_CORS_ORIGINS,
+            ),
+            session_cookie_name=os.environ.get(
+                "ZENODO_PROXY_SESSION_COOKIE_NAME",
+                DEFAULT_SESSION_COOKIE_NAME,
             ),
         )
 

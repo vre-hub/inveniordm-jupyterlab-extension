@@ -26,6 +26,8 @@ export ZENODO_CLIENT_SECRET="..."
 python -m zenodo_api_proxy
 ```
 
+In order to run two proxy servers, one for prod, one for sandbox, set the other config values accordingly. Default is sandbox.
+
 Then start login in the browser:
 
 ```text
@@ -41,6 +43,9 @@ http://127.0.0.1:8001/auth/status
 ### Notes
 
 - The redirect URI in Zenodo must exactly match `PROXY_PUBLIC_URL + /auth/callback`.
+- Use a different `ZENODO_PROXY_SESSION_COOKIE_NAME` for each local proxy
+  instance. The OAuth state cookie name is derived from it as
+  `<session-cookie-name>_oauth_state`.
 
 ### Available routes:
 
@@ -58,6 +63,6 @@ PUT /api/...
 PATCH /api/...
 DELETE /api/...
 
-These routes require the `zenodo_proxy_session` cookie. The proxy adds the
+These routes require the configured proxy session cookie. The proxy adds the
 stored Zenodo OAuth access token server-side and forwards the request to the
 configured Zenodo instance.

@@ -22,9 +22,6 @@ import tornado.web
 
 from .config import Config
 
-SESSION_COOKIE_NAME = "zenodo_proxy_session"
-OAUTH_STATE_COOKIE_NAME = "zenodo_proxy_oauth_state"
-
 @dataclass
 class ProxyState:
     oauth_states: dict[str, str] = field(default_factory=dict)
@@ -127,7 +124,7 @@ class BaseProxyHandler(tornado.web.RequestHandler):
         self.set_proxy_cookie(name, "", max_age=0, same_site="Lax")
 
     def current_session(self) -> dict[str, Any] | None:
-        session_id = self.get_cookie(SESSION_COOKIE_NAME)
+        session_id = self.get_cookie(self.config.session_cookie_name)
         if not session_id:
             return None
         return self.state.sessions.get(session_id)
@@ -172,7 +169,7 @@ class LoginHandler(BaseProxyHandler):
             )
         )
         self.set_proxy_cookie(
-            OAUTH_STATE_COOKIE_NAME,
+            self.config.oauth_state_cookie_name,
             state,
             max_age=600,
             same_site="Lax",
@@ -196,7 +193,7 @@ class CallbackHandler(BaseProxyHandler):
             self.write_json({"message": "Missing code or state"}, HTTPStatus.BAD_REQUEST)
             return
 
-        if self.get_cookie(OAUTH_STATE_COOKIE_NAME) != state:
+        if self.get_cookie(self.config.oauth_state_cookie_name) != state:
             self.write_json(
                 {"message": "OAuth state cookie mismatch"},
                 HTTPStatus.BAD_REQUEST,
@@ -264,12 +261,12 @@ class CallbackHandler(BaseProxyHandler):
             "access_token": access_token,
         }
         self.set_proxy_cookie(
-            SESSION_COOKIE_NAME,
+            self.config.session_cookie_name,
             session_id,
             max_age=60 * 60 * 24 * 14,
             same_site="Lax",
         )
-        self.expire_proxy_cookie(OAUTH_STATE_COOKIE_NAME)
+        self.expire_proxy_cookie(self.config.oauth_state_cookie_name)
         self.redirect(return_to)
 
 
@@ -291,10 +288,10 @@ class StatusHandler(BaseProxyHandler):
 
 class LogoutHandler(BaseProxyHandler):
     def get(self) -> None:
-        session_id = self.get_cookie(SESSION_COOKIE_NAME)
+        session_id = self.get_cookie(self.config.session_cookie_name)
         if session_id:
             self.state.sessions.pop(session_id, None)
-        self.expire_proxy_cookie(SESSION_COOKIE_NAME)
+        self.expire_proxy_cookie(self.config.session_cookie_name)
         self.write_json({"authenticated": False})
 
 class ApiProxyHandler(BaseProxyHandler):
