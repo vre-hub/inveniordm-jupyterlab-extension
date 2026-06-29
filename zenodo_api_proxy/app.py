@@ -292,6 +292,16 @@ class LogoutHandler(BaseProxyHandler):
         if session_id:
             self.state.sessions.pop(session_id, None)
         self.expire_proxy_cookie(self.config.session_cookie_name)
+        return_to = self.get_query_argument("return_to", None)
+        if return_to is not None:
+            if not _is_allowed_return_to(return_to, self.config):
+                self.write_json(
+                    {"message": "Invalid return_to URL"},
+                    HTTPStatus.BAD_REQUEST,
+                )
+                return
+            self.redirect(return_to)
+            return
         self.write_json({"authenticated": False})
 
 class ApiProxyHandler(BaseProxyHandler):
