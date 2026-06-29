@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from typing import Callable
 from urllib.parse import quote
-from http.cookies import SimpleCookie
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_core.paths import jupyter_data_dir
@@ -12,9 +11,13 @@ import tornado
 import requests
 
 from .cell_actions import make_zenodo_import_cell_action
-from .token_store import FileTokenStore
 from .zenodo_download_manager import ZenodoDownloadManager
 from .zenodo_requests import ZenodoRequests
+from .zenodo_requests_factory import (
+    ZenodoRequestsFactory,
+    create_zenodo_requests_factory,
+    get_user_token_id,
+)
 
 from .util.sse import EventBus, stream_user_events
 
@@ -22,31 +25,8 @@ GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 GetZenodoDownloadManager = Callable[[], ZenodoDownloadManager]
 
 
-def _default_token_store_path() -> Path:
-    return Path(jupyter_data_dir()) / "zenodo_jupyterlab" / "tokens.json"
-
-
 def _default_downloads_dir() -> Path:
     return Path(jupyter_data_dir()) / "zenodo_jupyterlab" / "downloads"
-
-
-def _get_user_token_id(handler: APIHandler) -> str:
-    """
-    Get a unique ID for the current user to associate with their access token.
-    This uses the "username" field, which is only stable and secure if user accounts are not
-    renamed or remapped.
-    TODO we might want to allow to specify to use a different field than username
-    depending on auth provider,
-    if some auth providers have better options available
-    """
-    return handler.current_user.username
-
-
-def _get_sandbox_override(handler: APIHandler) -> bool | None:
-    if handler.get_query_argument("sandbox", None) is None:
-        return None
-
-    return handler.get_query_argument("sandbox", "false").lower() in ("1", "true")
 
 
 def _download_status_changed_topic(deposition_id: int | str, file_id: str) -> str:
@@ -74,10 +54,10 @@ class HelloRouteHandler(APIHandler):
 class ZenodoAccessTokenHandler(APIHandler):
     def initialize(
         self,
-        get_zenodo_requests: GetZenodoRequests,
+        zenodo_requests_factory: ZenodoRequestsFactory,
         event_bus: EventBus,
     ):
-        self.get_zenodo_requests = get_zenodo_requests
+        self.zenodo_requests_factory = zenodo_requests_factory
         self.event_bus = event_bus
 
     def _publish_access_token_status(self) -> None:
@@ -92,34 +72,41 @@ class ZenodoAccessTokenHandler(APIHandler):
 
     @tornado.web.authenticated
     def get(self):
-        status = self.get_zenodo_requests(self).get_access_token_status()
+        status = self.zenodo_requests_factory.get_access_token_status(self)
         self.finish(json.dumps(status.__dict__))
 
     @tornado.web.authenticated
     def put(self):
-        data = self.get_json_body() or {}
-        access_token = data.get("access_token")
-        if not access_token:
-            self.set_status(400)
-            self.finish(json.dumps({"message": "Missing 'access_token' in request body"}))
+        try:
+            self.zenodo_requests_factory.put_access_token(self)
+        except NotImplementedError as error:
+            self.set_status(501)
+            self.finish(json.dumps({"message": str(error)}))
             return
-
-        access_token_valid = self.get_zenodo_requests(self).set_access_token(
-            access_token
-        )
-        if not access_token_valid:
-            self.set_status(400)
-            self.finish(json.dumps({"message": "Invalid Zenodo access token"}))
-            return
-
         self._publish_access_token_status()
-        self.finish(json.dumps({"message": "Access token received successfully"}))
 
     @tornado.web.authenticated
     def delete(self):
-        self.get_zenodo_requests(self).remove_access_token()
+        try:
+            self.zenodo_requests_factory.delete_access_token(self)
+        except NotImplementedError as error:
+            self.set_status(501)
+            self.finish(json.dumps({"message": str(error)}))
+            return
         self._publish_access_token_status()
-        self.finish(json.dumps({"message": "Access token removed successfully"}))
+
+
+class ZenodoAuthHandler(APIHandler):
+    def initialize(self, zenodo_requests_factory: ZenodoRequestsFactory):
+        self.zenodo_requests_factory = zenodo_requests_factory
+
+    @tornado.web.authenticated
+    def get(self, action: str):
+        try:
+            self.zenodo_requests_factory.handle_auth(self, action)
+        except NotImplementedError as error:
+            self.set_status(501)
+            self.finish(json.dumps({"message": str(error)}))
 
 
 class ZenodoRecordsHandler(APIHandler):
@@ -218,56 +205,6 @@ class WhoAmIHandler(APIHandler):
 
         self.finish(response.text)
 
-# Example on how to use the proxy
-
-ZENODO_API_PROXY_URL = os.environ.get(
-    "ZENODO_API_PROXY_URL",
-    "http://127.0.0.1:8001",
-).rstrip("/")
-ZENODO_PROXY_SESSION_COOKIE_NAME = "zenodo_proxy_session"
-class ProxyMeHandler(APIHandler):
-    @tornado.web.authenticated
-    def get(self):
-        cookies = self.request.cookies
-        print(
-            "Available cookies for /proxy-me:",
-            sorted(cookies.keys()),
-        )
-
-        proxy_session = cookies.get(ZENODO_PROXY_SESSION_COOKIE_NAME)
-        if proxy_session is None:
-            self.set_status(401)
-            self.finish(
-                json.dumps({
-                    "message": (
-                        f"Missing {ZENODO_PROXY_SESSION_COOKIE_NAME} cookie "
-                        "on the extension backend request"
-                    ),
-                    "cookies": sorted(cookies.keys()),
-                })
-            )
-            return
-
-        cookie = SimpleCookie()
-        cookie[ZENODO_PROXY_SESSION_COOKIE_NAME] = proxy_session.value
-        try:
-            response = requests.get(
-                f"{ZENODO_API_PROXY_URL}/api/me",
-                headers={"Cookie": cookie.output(header="", sep=";").strip()},
-                timeout=10,
-            )
-        except requests.RequestException as error:
-            self.set_status(getattr(error.response, "status_code", 502))
-            self.finish(json.dumps({"message": str(error)}))
-            return
-
-        self.set_status(response.status_code)
-        self.set_header(
-            "Content-Type",
-            response.headers.get("Content-Type", "application/json"),
-        )
-        self.finish(response.text)
-
 
 class ZenodoEventsHandler(APIHandler):
     def initialize(
@@ -285,7 +222,7 @@ class ZenodoEventsHandler(APIHandler):
         await stream_user_events(
             self,
             event_bus=self.event_bus,
-            user_id=_get_user_token_id(self),
+            user_id=get_user_token_id(self),
         )
 
 
@@ -342,7 +279,7 @@ class ZenodoFileDownloadHandler(APIHandler):
             return
 
         zenodo_requests = self.get_zenodo_requests(self)
-        user_id = _get_user_token_id(self)
+        user_id = get_user_token_id(self)
 
         def publish_download_progress(
             download_id: str,
@@ -391,7 +328,7 @@ class ZenodoFileDownloadHandler(APIHandler):
 
         if result.get("deleted"):
             self.event_bus.publish(
-                _get_user_token_id(self),
+                get_user_token_id(self),
                 _download_status_changed_topic(deposition_id, file_id),
             )
 
@@ -497,16 +434,12 @@ class ZenodoFileImportCellHandler(APIHandler):
 def setup_route_handlers(web_app):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
-    token_store = FileTokenStore(_default_token_store_path())
     event_bus = EventBus()
     zenodo_download_manager = ZenodoDownloadManager(_default_downloads_dir())
+    zenodo_requests_factory = create_zenodo_requests_factory()
 
     def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
-        return ZenodoRequests(
-            token_store,
-            token_id=_get_user_token_id(handler),
-            sandbox_override=_get_sandbox_override(handler),
-        )
+        return zenodo_requests_factory.create_zenodo_requests(handler)
 
     def get_zenodo_download_manager() -> ZenodoDownloadManager:
         return zenodo_download_manager
@@ -518,9 +451,14 @@ def setup_route_handlers(web_app):
             url_path_join(zenodo_base_url, "access-token"),
             ZenodoAccessTokenHandler,
             {
-                "get_zenodo_requests": get_zenodo_requests,
+                "zenodo_requests_factory": zenodo_requests_factory,
                 "event_bus": event_bus,
             },
+        ),
+        (
+            url_path_join(zenodo_base_url, "auth", r"(login|logout)"),
+            ZenodoAuthHandler,
+            {"zenodo_requests_factory": zenodo_requests_factory},
         ),
         (
             url_path_join(zenodo_base_url, "records"),
@@ -538,7 +476,6 @@ def setup_route_handlers(web_app):
             {"event_bus": event_bus},
         ),
         (url_path_join(zenodo_base_url, "whoami"), WhoAmIHandler),
-        (url_path_join(zenodo_base_url, "proxy-me"), ProxyMeHandler),
         (
             url_path_join(zenodo_base_url, "depositions"),
             ZenodoDepositionsHandler,

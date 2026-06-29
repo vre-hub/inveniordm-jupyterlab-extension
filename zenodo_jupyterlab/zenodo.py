@@ -5,13 +5,9 @@ TODO consider using httpx instead of requests, for async support.
 
 from collections.abc import Iterable
 from typing import Any, Protocol
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 import requests
-
-
-ZENODO_SERVER_URL = "https://zenodo.org"
-ZENODO_SANDBOX_SERVER_URL = "https://sandbox.zenodo.org"
 
 
 class ZenodoFileResponse(Protocol):
@@ -47,34 +43,57 @@ class _RequestsZenodoFileResponse:
     def close(self) -> None:
         self.response.close()
 
-def _headers(access_token: str | None) -> dict[str, str]:
+
+def _headers(headers: dict[str, str] | None = None) -> dict[str, str]:
     """
-    Return the headers for a Zenodo API request,
-    including the Authorization header if an access token is provided.
+    Return headers for a Zenodo API request, with defaults applied.
     """
-    headers = {"Accept": "application/json"}
-    if access_token:
-        headers["Authorization"] = f"Bearer {access_token}"
-    return headers
+    return {"Accept": "application/json", **(headers or {})}
 
 
-def _is_zenodo_url(url: str) -> bool:
-    hostname = urlparse(url).hostname
-    return hostname in {
-        urlparse(ZENODO_SERVER_URL).hostname,
-        urlparse(ZENODO_SANDBOX_SERVER_URL).hostname,
-    }
+def _normalize_base_url(base_url: str) -> str:
+    return base_url.rstrip("/")
 
 
-def is_zenodo_access_token_valid(access_token: str, sandbox: bool = False) -> bool:
+def _rebase_zenodo_url(url: str, *, base_url: str) -> str:
     """
-    Perform a dummy API call to Zenodo using the provided access token to check if it's valid.
+    Rebase absolute API links onto the configured Zenodo server URL.
     """
-    server_url = ZENODO_SANDBOX_SERVER_URL if sandbox else ZENODO_SERVER_URL
+    parsed_url = urlparse(url)
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+        raise ValueError("URL must be absolute")
+    if not parsed_url.path.startswith("/api/"):
+        raise ValueError("URL must be an API URL")
+
+    target_base = urlparse(_normalize_base_url(base_url))
+    return urlunparse(
+        (
+            target_base.scheme,
+            target_base.netloc,
+            parsed_url.path,
+            parsed_url.params,
+            parsed_url.query,
+            parsed_url.fragment,
+        )
+    )
+
+
+def _is_api_url(url: str) -> bool:
+    return urlparse(url).path.startswith("/api/")
+
+
+def is_zenodo_request_authenticated(
+    *,
+    base_url: str,
+    headers: dict[str, str],
+) -> bool:
+    """
+    Perform a dummy authenticated API call.
+    """
     try:
         response = requests.get(
-            f"{server_url}/api/me",
-            headers=_headers(access_token),
+            f"{_normalize_base_url(base_url)}/api/me",
+            headers=_headers(headers),
             timeout=5,
         )
         if response.status_code == 200:
@@ -89,17 +108,16 @@ def is_zenodo_access_token_valid(access_token: str, sandbox: bool = False) -> bo
 
 def get_zenodo_me(
     *,
-    access_token: str,
-    sandbox: bool = False,
+    base_url: str,
+    headers: dict[str, str],
 ) -> dict[str, Any]:
     """
     Fetch the authenticated user's Zenodo profile and return the public fields
     needed by the JupyterLab frontend.
     """
-    server_url = ZENODO_SANDBOX_SERVER_URL if sandbox else ZENODO_SERVER_URL
     response = requests.get(
-        f"{server_url}/api/me",
-        headers=_headers(access_token),
+        f"{_normalize_base_url(base_url)}/api/me",
+        headers=_headers(headers),
         timeout=10,
     )
     response.raise_for_status()
@@ -113,8 +131,8 @@ def get_zenodo_me(
 def search_zenodo_records(
     query: str,
     *,
-    access_token: str | None = None,
-    sandbox: bool = False,
+    base_url: str,
+    headers: dict[str, str] | None = None,
     page: int = 1,
     size: int = 10,
     sort: str = "bestmatch",
@@ -124,7 +142,6 @@ def search_zenodo_records(
     """
     Search published Zenodo records.
     """
-    server_url = ZENODO_SANDBOX_SERVER_URL if sandbox else ZENODO_SERVER_URL
     params: dict[str, Any] = {
         "q": query,
         "page": page,
@@ -136,9 +153,9 @@ def search_zenodo_records(
         params.update(filters)
 
     response = requests.get(
-        f"{server_url}/api/records",
+        f"{_normalize_base_url(base_url)}/api/records",
         params=params,
-        headers=_headers(access_token),
+        headers=_headers(headers),
         timeout=10,
     )
     response.raise_for_status()
@@ -148,14 +165,15 @@ def search_zenodo_records(
 def get_zenodo_files(
     files_url: str,
     *,
-    access_token: str | None = None,
+    base_url: str,
+    headers: dict[str, str] | None = None,
 ) -> list[dict[str, Any]] | dict[str, Any]:
     """
     Fetch files from a Zenodo files URL provided by a record or deposition.
     """
     response = requests.get(
-        files_url,
-        headers=_headers(access_token),
+        _rebase_zenodo_url(files_url, base_url=base_url),
+        headers=_headers(headers),
         timeout=10,
     )
     response.raise_for_status()
@@ -166,16 +184,18 @@ def get_zenodo_deposition_file(
     deposition_id: int | str,
     file_id: str,
     *,
-    access_token: str | None = None,
-    sandbox: bool = False,
+    base_url: str,
+    headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """
     Fetch one file for a Zenodo deposition.
     """
-    server_url = ZENODO_SANDBOX_SERVER_URL if sandbox else ZENODO_SERVER_URL
     response = requests.get(
-        f"{server_url}/api/deposit/depositions/{deposition_id}/files/{file_id}",
-        headers=_headers(access_token),
+        (
+            f"{_normalize_base_url(base_url)}/api/deposit/depositions/"
+            f"{deposition_id}/files/{file_id}"
+        ),
+        headers=_headers(headers),
         timeout=10,
     )
     response.raise_for_status()
@@ -185,17 +205,18 @@ def get_zenodo_deposition_file(
 def open_zenodo_file(
     file_url: str,
     *,
-    access_token: str | None = None,
+    base_url: str,
+    headers: dict[str, str] | None = None,
 ) -> ZenodoFileResponse:
     """
     Open a streaming response for a Zenodo file URL.
     """
-    if not _is_zenodo_url(file_url):
-        raise ValueError("File URL must be a Zenodo URL")
+    if not _is_api_url(file_url):
+        raise ValueError("File URL must be an API URL")
 
     response = requests.get(
-        file_url,
-        headers=_headers(access_token),
+        _rebase_zenodo_url(file_url, base_url=base_url),
+        headers=_headers(headers),
         stream=True,
         timeout=30,
     )
@@ -209,19 +230,18 @@ def open_zenodo_file(
 
 def list_zenodo_depositions(
     *,
-    access_token: str | None,
-    sandbox: bool = False,
+    base_url: str,
+    headers: dict[str, str] | None,
     page: int = 1,
     size: int = 10,
 ) -> list[dict[str, Any]]:
     """
     List depositions owned by the authenticated user.
     """
-    server_url = ZENODO_SANDBOX_SERVER_URL if sandbox else ZENODO_SERVER_URL
     response = requests.get(
-        f"{server_url}/api/deposit/depositions",
+        f"{_normalize_base_url(base_url)}/api/deposit/depositions",
         params={"page": page, "size": size},
-        headers=_headers(access_token),
+        headers=_headers(headers),
         timeout=10,
     )
     response.raise_for_status()

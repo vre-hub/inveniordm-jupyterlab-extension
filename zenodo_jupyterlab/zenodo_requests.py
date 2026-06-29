@@ -1,13 +1,11 @@
 from dataclasses import dataclass
 from typing import Any
 
-from .token_store import StoredToken, TokenStore
 from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
     ZenodoFileResponse,
     get_zenodo_deposition_file,
     get_zenodo_me,
-    is_zenodo_access_token_valid,
     list_zenodo_depositions,
     open_zenodo_file,
     search_zenodo_records,
@@ -24,73 +22,23 @@ class AccessTokenStatus:
 class ZenodoRequests:
     """
     Wrapper around Zenodo API requests for a specific user/token,
-    using a TokenStore to manage the access token.
+    using caller-provided headers for authentication.
     """
     def __init__(
         self,
-        token_store: TokenStore,
-        token_id: str,
-        sandbox_override: bool | None = None,
+        url: str,
+        headers: dict[str, str] | None = None,
     ):
-        self.token_store = token_store
-        self.token_id = token_id
-        self.sandbox_override = sandbox_override
-
-    @property
-    def token(self) -> StoredToken | None:
-        return self.token_store.get_token(self.token_id)
-
-    @property
-    def sandbox(self) -> bool:
-        if self.sandbox_override is not None:
-            return self.sandbox_override
-
-        token = self.token
-        return token.sandbox if token is not None else False
-
-    def get_access_token_status(self) -> AccessTokenStatus:
-        token = self.token
-        return AccessTokenStatus(
-            access_token_present=token is not None,
-            access_token_valid=(
-                token.access_token_valid
-                if token is not None
-                else False
-            ),
-            sandbox=token.sandbox if token is not None else False,
-        )
-
-    def set_access_token(
-        self,
-        access_token: str,
-    ) -> bool:
-        sandbox = False
-        access_token_valid = False
-        for candidate_sandbox in (False, True):
-            if is_zenodo_access_token_valid(access_token, candidate_sandbox):
-                sandbox = candidate_sandbox
-                access_token_valid = True
-                break
-
-        if not access_token_valid:
-            return False
-
-        self.token_store.set_access_token(
-            self.token_id, access_token, access_token_valid, sandbox
-        )
-        return True
-
-    def remove_access_token(self) -> None:
-        self.token_store.remove_access_token(self.token_id)
+        self.url = url.rstrip("/")
+        self.headers = headers or {}
 
     def get_zenodo_me(self) -> dict[str, Any]:
-        token = self.token
-        if token is None:
-            raise ValueError("Missing Zenodo access token")
+        if not self.headers:
+            raise ValueError("Missing Zenodo request authentication headers")
 
         return get_zenodo_me(
-            access_token=token.access_token,
-            sandbox=self.sandbox,
+            base_url=self.url,
+            headers=self.headers,
         )
 
     def search_zenodo_records(
@@ -104,12 +52,10 @@ class ZenodoRequests:
         filters: dict[str, str] | None = None,
         include_files: bool = False,
     ) -> dict[str, Any]:
-        token = self.token
-
         records = search_zenodo_records(
             query,
-            access_token=token.access_token if token is not None else None,
-            sandbox=self.sandbox,
+            base_url=self.url,
+            headers=self.headers,
             page=page,
             size=size,
             sort=sort,
@@ -119,7 +65,8 @@ class ZenodoRequests:
         if include_files:
             include_zenodo_files(
                 records.get("hits", {}).get("hits", []),
-                access_token=token.access_token if token is not None else None,
+                base_url=self.url,
+                headers=self.headers,
             )
 
         return records
@@ -131,18 +78,17 @@ class ZenodoRequests:
         size: int = 10,
         include_files: bool = False,
     ) -> list[dict[str, Any]]:
-        token = self.token
-
         depositions = list_zenodo_depositions(
-            access_token=token.access_token if token is not None else None,
-            sandbox=self.sandbox,
+            base_url=self.url,
+            headers=self.headers,
             page=page,
             size=size,
         )
         if include_files:
             include_zenodo_files(
                 depositions,
-                access_token=token.access_token if token is not None else None,
+                base_url=self.url,
+                headers=self.headers,
             )
 
         return depositions
@@ -152,13 +98,13 @@ class ZenodoRequests:
         *,
         file_url: str,
     ) -> ZenodoFileResponse:
-        token = self.token
-        if token is None:
-            raise ValueError("Missing Zenodo access token")
+        if not self.headers:
+            raise ValueError("Missing Zenodo request authentication headers")
 
         return open_zenodo_file(
             file_url,
-            access_token=token.access_token,
+            base_url=self.url,
+            headers=self.headers,
         )
 
     def get_zenodo_deposition_file(
@@ -167,13 +113,12 @@ class ZenodoRequests:
         deposition_id: int | str,
         file_id: str,
     ) -> dict[str, Any]:
-        token = self.token
-        if token is None:
-            raise ValueError("Missing Zenodo access token")
+        if not self.headers:
+            raise ValueError("Missing Zenodo request authentication headers")
 
         return get_zenodo_deposition_file(
             deposition_id,
             file_id,
-            access_token=token.access_token,
-            sandbox=self.sandbox,
+            base_url=self.url,
+            headers=self.headers,
         )

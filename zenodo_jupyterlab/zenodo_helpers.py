@@ -6,7 +6,8 @@ from .zenodo import get_zenodo_files
 def include_zenodo_files(
     items: list[dict[str, Any]],
     *,
-    access_token: str | None,
+    base_url: str,
+    headers: dict[str, str] | None,
 ) -> None:
     """
     Expand Zenodo resources in place with their file list, if Zenodo provides
@@ -19,5 +20,6 @@ def include_zenodo_files(
 
         item["files"] = get_zenodo_files(
             files_url,
-            access_token=access_token,
+            base_url=base_url,
+            headers=headers,
         )

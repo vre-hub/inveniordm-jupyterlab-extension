@@ -1,4 +1,5 @@
 import React from 'react';
+import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 
 import type { InsertZenodoCellAction } from './insertCell';
@@ -54,6 +55,34 @@ export async function getZenodoMe(
 ): Promise<ZenodoMeResponse> {
   return await requestAPI<ZenodoMeResponse>('me', serverSettings);
 }
+
+/**
+ * Construct the URL for Zenodo authentication (login or logout),
+ * with the correct return URL and sandbox parameter.
+ *
+ * @param serverSettings - The server settings for the JupyterLab server.
+ * @param action - The action to perform ('login' or 'logout').
+ * @param returnTo - The URL to return to after authentication.
+ * @param sandbox - Whether to use the Zenodo sandbox environment.
+ * @returns The constructed authentication URL.
+ */
+export function constructZenodoAuthUrl(
+  serverSettings: ServerConnection.ISettings,
+  action: 'login' | 'logout',
+  returnTo: string,
+  sandbox: boolean = false
+): string {
+  const params = new URLSearchParams({
+    return_to: returnTo,
+    sandbox: sandbox.toString()
+  });
+  return (
+    URLExt.join(serverSettings.baseUrl, 'zenodo-jupyterlab', 'auth', action) +
+    `?${params.toString()}`
+  );
+}
+
+
 
 export async function putAccessToken(
   serverSettings: ServerConnection.ISettings,

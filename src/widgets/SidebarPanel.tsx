@@ -4,9 +4,9 @@ import { VDomRenderer } from '@jupyterlab/apputils';
 import { Tabs, TabItem } from '../components/Tabs';
 import { ZenodoDepositions } from '../components/ZenodoDepositions';
 import { ZenodoLoginForm } from '../components/ZenodoLoginForm';
-import { ZenodoSandboxOverrideSetting } from '../components/ZenodoSandboxOverrideSetting';
 import { ZenodoSearch } from '../components/ZenodoSearch';
 import { setCurrentTabID, useCurrentTabID } from '../store';
+import { DeveloperSettings } from '../components/DeveloperSettings';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
 
@@ -20,7 +20,7 @@ const TABS: SidebarTab[] = [
   {
     id: 'settings',
     label: 'Settings',
-    Component: ZenodoSandboxOverrideSetting
+    Component: DeveloperSettings,
   },
   { id: 'account', label: 'My Account', Component: ZenodoDepositions }
 ];
