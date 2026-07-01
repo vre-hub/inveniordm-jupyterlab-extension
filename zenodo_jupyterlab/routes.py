@@ -16,7 +16,6 @@ from .zenodo_requests.zenodo_requests import ZenodoRequests
 from .zenodo_requests.zenodo_requests_factory import (
     ZenodoRequestsFactory,
     create_zenodo_requests_factory,
-    get_user_token_id,
 )
 
 from .util.sse import EventBus, stream_user_events
@@ -24,6 +23,13 @@ from .util.sse import EventBus, stream_user_events
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 GetZenodoDownloadManager = Callable[[], ZenodoDownloadManager]
 
+
+
+def get_user_id(handler: APIHandler) -> str:
+    """
+    Get a unique ID for the current user.
+    """
+    return handler.current_user.username
 
 def _default_downloads_dir() -> Path:
     return Path(jupyter_data_dir()) / "zenodo_jupyterlab" / "downloads"
@@ -222,7 +228,7 @@ class ZenodoEventsHandler(APIHandler):
         await stream_user_events(
             self,
             event_bus=self.event_bus,
-            user_id=get_user_token_id(self),
+            user_id=get_user_id(self),
         )
 
 
@@ -279,7 +285,7 @@ class ZenodoFileDownloadHandler(APIHandler):
             return
 
         zenodo_requests = self.get_zenodo_requests(self)
-        user_id = get_user_token_id(self)
+        user_id = get_user_id(self)
 
         def publish_download_progress(
             download_id: str,
@@ -328,7 +334,7 @@ class ZenodoFileDownloadHandler(APIHandler):
 
         if result.get("deleted"):
             self.event_bus.publish(
-                get_user_token_id(self),
+                get_user_id(self),
                 _download_status_changed_topic(deposition_id, file_id),
             )
 

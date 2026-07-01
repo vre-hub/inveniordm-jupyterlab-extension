@@ -4,31 +4,34 @@ from zenodo_jupyterlab.zenodo_requests.token_store import FileTokenStore
 
 
 def test_file_token_store_persists_validity(tmp_path):
-    store = FileTokenStore(tmp_path / "tokens.json")
+    path = tmp_path / "tokens.json"
+    store = FileTokenStore(path)
 
-    store.set_access_token("user", "token", True)
-    store.set_access_token_validity("user", False)
+    store.set_access_token("token", True)
+    store.set_access_token_validity(False)
 
-    token = store.get_token("user")
+    token = store.get_token()
     assert token is not None
     assert token.access_token == "token"
     assert token.access_token_valid is False
 
-    data = json.loads((tmp_path / "tokens.json").read_text())
-    assert data == {
-        "user": {
-            "access_token": "token",
-            "access_token_valid": False,
-        }
+    assert json.loads(path.read_text()) == {
+        "access_token": "token",
+        "access_token_valid": False,
+        "sandbox": False,
     }
 
 
-def test_file_token_store_reads_old_string_tokens_as_valid(tmp_path):
+def test_file_token_store_returns_none_for_missing_file(tmp_path):
+    assert FileTokenStore(tmp_path / "tokens.json").get_token() is None
+
+
+def test_file_token_store_removes_token(tmp_path):
     path = tmp_path / "tokens.json"
-    path.write_text(json.dumps({"user": "old-token"}))
+    store = FileTokenStore(path)
+    store.set_access_token("token", True)
 
-    token = FileTokenStore(path).get_token("user")
+    store.remove_access_token()
 
-    assert token is not None
-    assert token.access_token == "old-token"
-    assert token.access_token_valid is True
+    assert store.get_token() is None
+    assert not path.exists()

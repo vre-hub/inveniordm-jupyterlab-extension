@@ -1,12 +1,8 @@
-import os
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import TYPE_CHECKING
 
-from jupyter_core.paths import jupyter_data_dir
 from jupyter_server.base.handlers import APIHandler
 
-from .token_store import FileTokenStore
 from .zenodo import is_zenodo_request_authenticated
 from .zenodo_requests import AccessTokenStatus, ZenodoRequests
 
@@ -15,15 +11,6 @@ if TYPE_CHECKING:
     from .proxy_zenodo_requests_factory import ProxyZenodoRequestsFactory
 
 
-def default_token_store_path() -> Path:
-    return Path(jupyter_data_dir()) / "zenodo_jupyterlab" / "tokens.json"
-
-
-def get_user_token_id(handler: APIHandler) -> str:
-    """
-    Get a unique ID for the current user to associate with their access token.
-    """
-    return handler.current_user.username
 
 
 def get_sandbox_override(handler: APIHandler) -> bool | None:
@@ -89,14 +76,7 @@ def create_zenodo_requests_factory(
     if factory_type == "local":
         from .local_zenodo_requests_factory import LocalZenodoRequestsFactory
 
-        return LocalZenodoRequestsFactory(
-            FileTokenStore(
-                os.environ.get(
-                    "ZENODO_JUPYTERLAB_TOKEN_STORE",
-                    str(default_token_store_path()),
-                )
-            )
-        )
+        return LocalZenodoRequestsFactory()
     if factory_type == "proxy":
         from .proxy_zenodo_requests_factory import ProxyZenodoRequestsFactory
 

@@ -2,13 +2,12 @@ import json
 
 from jupyter_server.base.handlers import APIHandler
 
-from .token_store import StoredToken, TokenStore
+from .token_store import FileTokenStore, StoredToken
 from .zenodo import is_zenodo_request_authenticated
 from .zenodo_requests import AccessTokenStatus, ZenodoRequests
 from .zenodo_requests_factory import (
     ZenodoRequestsFactory,
     get_sandbox_override,
-    get_user_token_id,
 )
 
 
@@ -16,12 +15,12 @@ class LocalZenodoRequestsFactory(ZenodoRequestsFactory):
     production_url = "https://zenodo.org"
     sandbox_url = "https://sandbox.zenodo.org"
 
-    def __init__(self, token_store: TokenStore):
-        self.token_store = token_store
+    def __init__(self):
+        self.token_store = FileTokenStore()
 
     def create_zenodo_requests(self, handler: APIHandler) -> ZenodoRequests:
         sandbox_override = get_sandbox_override(handler)
-        token = self.token_store.get_token(get_user_token_id(handler))
+        token = self.token_store.get_token()
 
         if sandbox_override is not None:
             headers = self._headers_for_token(token, sandbox_override)
@@ -52,7 +51,6 @@ class LocalZenodoRequestsFactory(ZenodoRequestsFactory):
         headers = {"Authorization": f"Bearer {access_token}"}
         sandbox = self._check_if_token_is_sandbox(headers=headers)
         self.token_store.set_access_token(
-            get_user_token_id(handler),
             access_token,
             True,
             sandbox=sandbox,
@@ -68,7 +66,7 @@ class LocalZenodoRequestsFactory(ZenodoRequestsFactory):
         )
 
     def delete_access_token(self, handler: APIHandler) -> None:
-        self.token_store.remove_access_token(get_user_token_id(handler))
+        self.token_store.remove_access_token()
         handler.finish(json.dumps({"message": "Zenodo access token removed"}))
 
     def _headers_for_token(
