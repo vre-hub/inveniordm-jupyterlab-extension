@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from .util.download_types import CancelCheck, DownloadCancelled, ProgressCallback
-from .zenodo import ZenodoFileResponse
+from .zenodo_requests.zenodo import ZenodoFileResponse
 
 
 class ZenodoFileSource(Protocol):

@@ -1,6 +1,6 @@
 import json
 
-from zenodo_jupyterlab.token_store import FileTokenStore
+from zenodo_jupyterlab.zenodo_requests.token_store import FileTokenStore
 
 
 def test_file_token_store_persists_validity(tmp_path):

@@ -12,8 +12,8 @@ import requests
 
 from .cell_actions import make_zenodo_import_cell_action
 from .zenodo_download_manager import ZenodoDownloadManager
-from .zenodo_requests import ZenodoRequests
-from .zenodo_requests_factory import (
+from .zenodo_requests.zenodo_requests import ZenodoRequests
+from .zenodo_requests.zenodo_requests_factory import (
     ZenodoRequestsFactory,
     create_zenodo_requests_factory,
     get_user_token_id,
