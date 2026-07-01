@@ -57,19 +57,6 @@ class ZenodoRequestsFactory(ABC):
     def delete_access_token(self, handler: APIHandler) -> None:
         raise NotImplementedError("Manual Zenodo access tokens are not configured")
 
-
-def __getattr__(name: str):
-    if name == "LocalZenodoRequestsFactory":
-        from .local_zenodo_requests_factory import LocalZenodoRequestsFactory
-
-        return LocalZenodoRequestsFactory
-    if name == "ProxyZenodoRequestsFactory":
-        from .proxy_zenodo_requests_factory import ProxyZenodoRequestsFactory
-
-        return ProxyZenodoRequestsFactory
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
 def create_zenodo_requests_factory(
     factory_type: str = "proxy",
 ) -> ZenodoRequestsFactory:
