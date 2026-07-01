@@ -1,16 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 from jupyter_server.base.handlers import APIHandler
 
 from .zenodo import is_zenodo_request_authenticated
 from .zenodo_requests import AccessTokenStatus, ZenodoRequests
-
-if TYPE_CHECKING:
-    from .local_zenodo_requests_factory import LocalZenodoRequestsFactory
-    from .proxy_zenodo_requests_factory import ProxyZenodoRequestsFactory
-
-
 
 
 def get_sandbox_override(handler: APIHandler) -> bool | None:
@@ -56,19 +49,3 @@ class ZenodoRequestsFactory(ABC):
 
     def delete_access_token(self, handler: APIHandler) -> None:
         raise NotImplementedError("Manual Zenodo access tokens are not configured")
-
-def create_zenodo_requests_factory(
-    factory_type: str = "proxy",
-) -> ZenodoRequestsFactory:
-    if factory_type == "local":
-        from .local_zenodo_requests_factory import LocalZenodoRequestsFactory
-
-        return LocalZenodoRequestsFactory()
-    if factory_type == "proxy":
-        from .proxy_zenodo_requests_factory import ProxyZenodoRequestsFactory
-
-        return ProxyZenodoRequestsFactory()
-
-    raise ValueError(
-        "ZENODO_JUPYTERLAB_REQUESTS_FACTORY must be either 'proxy' or 'local'"
-    )

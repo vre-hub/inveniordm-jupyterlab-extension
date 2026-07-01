@@ -13,8 +13,8 @@ import requests
 from .cell_actions import make_zenodo_import_cell_action
 from .zenodo_download_manager import ZenodoDownloadManager
 from .zenodo_requests.zenodo_requests import ZenodoRequests
-from .zenodo_requests.zenodo_requests_factory import (
-    ZenodoRequestsFactory,
+from .zenodo_requests.zenodo_requests_factory import ZenodoRequestsFactory
+from .zenodo_requests.zenodo_requests_factory_create import (
     create_zenodo_requests_factory,
 )
 
