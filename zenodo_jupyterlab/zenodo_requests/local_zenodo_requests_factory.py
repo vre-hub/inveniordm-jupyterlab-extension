@@ -2,7 +2,7 @@ import json
 
 from jupyter_server.base.handlers import APIHandler
 
-from .token_store import FileTokenStore, StoredToken
+from zenodo_auth.token_store import BoundedTokenStore, FileTokenStore, StoredToken
 from .zenodo import is_zenodo_request_authenticated
 from .zenodo_requests import AccessTokenStatus, ZenodoRequests
 from .zenodo_requests_factory import (
@@ -16,7 +16,7 @@ class LocalZenodoRequestsFactory(ZenodoRequestsFactory):
     sandbox_url = "https://sandbox.zenodo.org"
 
     def __init__(self):
-        self.token_store = FileTokenStore()
+        self.token_store = BoundedTokenStore(FileTokenStore())
 
     def create_zenodo_requests(self, handler: APIHandler) -> ZenodoRequests:
         sandbox_override = get_sandbox_override(handler)
