@@ -36,10 +36,6 @@ class TokenStore(ABC):
         pass
 
     @abstractmethod
-    def set_access_token_validity(self, access_token_valid: bool) -> None:
-        pass
-
-    @abstractmethod
     def remove_access_token(self) -> None:
         pass
 
@@ -84,16 +80,6 @@ class FileTokenStore(TokenStore):
                 asdict(StoredToken(access_token, access_token_valid, sandbox)),
                 fid,
             )
-
-    def set_access_token_validity(self, access_token_valid: bool) -> None:
-        token = self.get_token()
-        if token is None:
-            return
-        self.set_access_token(
-            token.access_token,
-            access_token_valid,
-            sandbox=token.sandbox,
-        )
 
     def remove_access_token(self) -> None:
         self.path.unlink(missing_ok=True)

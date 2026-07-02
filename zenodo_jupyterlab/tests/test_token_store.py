@@ -8,16 +8,15 @@ def test_file_token_store_persists_validity(tmp_path):
     store = FileTokenStore(path)
 
     store.set_access_token("token", True)
-    store.set_access_token_validity(False)
 
     token = store.get_token()
     assert token is not None
     assert token.access_token == "token"
-    assert token.access_token_valid is False
+    assert token.access_token_valid is True
 
     assert json.loads(path.read_text()) == {
         "access_token": "token",
-        "access_token_valid": False,
+        "access_token_valid": True,
         "sandbox": False,
     }
 
