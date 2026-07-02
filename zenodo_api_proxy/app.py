@@ -1,8 +1,8 @@
 """
 Auth-only MVP for the Zenodo API proxy.
 
-This deliberately keeps state in memory and only proves the OAuth login flow
-against the Zenodo sandbox. It is not production storage.
+This deliberately keeps browser session state in memory and only proves the
+OAuth login flow against the Zenodo sandbox.
 """
 
 from __future__ import annotations
@@ -13,39 +13,26 @@ import secrets
 from http import HTTPStatus
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 
+from zenodo_auth.auth_service import (
+    OAuthConfigurationError,
+    OAuthStateError,
+    OAuthTokenResponseError,
+    ZenodoAuthService,
+)
+from zenodo_auth.token_store import FileTokenStore
+
 from .config import Config
 
 @dataclass
 class ProxyState:
-    oauth_states: dict[str, str] = field(default_factory=dict)
-    sessions: dict[str, dict[str, Any]] = field(default_factory=dict)
-
-
-def _form_post_json(
-    url: str,
-    *,
-    form_data: dict[str, str],
-    timeout: int = 10,
-) -> dict[str, Any]:
-    body = urlencode(form_data).encode("utf-8")
-    request = Request(
-        url,
-        data=body,
-        headers={
-            "Accept": "application/json",
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        method="POST",
-    )
-    with urlopen(request, timeout=timeout) as response:
-        return json.loads(response.read().decode("utf-8"))
+    sessions: dict[str, str] = field(default_factory=dict)
 
 
 def _is_allowed_return_to(return_to: str, config: Config) -> bool:
@@ -76,6 +63,10 @@ class BaseProxyHandler(tornado.web.RequestHandler):
     @property
     def state(self) -> ProxyState:
         return self.settings["proxy_state"]
+
+    @property
+    def auth_service(self) -> ZenodoAuthService:
+        return self.settings["zenodo_auth_service"]
 
     def set_default_headers(self) -> None:
         origin = self.request.headers.get("Origin")
@@ -123,7 +114,7 @@ class BaseProxyHandler(tornado.web.RequestHandler):
     def expire_proxy_cookie(self, name: str) -> None:
         self.set_proxy_cookie(name, "", max_age=0, same_site="Lax")
 
-    def current_session(self) -> dict[str, Any] | None:
+    def current_zenodo_user_id(self) -> str | None:
         session_id = self.get_cookie(self.config.session_cookie_name)
         if not session_id:
             return None
@@ -137,44 +128,27 @@ class HealthHandler(BaseProxyHandler):
 
 class LoginHandler(BaseProxyHandler):
     def get(self) -> None:
-        if not self.config.client_id or not self.config.client_secret:
-            self.write_json(
-                {
-                    "message": (
-                        "Set ZENODO_CLIENT_ID and ZENODO_CLIENT_SECRET before "
-                        "starting OAuth login."
-                    )
-                },
-                HTTPStatus.SERVICE_UNAVAILABLE,
-            )
-            return
-
         return_to = self.get_query_argument("return_to", self.config.proxy_public_url)
         if not _is_allowed_return_to(return_to, self.config):
             self.write_json({"message": "Invalid return_to URL"}, HTTPStatus.BAD_REQUEST)
             return
 
-        state = secrets.token_urlsafe(32)
-        self.state.oauth_states[state] = return_to
-        authorize_url = (
-            f"{self.config.zenodo_base_url}/oauth/authorize?"
-            + urlencode(
-                {
-                    "response_type": "code",
-                    "client_id": self.config.client_id,
-                    "redirect_uri": self.config.redirect_uri,
-                    "scope": self.config.scope,
-                    "state": state,
-                }
+        try:
+            login = self.auth_service.begin_login(return_to)
+        except OAuthConfigurationError as error:
+            self.write_json(
+                {"message": str(error)},
+                HTTPStatus.SERVICE_UNAVAILABLE,
             )
-        )
+            return
+
         self.set_proxy_cookie(
             self.config.oauth_state_cookie_name,
-            state,
+            login.state,
             max_age=600,
             same_site="Lax",
         )
-        self.redirect(authorize_url)
+        self.redirect(login.authorize_url)
 
 
 class CallbackHandler(BaseProxyHandler):
@@ -200,41 +174,14 @@ class CallbackHandler(BaseProxyHandler):
             )
             return
 
-        return_to = self.state.oauth_states.pop(state, None)
-        if return_to is None:
-            self.write_json(
-                {"message": "Unknown or expired OAuth state"},
-                HTTPStatus.BAD_REQUEST,
-            )
-            return
-
         try:
-            token_response = _form_post_json(
-                f"{self.config.zenodo_base_url}/oauth/token",
-                form_data={
-                    "grant_type": "authorization_code",
-                    "code": code,
-                    "client_id": self.config.client_id,
-                    "client_secret": self.config.client_secret,
-                    "redirect_uri": self.config.redirect_uri,
-                },
-            )
-            """
-            print("Zenodo token response keys:", sorted(token_response.keys()))
-            print("Zenodo token response expires_in:", token_response.get("expires_in"))
-            print("Zenodo token response scope:", token_response.get("scope"))
-            print("Zenodo token response user:", token_response.get("user")) # {'id': '12345'}
-            """
-            access_token = token_response["access_token"]
-            zenodo_user_id = str(token_response["user"]["id"])
-        except KeyError:
+            callback = self.auth_service.finish_login(code=code, state=state)
+        except OAuthStateError as error:
+            self.write_json({"message": str(error)}, HTTPStatus.BAD_REQUEST)
+            return
+        except OAuthTokenResponseError as error:
             self.write_json(
-                {
-                    "message": (
-                        "Zenodo token response did not include access_token "
-                        "or user.id"
-                    )
-                },
+                {"message": str(error)},
                 HTTPStatus.BAD_GATEWAY,
             )
             return
@@ -256,10 +203,7 @@ class CallbackHandler(BaseProxyHandler):
             return
 
         session_id = secrets.token_urlsafe(32)
-        self.state.sessions[session_id] = {
-            "zenodo_user_id": zenodo_user_id,
-            "access_token": access_token,
-        }
+        self.state.sessions[session_id] = callback.zenodo_user_id
         self.set_proxy_cookie(
             self.config.session_cookie_name,
             session_id,
@@ -267,13 +211,13 @@ class CallbackHandler(BaseProxyHandler):
             same_site="Lax",
         )
         self.expire_proxy_cookie(self.config.oauth_state_cookie_name)
-        self.redirect(return_to)
+        self.redirect(callback.return_to)
 
 
 class StatusHandler(BaseProxyHandler):
     def get(self) -> None:
-        session = self.current_session()
-        if session is None:
+        zenodo_user_id = self.current_zenodo_user_id()
+        if zenodo_user_id is None:
             self.write_json({"authenticated": False})
             return
 
@@ -281,7 +225,7 @@ class StatusHandler(BaseProxyHandler):
             {
                 "authenticated": True,
                 "zenodo_base_url": self.config.zenodo_base_url,
-                "zenodo_user_id": session["zenodo_user_id"],
+                "zenodo_user_id": zenodo_user_id,
             }
         )
 
@@ -323,10 +267,17 @@ class ApiProxyHandler(BaseProxyHandler):
         self.forward(path)
 
     def forward(self, path: str | None) -> None:
-        session = self.current_session()
-        if session is None:
+        zenodo_user_id = self.current_zenodo_user_id()
+        if zenodo_user_id is None:
             self.write_json(
                 {"message": "Missing or expired proxy session"},
+                HTTPStatus.UNAUTHORIZED,
+            )
+            return
+        token = self.auth_service.get_token(zenodo_user_id)
+        if token is None:
+            self.write_json(
+                {"message": "Missing or expired Zenodo token"},
                 HTTPStatus.UNAUTHORIZED,
             )
             return
@@ -338,7 +289,7 @@ class ApiProxyHandler(BaseProxyHandler):
         request = Request(
             target_url,
             data=self.request.body or None,
-            headers=self.forward_request_headers(session["access_token"]),
+            headers=self.forward_request_headers(token.access_token),
             method=self.request.method,
         )
 
@@ -398,8 +349,18 @@ class JsonNotFoundHandler(BaseProxyHandler):
 def create_app(
     config: Config,
     state: ProxyState | None = None,
+    auth_service: ZenodoAuthService | None = None,
 ) -> tornado.web.Application:
     proxy_state = state or ProxyState()
+    zenodo_auth_service = auth_service or ZenodoAuthService(
+        zenodo_base_url=config.zenodo_base_url,
+        client_id=config.client_id,
+        client_secret=config.client_secret,
+        redirect_uri=config.redirect_uri,
+        scope=config.scope,
+        token_store=FileTokenStore(),
+        sandbox="sandbox.zenodo.org" in urlparse(config.zenodo_base_url).netloc,
+    )
     return tornado.web.Application(
         [
             (r"/health", HealthHandler),
@@ -412,6 +373,7 @@ def create_app(
         ],
         proxy_config=config,
         proxy_state=proxy_state,
+        zenodo_auth_service=zenodo_auth_service,
     )
 
 
@@ -420,8 +382,9 @@ def create_server(
     host: str,
     port: int,
     state: ProxyState | None = None,
+    auth_service: ZenodoAuthService | None = None,
 ) -> tornado.httpserver.HTTPServer:
-    app = create_app(config, state)
+    app = create_app(config, state, auth_service)
     server = tornado.httpserver.HTTPServer(app)
     server.listen(port, address=host)
     return server
