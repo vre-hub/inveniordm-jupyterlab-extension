@@ -22,12 +22,8 @@ class MultiTokenStore(ABC):
     def get_token(self, token_id: str) -> StoredToken | None:
         pass
 
-    def get_access_token(self, token_id: str) -> str | None:
-        token = self.get_token(token_id)
-        return token.access_token if token is not None else None
-
     @abstractmethod
-    def set_access_token(
+    def set_token(
         self,
         token_id: str,
         access_token: str,
@@ -37,7 +33,7 @@ class MultiTokenStore(ABC):
         pass
 
     @abstractmethod
-    def remove_access_token(self, token_id: str) -> None:
+    def remove_token(self, token_id: str) -> None:
         pass
 
 
@@ -49,25 +45,21 @@ class BoundedTokenStore:
     def get_token(self) -> StoredToken | None:
         return self.multi_store.get_token(self.token_id)
 
-    def get_access_token(self) -> str | None:
-        token = self.get_token()
-        return token.access_token if token is not None else None
-
-    def set_access_token(
+    def set_token(
         self,
         access_token: str,
         access_token_valid: bool,
         sandbox: bool = False,
     ) -> None:
-        self.multi_store.set_access_token(
+        self.multi_store.set_token(
             self.token_id,
             access_token,
             access_token_valid,
             sandbox,
         )
 
-    def remove_access_token(self) -> None:
-        self.multi_store.remove_access_token(self.token_id)
+    def remove_token(self) -> None:
+        self.multi_store.remove_token(self.token_id)
 
 
 def default_token_store_path() -> Path:
@@ -97,7 +89,7 @@ class FileTokenStore(MultiTokenStore):
             sandbox=bool(token_data.get("sandbox", False)),
         )
 
-    def set_access_token(
+    def set_token(
         self,
         token_id: str,
         access_token: str,
@@ -110,7 +102,7 @@ class FileTokenStore(MultiTokenStore):
         )
         self._write_tokens(data)
 
-    def remove_access_token(self, token_id: str) -> None:
+    def remove_token(self, token_id: str) -> None:
         data = self._read_tokens()
         data.pop(token_id, None)
         if data:

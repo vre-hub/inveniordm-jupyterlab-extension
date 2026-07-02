@@ -10,8 +10,8 @@ def test_file_token_store_persists_multiple_tokens(tmp_path):
     path = tmp_path / "tokens.json"
     store = FileTokenStore(path)
 
-    store.set_access_token("alice", "alice-token", True)
-    store.set_access_token("bob", "bob-token", False, sandbox=True)
+    store.set_token("alice", "alice-token", True)
+    store.set_token("bob", "bob-token", False, sandbox=True)
 
     alice_token = store.get_token("alice")
     assert alice_token is not None
@@ -48,10 +48,10 @@ def test_file_token_store_returns_none_for_missing_file(tmp_path):
 def test_file_token_store_removes_one_token(tmp_path):
     path = tmp_path / "tokens.json"
     store = FileTokenStore(path)
-    store.set_access_token("alice", "alice-token", True)
-    store.set_access_token("bob", "bob-token", True)
+    store.set_token("alice", "alice-token", True)
+    store.set_token("bob", "bob-token", True)
 
-    store.remove_access_token("alice")
+    store.remove_token("alice")
 
     assert store.get_token("alice") is None
     assert store.get_token("bob") is not None
@@ -61,9 +61,9 @@ def test_file_token_store_removes_one_token(tmp_path):
 def test_file_token_store_removes_file_after_last_token(tmp_path):
     path = tmp_path / "tokens.json"
     store = FileTokenStore(path)
-    store.set_access_token("user", "token", True)
+    store.set_token("user", "token", True)
 
-    store.remove_access_token("user")
+    store.remove_token("user")
 
     assert store.get_token("user") is None
     assert not path.exists()
@@ -74,7 +74,7 @@ def test_bounded_token_store_uses_single_bound_token(tmp_path):
     multi_store = FileTokenStore(path)
     store = BoundedTokenStore(multi_store, "local-user")
 
-    store.set_access_token("token", True, sandbox=True)
+    store.set_token("token", True, sandbox=True)
 
     token = store.get_token()
     assert token is not None

@@ -50,7 +50,7 @@ class LocalZenodoRequestsFactory(ZenodoRequestsFactory):
 
         headers = {"Authorization": f"Bearer {access_token}"}
         sandbox = self._check_if_token_is_sandbox(headers=headers)
-        self.token_store.set_access_token(
+        self.token_store.set_token(
             access_token,
             True,
             sandbox=sandbox,
@@ -66,7 +66,7 @@ class LocalZenodoRequestsFactory(ZenodoRequestsFactory):
         )
 
     def delete_access_token(self, handler: APIHandler) -> None:
-        self.token_store.remove_access_token()
+        self.token_store.remove_token()
         handler.finish(json.dumps({"message": "Zenodo access token removed"}))
 
     def _headers_for_token(
