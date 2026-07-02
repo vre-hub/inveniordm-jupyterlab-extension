@@ -7,6 +7,7 @@ from typing import Any
 import tornado.web
 
 from zenodo_auth.auth_service import ZenodoAuthService
+from zenodo_auth.token_store import MultiTokenStore
 
 from .config import Config
 from .types import ProxyState
@@ -24,6 +25,10 @@ class BaseProxyHandler(tornado.web.RequestHandler):
     @property
     def auth_service(self) -> ZenodoAuthService:
         return self.settings["zenodo_auth_service"]
+
+    @property
+    def token_store(self) -> MultiTokenStore:
+        return self.settings["zenodo_token_store"]
 
     def set_default_headers(self) -> None:
         origin = self.request.headers.get("Origin")

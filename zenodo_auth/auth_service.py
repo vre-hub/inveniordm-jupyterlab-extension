@@ -7,8 +7,6 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from .token_store import MultiTokenStore, StoredToken
-
 
 @dataclass(frozen=True)
 class OAuthLogin:
@@ -20,6 +18,8 @@ class OAuthLogin:
 class OAuthCallback:
     return_to: str
     zenodo_user_id: str
+    access_token: str
+    token_response: dict[str, Any]
 
 
 class OAuthConfigurationError(ValueError):
@@ -60,10 +60,9 @@ class ZenodoAuthService:
         *,
         zenodo_base_url: str,
         client_id: str,
-        client_secret: str,
+        client_secret: str | None = None,
         redirect_uri: str,
         scope: str,
-        token_store: MultiTokenStore,
         sandbox: bool = False,
     ):
         self.zenodo_base_url = zenodo_base_url.rstrip("/")
@@ -71,15 +70,13 @@ class ZenodoAuthService:
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
         self.scope = scope
-        self.token_store = token_store
         self.sandbox = sandbox
         self.oauth_states: dict[str, str] = {}
 
     def begin_login(self, return_to: str) -> OAuthLogin:
-        if not self.client_id or not self.client_secret:
+        if not self.client_id:
             raise OAuthConfigurationError(
-                "Set ZENODO_CLIENT_ID and ZENODO_CLIENT_SECRET before "
-                "starting OAuth login."
+                "Set ZENODO_CLIENT_ID before starting OAuth login."
             )
 
         state = secrets.token_urlsafe(32)
@@ -103,15 +100,18 @@ class ZenodoAuthService:
         if return_to is None:
             raise OAuthStateError("Unknown or expired OAuth state")
 
+        form_data = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "client_id": self.client_id,
+            "redirect_uri": self.redirect_uri,
+        }
+        if self.client_secret:
+            form_data["client_secret"] = self.client_secret
+
         token_response = _form_post_json(
             f"{self.zenodo_base_url}/oauth/token",
-            form_data={
-                "grant_type": "authorization_code",
-                "code": code,
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
-                "redirect_uri": self.redirect_uri,
-            },
+            form_data=form_data,
         )
 
         try:
@@ -122,13 +122,9 @@ class ZenodoAuthService:
                 "Zenodo token response did not include access_token or user.id"
             ) from error
 
-        self.token_store.set_token(
-            zenodo_user_id,
-            access_token,
-            True,
-            sandbox=self.sandbox,
+        return OAuthCallback(
+            return_to=return_to,
+            zenodo_user_id=zenodo_user_id,
+            access_token=access_token,
+            token_response=token_response,
         )
-        return OAuthCallback(return_to=return_to, zenodo_user_id=zenodo_user_id)
-
-    def get_token(self, zenodo_user_id: str) -> StoredToken | None:
-        return self.token_store.get_token(zenodo_user_id)

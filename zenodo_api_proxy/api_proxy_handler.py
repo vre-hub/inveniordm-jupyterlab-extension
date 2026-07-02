@@ -34,7 +34,7 @@ class ApiProxyHandler(BaseProxyHandler):
                 HTTPStatus.UNAUTHORIZED,
             )
             return
-        token = self.auth_service.get_token(zenodo_user_id)
+        token = self.token_store.get_token(zenodo_user_id)
         if token is None:
             self.write_json(
                 {"message": "Missing or expired Zenodo token"},
