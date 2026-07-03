@@ -11,6 +11,7 @@ import tornado
 import requests
 
 from .cell_actions import make_zenodo_import_cell_action
+from .zenodo_auth.auth_controller import ZenodoAuthController
 from .zenodo_download_manager import ZenodoDownloadManager
 from .zenodo_requests.zenodo_requests import ZenodoRequests
 from .zenodo_requests.zenodo_requests_factory import ZenodoRequestsFactory
@@ -71,16 +72,25 @@ class ZenodoAccessTokenHandler(APIHandler):
 
 
 class ZenodoAuthHandler(APIHandler):
-    def initialize(self, zenodo_requests_factory: ZenodoRequestsFactory):
-        self.zenodo_requests_factory = zenodo_requests_factory
+    def initialize(self, zenodo_auth_controller: ZenodoAuthController):
+        self.zenodo_auth_controller = zenodo_auth_controller
 
     @tornado.web.authenticated
     def get(self, action: str):
-        try:
-            self.zenodo_requests_factory.handle_auth(self, action)
-        except NotImplementedError as error:
-            self.set_status(501)
-            self.finish(json.dumps({"message": str(error)}))
+        if action == "login":
+            self.zenodo_auth_controller.login(self)
+            return
+
+        if action == "logout":
+            self.zenodo_auth_controller.logout(self)
+            return
+
+        if action == "callback":
+            self.zenodo_auth_controller.callback(self)
+            return
+
+        self.set_status(404)
+        self.finish(json.dumps({"message": "Unknown auth action"}))
 
 
 class ZenodoRecordsHandler(APIHandler):
@@ -429,7 +439,7 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "auth", r"(login|logout|callback)"),
             ZenodoAuthHandler,
-            {"zenodo_requests_factory": zenodo_requests_factory},
+            {"zenodo_auth_controller": zenodo_requests_factory.auth_controller},
         ),
         (
             url_path_join(zenodo_base_url, "records"),

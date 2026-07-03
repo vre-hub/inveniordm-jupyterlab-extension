@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from jupyter_server.base.handlers import APIHandler
 
+from ..zenodo_auth.auth_controller import ZenodoAuthController
 from .zenodo import is_zenodo_request_authenticated
 from .zenodo_requests import AccessTokenStatus, ZenodoRequests
 
@@ -14,6 +15,11 @@ def get_sandbox_override(handler: APIHandler) -> bool | None:
 
 
 class ZenodoRequestsFactory(ABC):
+    @property
+    @abstractmethod
+    def auth_controller(self) -> ZenodoAuthController:
+        pass
+
     @abstractmethod
     def create_zenodo_requests(self, handler: APIHandler) -> ZenodoRequests:
         pass
@@ -40,6 +46,3 @@ class ZenodoRequestsFactory(ABC):
             ),
             sandbox=self.is_sandbox(zenodo_requests),
         )
-
-    def handle_auth(self, handler: APIHandler, action: str) -> None:
-        raise NotImplementedError("OAuth proxy authentication is not configured")

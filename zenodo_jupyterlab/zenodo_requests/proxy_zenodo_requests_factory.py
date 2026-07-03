@@ -1,10 +1,10 @@
 import os
 from http.cookies import SimpleCookie
-from urllib.parse import urlencode
 
 from jupyter_server.base.handlers import APIHandler
-from jupyter_server.utils import url_path_join
 
+from ..zenodo_auth.auth_controller import ZenodoAuthController
+from ..zenodo_auth.proxy_auth_controller import ProxyZenodoAuthController
 from .zenodo_requests import ZenodoRequests
 from .zenodo_requests_factory import (
     ZenodoRequestsFactory,
@@ -38,6 +38,13 @@ class ProxyZenodoRequestsFactory(ZenodoRequestsFactory):
         "zenodo_production_proxy_session",
     )
     production_proxy_public_url = "http://127.0.0.1:8003"
+
+    def __init__(self):
+        self._auth_controller = ProxyZenodoAuthController(self._proxy_url)
+
+    @property
+    def auth_controller(self) -> ZenodoAuthController:
+        return self._auth_controller
 
     def create_zenodo_requests(self, handler: APIHandler) -> ZenodoRequests:
         sandbox_override = get_sandbox_override(handler)
@@ -78,24 +85,6 @@ class ProxyZenodoRequestsFactory(ZenodoRequestsFactory):
             self.sandbox_url,
             self.sandbox_proxy_public_url,
         }
-
-    def handle_auth(self, handler: APIHandler, action: str) -> None:
-        sandbox_override = get_sandbox_override(handler)
-        sandbox = sandbox_override if sandbox_override is not None else False
-        return_to = handler.get_query_argument("return_to", None)
-        if return_to is None:
-            return_to = handler.request.headers.get(
-                "Referer",
-                (
-                    f"{handler.request.protocol}://{handler.request.host}"
-                    f"{url_path_join(handler.settings['base_url'], 'lab')}"
-                ),
-            )
-
-        handler.redirect(
-            f"{self._proxy_url(sandbox)}/auth/{action}?"
-            + urlencode({"return_to": return_to})
-        )
 
     def _create_requests_for_server(
         self,
