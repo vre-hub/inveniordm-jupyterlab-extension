@@ -6,7 +6,7 @@ from typing import Any
 
 import tornado.web
 
-from zenodo_auth.auth_service import ZenodoAuthService
+from zenodo_auth import OAuthClientConfig
 from zenodo_auth.token_store import MultiTokenStore
 
 from .config import Config
@@ -23,8 +23,8 @@ class BaseProxyHandler(tornado.web.RequestHandler):
         return self.settings["proxy_state"]
 
     @property
-    def auth_service(self) -> ZenodoAuthService:
-        return self.settings["zenodo_auth_service"]
+    def oauth_config(self) -> OAuthClientConfig:
+        return self.settings["zenodo_oauth_config"]
 
     @property
     def token_store(self) -> MultiTokenStore:

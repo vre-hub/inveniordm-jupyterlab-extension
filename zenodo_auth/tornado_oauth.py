@@ -10,14 +10,18 @@ import tornado.web
 
 from .auth_service import (
     OAuthCallback,
+    OAuthClientConfig,
     OAuthConfigurationError,
     OAuthStateError,
     OAuthTokenResponseError,
-    ZenodoAuthService,
+    create_oauth_login,
+    exchange_oauth_code,
 )
 
 IsAllowedReturnTo = Callable[[str], bool]
 OnOAuthSuccess = Callable[[tornado.web.RequestHandler, OAuthCallback], None]
+SaveOAuthState = Callable[[str, str], None]
+PopOAuthState = Callable[[str], str | None]
 
 
 def write_json(
@@ -33,7 +37,8 @@ def write_json(
 def begin_zenodo_oauth_login(
     handler: tornado.web.RequestHandler,
     *,
-    auth_service: ZenodoAuthService,
+    oauth_config: OAuthClientConfig,
+    save_oauth_state: SaveOAuthState,
     default_return_to: str,
     is_allowed_return_to: IsAllowedReturnTo,
     state_cookie_name: str | None = None,
@@ -48,7 +53,7 @@ def begin_zenodo_oauth_login(
         return
 
     try:
-        login = auth_service.begin_login(return_to)
+        login = create_oauth_login(oauth_config)
     except OAuthConfigurationError as error:
         write_json(
             handler,
@@ -57,6 +62,7 @@ def begin_zenodo_oauth_login(
         )
         return
 
+    save_oauth_state(login.state, return_to)
     if state_cookie_name is not None:
         handler.set_cookie(
             state_cookie_name,
@@ -72,7 +78,8 @@ def begin_zenodo_oauth_login(
 def finish_zenodo_oauth_callback(
     handler: tornado.web.RequestHandler,
     *,
-    auth_service: ZenodoAuthService,
+    oauth_config: OAuthClientConfig,
+    pop_oauth_state: PopOAuthState,
     on_success: OnOAuthSuccess,
     state_cookie_name: str | None = None,
 ) -> None:
@@ -107,7 +114,16 @@ def finish_zenodo_oauth_callback(
         return
 
     try:
-        callback = auth_service.finish_login(code=code, state=state)
+        return_to = pop_oauth_state(state)
+        if return_to is None:
+            raise OAuthStateError("Unknown or expired OAuth state")
+        token = exchange_oauth_code(oauth_config, code=code)
+        callback = OAuthCallback(
+            return_to=return_to,
+            zenodo_user_id=token.zenodo_user_id,
+            access_token=token.access_token,
+            token_response=token.token_response,
+        )
     except OAuthStateError as error:
         write_json(handler, {"message": str(error)}, HTTPStatus.BAD_REQUEST)
         return
