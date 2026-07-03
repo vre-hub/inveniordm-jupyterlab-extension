@@ -41,10 +41,6 @@ export function useAccessTokenEventListener(onEvent: () => void): void {
   return useEventListener('auth.status.changed', onEvent);
 }
 
-export type PutDeleteAccessTokenResponse = {
-  message: string;
-};
-
 export type ZenodoMeResponse = {
   email: string;
   id: number;
@@ -80,27 +76,6 @@ export function constructZenodoAuthUrl(
     URLExt.join(serverSettings.baseUrl, 'zenodo-jupyterlab', 'auth', action) +
     `?${params.toString()}`
   );
-}
-
-
-
-export async function putAccessToken(
-  serverSettings: ServerConnection.ISettings,
-  token: string
-): Promise<PutDeleteAccessTokenResponse> {
-  return await requestAPI('access-token', serverSettings, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ access_token: token })
-  });
-}
-
-export async function deleteAccessToken(
-  serverSettings: ServerConnection.ISettings
-): Promise<PutDeleteAccessTokenResponse> {
-  return await requestAPI('access-token', serverSettings, {
-    method: 'DELETE'
-  });
 }
 
 export async function searchZenodoRecords(

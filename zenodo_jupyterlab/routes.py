@@ -61,45 +61,13 @@ class ZenodoAccessTokenHandler(APIHandler):
     def initialize(
         self,
         zenodo_requests_factory: ZenodoRequestsFactory,
-        event_bus: EventBus,
     ):
         self.zenodo_requests_factory = zenodo_requests_factory
-        self.event_bus = event_bus
-
-    def _publish_access_token_status(self) -> None:
-        """
-        Notify the frontend that the access token status has changed
-        (e.g. after a token has been added or removed).
-        """
-        self.event_bus.publish(
-            self.current_user.username,
-            "auth.status.changed",
-        )
 
     @tornado.web.authenticated
     def get(self):
         status = self.zenodo_requests_factory.get_access_token_status(self)
         self.finish(json.dumps(status.__dict__))
-
-    @tornado.web.authenticated
-    def put(self):
-        try:
-            self.zenodo_requests_factory.put_access_token(self)
-        except NotImplementedError as error:
-            self.set_status(501)
-            self.finish(json.dumps({"message": str(error)}))
-            return
-        self._publish_access_token_status()
-
-    @tornado.web.authenticated
-    def delete(self):
-        try:
-            self.zenodo_requests_factory.delete_access_token(self)
-        except NotImplementedError as error:
-            self.set_status(501)
-            self.finish(json.dumps({"message": str(error)}))
-            return
-        self._publish_access_token_status()
 
 
 class ZenodoAuthHandler(APIHandler):
@@ -456,10 +424,7 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "access-token"),
             ZenodoAccessTokenHandler,
-            {
-                "zenodo_requests_factory": zenodo_requests_factory,
-                "event_bus": event_bus,
-            },
+            {"zenodo_requests_factory": zenodo_requests_factory},
         ),
         (
             url_path_join(zenodo_base_url, "auth", r"(login|logout|callback)"),

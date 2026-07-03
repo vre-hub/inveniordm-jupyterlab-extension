@@ -43,9 +43,3 @@ class ZenodoRequestsFactory(ABC):
 
     def handle_auth(self, handler: APIHandler, action: str) -> None:
         raise NotImplementedError("OAuth proxy authentication is not configured")
-
-    def put_access_token(self, handler: APIHandler) -> None:
-        raise NotImplementedError("Manual Zenodo access tokens are not configured")
-
-    def delete_access_token(self, handler: APIHandler) -> None:
-        raise NotImplementedError("Manual Zenodo access tokens are not configured")

@@ -2,7 +2,6 @@ import React from 'react';
 
 import { AuthButtons } from './AuthButtons';
 import { LoginStatusPill } from './LoginStatusPill';
-import { ManualAccessTokenForm } from './ManualAccessTokenForm';
 import { ZenodoUserProfile } from './ZenodoUserProfile';
 
 export const ZenodoLoginForm: React.FC = () => {
@@ -10,8 +9,6 @@ export const ZenodoLoginForm: React.FC = () => {
     <>
       <LoginStatusPill />
       <AuthButtons sandbox={false} />
-      <hr />
-      <ManualAccessTokenForm />
       <hr />
       <ZenodoUserProfile />
     </>
