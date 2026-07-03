@@ -462,7 +462,7 @@ def setup_route_handlers(web_app):
             },
         ),
         (
-            url_path_join(zenodo_base_url, "auth", r"(login|logout)"),
+            url_path_join(zenodo_base_url, "auth", r"(login|logout|callback)"),
             ZenodoAuthHandler,
             {"zenodo_requests_factory": zenodo_requests_factory},
         ),
