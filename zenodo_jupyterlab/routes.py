@@ -420,7 +420,7 @@ def setup_route_handlers(web_app):
     base_url = web_app.settings["base_url"]
     event_bus = EventBus()
     zenodo_download_manager = ZenodoDownloadManager(_default_downloads_dir())
-    zenodo_requests_factory = create_zenodo_requests_factory("proxy")
+    zenodo_requests_factory = create_zenodo_requests_factory("local")
 
     def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
         return zenodo_requests_factory.create_zenodo_requests(handler)
