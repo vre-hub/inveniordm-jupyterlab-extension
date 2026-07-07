@@ -2,7 +2,9 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
+import { FileDialog } from '@jupyterlab/filebrowser';
 import { INotebookTracker } from '@jupyterlab/notebook';
+import { IDocumentManager } from '@jupyterlab/docmanager';
 
 import { insertZenodoCell } from './insertCell';
 import { requestAPI } from './request';
@@ -16,12 +18,33 @@ const plugin: JupyterFrontEndPlugin<void> = {
   id: 'zenodo_jupyterlab:plugin',
   description: 'Integrates Zenodo into JupyterLab.',
   autoStart: true,
-  requires: [INotebookTracker],
-  activate: (app: JupyterFrontEnd, notebooks: INotebookTracker) => {
+  requires: [INotebookTracker, IDocumentManager],
+  activate: (
+    app: JupyterFrontEnd,
+    notebooks: INotebookTracker,
+    docManager: IDocumentManager
+  ) => {
     console.log('JupyterLab extension zenodo_jupyterlab is activated!');
 
     initializeZenodoStore({
       insertZenodoCell: action => insertZenodoCell(action, notebooks),
+      pickDownloadDirectory: async () => {
+        const result = await FileDialog.getExistingDirectory({
+          manager: docManager,
+          title: 'Select download directory',
+          label: 'Choose a directory for Zenodo downloads'
+        });
+
+        if (
+          !result.button.accept ||
+          !result.value ||
+          result.value.length === 0
+        ) {
+          return null;
+        }
+
+        return result.value[0].path;
+      },
       serverSettings: app.serviceManager.serverSettings
     });
 
