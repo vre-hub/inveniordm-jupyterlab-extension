@@ -51,9 +51,11 @@ fields = ["description", "authors", "urls", "keywords"]
 artifacts = ["zenodo_jupyterlab/labextension"]
 exclude = [".github", "binder"]
 
+[tool.hatch.build.targets.wheel]
+packages = ["zenodo_jupyterlab", "zenodo_auth"]
+
 [tool.hatch.build.targets.wheel.shared-data]
 "zenodo_jupyterlab/labextension" = "share/jupyter/labextensions/zenodo_jupyterlab"
-"install.json" = "share/jupyter/labextensions/zenodo_jupyterlab/install.json"
 "jupyter-config/server-config" = "etc/jupyter/jupyter_server_config.d"
 
 [tool.hatch.build.hooks.version]
