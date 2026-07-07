@@ -4,7 +4,7 @@ from typing import Any
 
 
 def _make_file_variable_name(*, deposition_id: int | str, path: Path) -> str:
-    name = f"zenodo_{deposition_id}_{path.stem}"
+    name = f"{path.stem}_{deposition_id}"
     name = re.sub(r"\W+", "_", name).strip("_").lower()
     return name or "zenodo_file"
 

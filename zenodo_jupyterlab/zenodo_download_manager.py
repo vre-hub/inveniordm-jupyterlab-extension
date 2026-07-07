@@ -45,22 +45,26 @@ class ZenodoDownloadManager:
 
     def get_download_status(
         self,
+        zenodo_requests: ZenodoFileSource,
         *,
         deposition_id: int | str,
         file_id: str,
     ) -> dict[str, object]:
         return self.zenodo_downloads.get_download_status(
+            zenodo_requests,
             deposition_id=deposition_id,
             file_id=file_id,
         )
 
     def delete_download(
         self,
+        zenodo_requests: ZenodoFileSource,
         *,
         deposition_id: int | str,
         file_id: str,
     ) -> dict[str, object]:
         return self.zenodo_downloads.delete_download(
+            zenodo_requests,
             deposition_id=deposition_id,
             file_id=file_id,
         )

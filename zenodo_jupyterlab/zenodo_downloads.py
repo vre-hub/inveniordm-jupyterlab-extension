@@ -32,13 +32,18 @@ class ZenodoDownloads:
 
     def get_download_status(
         self,
+        zenodo_requests: ZenodoFileSource,
         *,
         deposition_id: int | str,
         file_id: str,
     ) -> dict[str, object]:
-        existing_file = self.location_manager.find_downloaded_file(
+        file_metadata = zenodo_requests.get_zenodo_deposition_file(
             deposition_id=deposition_id,
             file_id=file_id,
+        )
+        existing_file = self.location_manager.find_downloaded_file_from_metadata(
+            file_metadata,
+            deposition_id=deposition_id,
         )
         return {
             "downloaded": existing_file is not None,
@@ -47,13 +52,18 @@ class ZenodoDownloads:
 
     def delete_download(
         self,
+        zenodo_requests: ZenodoFileSource,
         *,
         deposition_id: int | str,
         file_id: str,
     ) -> dict[str, object]:
-        existing_file = self.location_manager.find_downloaded_file(
+        file_metadata = zenodo_requests.get_zenodo_deposition_file(
             deposition_id=deposition_id,
             file_id=file_id,
+        )
+        existing_file = self.location_manager.find_downloaded_file_from_metadata(
+            file_metadata,
+            deposition_id=deposition_id,
         )
         if existing_file is None:
             return {"deleted": False, "path": None}
@@ -84,7 +94,6 @@ class ZenodoDownloads:
         destination = self.location_manager.download_location_from_metadata(
             file_metadata,
             deposition_id=deposition_id,
-            file_id=file_id,
         )
 
         response = zenodo_requests.open_zenodo_file(file_url=file_url)

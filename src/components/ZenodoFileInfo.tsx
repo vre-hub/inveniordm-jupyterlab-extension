@@ -14,7 +14,7 @@ export const ZenodoFileInfo: React.FC<{
   const insertZenodoCell = useInsertZenodoCell();
   const [downloadId, setDownloadId] = React.useState<string | null>(null);
   const filename = file.key ?? file.filename ?? file.id ?? 'download';
-  const fileId = file.file_id;
+  const fileId = file.file_id ?? file.id ?? null;
 
   const download = async (): Promise<void> => {
     const response = await downloadZenodoFile(

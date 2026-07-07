@@ -302,11 +302,16 @@ class ZenodoFileDownloadHandler(APIHandler):
 
         try:
             result = self.get_zenodo_download_manager().delete_download(
+                self.get_zenodo_requests(self),
                 deposition_id=deposition_id,
                 file_id=file_id,
             )
         except ValueError as error:
             self.set_status(400)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
             self.finish(json.dumps({"message": str(error)}))
             return
 
@@ -335,7 +340,12 @@ class ZenodoDownloadCancelHandler(APIHandler):
 
 
 class ZenodoFileDownloadStatusHandler(APIHandler):
-    def initialize(self, get_zenodo_download_manager: GetZenodoDownloadManager):
+    def initialize(
+        self,
+        get_zenodo_requests: GetZenodoRequests,
+        get_zenodo_download_manager: GetZenodoDownloadManager,
+    ):
+        self.get_zenodo_requests = get_zenodo_requests
         self.get_zenodo_download_manager = get_zenodo_download_manager
 
     @tornado.web.authenticated
@@ -352,11 +362,16 @@ class ZenodoFileDownloadStatusHandler(APIHandler):
 
         try:
             status = self.get_zenodo_download_manager().get_download_status(
+                self.get_zenodo_requests(self),
                 deposition_id=deposition_id,
                 file_id=file_id,
             )
         except ValueError as error:
             self.set_status(400)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
             self.finish(json.dumps({"message": str(error)}))
             return
 
@@ -474,7 +489,10 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "files", "status"),
             ZenodoFileDownloadStatusHandler,
-            {"get_zenodo_download_manager": get_zenodo_download_manager},
+            {
+                "get_zenodo_requests": get_zenodo_requests,
+                "get_zenodo_download_manager": get_zenodo_download_manager,
+            },
         ),
         (
             url_path_join(
