@@ -12,10 +12,9 @@ class ZenodoDownloadManager:
     def __init__(
         self,
         downloads_dir: Path,
-        zenodo_downloads: ZenodoDownloads | None = None,
         download_job_manager: DownloadJobManager | None = None,
     ):
-        self.zenodo_downloads = zenodo_downloads or ZenodoDownloads(downloads_dir)
+        self.zenodo_downloads = ZenodoDownloads(downloads_dir)
         self.download_job_manager = download_job_manager or DownloadJobManager()
 
     def start_download(

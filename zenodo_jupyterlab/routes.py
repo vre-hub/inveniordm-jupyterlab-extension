@@ -10,6 +10,9 @@ from jupyter_server.utils import url_path_join
 import tornado
 import requests
 
+from zenodo_jupyterlab.user_settings import ZenodoUserSettingsFromFile, ZenodoUserSettings
+from zenodo_jupyterlab.util.download_job_manager import DownloadJobManager
+
 from .cell_actions import make_zenodo_import_cell_action
 from .zenodo_auth.auth_controller import ZenodoAuthController
 from .zenodo_download_manager import ZenodoDownloadManager
@@ -22,8 +25,8 @@ from .zenodo_requests.zenodo_requests_factory_create import (
 from .util.sse import EventBus, stream_user_events
 
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
-GetZenodoDownloadManager = Callable[[], ZenodoDownloadManager]
-
+GetZenodoDownloadManager = Callable[[APIHandler], ZenodoDownloadManager]
+GetUserSettings = Callable[[APIHandler], ZenodoUserSettings]
 
 
 def get_user_id(handler: APIHandler) -> str:
@@ -280,7 +283,7 @@ class ZenodoFileDownloadHandler(APIHandler):
                     _download_status_changed_topic(deposition_id, file_id),
                 )
 
-        download_id = self.get_zenodo_download_manager().start_download(
+        download_id = self.get_zenodo_download_manager(self).start_download(
             zenodo_requests,
             deposition_id=deposition_id,
             file_id=file_id,
@@ -301,7 +304,7 @@ class ZenodoFileDownloadHandler(APIHandler):
             return
 
         try:
-            result = self.get_zenodo_download_manager().delete_download(
+            result = self.get_zenodo_download_manager(self).delete_download(
                 self.get_zenodo_requests(self),
                 deposition_id=deposition_id,
                 file_id=file_id,
@@ -330,7 +333,7 @@ class ZenodoDownloadCancelHandler(APIHandler):
 
     @tornado.web.authenticated
     def post(self, download_id: str):
-        progress = self.get_zenodo_download_manager().cancel(download_id)
+        progress = self.get_zenodo_download_manager(self).cancel(download_id)
         if progress is None:
             self.set_status(404)
             self.finish(json.dumps({"message": "Unknown download"}))
@@ -361,7 +364,7 @@ class ZenodoFileDownloadStatusHandler(APIHandler):
             return
 
         try:
-            status = self.get_zenodo_download_manager().get_download_status(
+            status = self.get_zenodo_download_manager(self).get_download_status(
                 self.get_zenodo_requests(self),
                 deposition_id=deposition_id,
                 file_id=file_id,
@@ -401,7 +404,7 @@ class ZenodoFileImportCellHandler(APIHandler):
 
         try:
             zenodo_requests = self.get_zenodo_requests(self)
-            destination = self.get_zenodo_download_manager().get_download_location(
+            destination = self.get_zenodo_download_manager(self).get_download_location(
                 zenodo_requests,
                 deposition_id=deposition_id,
                 file_id=file_id,
@@ -430,18 +433,66 @@ class ZenodoFileImportCellHandler(APIHandler):
         self.finish(json.dumps(action))
 
 
+class ZenodoDownloadLocationSettingHandler(APIHandler):
+
+    def initialize(self, get_user_settings: GetUserSettings):
+        self.get_user_settings = get_user_settings
+
+    @tornado.web.authenticated
+    def get(self):
+        """
+        Get the current downloads directory.
+        """
+        downloads_dir = self.get_user_settings(self).get_downloads_directory()
+        self.finish(json.dumps({"downloads_dir": str(downloads_dir)}))
+
+    @tornado.web.authenticated
+    def post(self):
+        """
+        Set the downloads directory.
+        """
+        data = self.get_json_body() or {}
+        downloads_dir = data.get("downloads_dir")
+        if not downloads_dir:
+            self.set_status(400)
+            self.finish(json.dumps({"message": "Missing downloads_dir"}))
+            return
+
+        try:
+            self.get_user_settings(self).set_downloads_directory(downloads_dir)
+        except ValueError as error:
+            self.set_status(400)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps({"downloads_dir": str(self.get_user_settings(self).get_downloads_directory())}))
+
+    @tornado.web.authenticated
+    def delete(self):
+        """
+        Unset the configured downloads directory.
+        """
+        self.get_user_settings(self).unset_downloads_directory()
+        self.finish(json.dumps({"downloads_dir": str(self.get_user_settings(self).get_downloads_directory())}))
+
 def setup_route_handlers(web_app):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
     event_bus = EventBus()
-    zenodo_download_manager = ZenodoDownloadManager(_default_downloads_dir())
+    download_job_manager = DownloadJobManager()
     zenodo_requests_factory = create_zenodo_requests_factory("local")
 
     def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
         return zenodo_requests_factory.create_zenodo_requests(handler)
 
-    def get_zenodo_download_manager() -> ZenodoDownloadManager:
-        return zenodo_download_manager
+    def get_user_settings(handler: APIHandler) -> ZenodoUserSettings:
+        contents_manager = handler.settings["contents_manager"]
+        root_dir = Path(contents_manager.root_dir)
+        return ZenodoUserSettingsFromFile(root_dir)
+
+    def get_zenodo_download_manager(handler: APIHandler) -> ZenodoDownloadManager:
+        settings = get_user_settings(handler)
+        return ZenodoDownloadManager(settings.get_downloads_directory(), download_job_manager=download_job_manager)
 
     zenodo_base_url = url_path_join(base_url, "zenodo-jupyterlab")
     handlers = [
@@ -512,6 +563,11 @@ def setup_route_handlers(web_app):
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_zenodo_download_manager": get_zenodo_download_manager,
             },
+        ),
+        (
+            url_path_join(zenodo_base_url, "settings", "downloads-directory"),
+            ZenodoDownloadLocationSettingHandler,
+            {"get_user_settings": get_user_settings},
         ),
     ]
 

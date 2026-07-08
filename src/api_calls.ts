@@ -52,6 +52,35 @@ export async function getZenodoMe(
   return await requestAPI<ZenodoMeResponse>('me', serverSettings);
 }
 
+export type SetZenodoDownloadDirectoryResponse = {
+  downloads_dir: string;
+};
+
+export async function setZenodoDownloadDirectory(
+  serverSettings: ServerConnection.ISettings,
+  downloadsDir: string
+): Promise<SetZenodoDownloadDirectoryResponse> {
+  return await requestAPI<SetZenodoDownloadDirectoryResponse>(
+    'settings/downloads-directory',
+    serverSettings,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ downloads_dir: downloadsDir })
+    }
+  );
+}
+
+export async function unsetZenodoDownloadDirectory(
+  serverSettings: ServerConnection.ISettings
+): Promise<SetZenodoDownloadDirectoryResponse> {
+  return await requestAPI<SetZenodoDownloadDirectoryResponse>(
+    'settings/downloads-directory',
+    serverSettings,
+    { method: 'DELETE' }
+  );
+}
+
 /**
  * Construct the URL for Zenodo authentication (login or logout),
  * with the correct return URL and sandbox parameter.
