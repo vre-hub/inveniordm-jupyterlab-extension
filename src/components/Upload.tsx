@@ -50,6 +50,10 @@ export const Upload: React.FC = () => {
   return (
     <form onSubmit={onSubmit}>
       <h2>Upload</h2>
+      <p>
+        Upload files to a Zenodo draft.
+        You will be able to edit the draft metadata and publish it on Zenodo after the upload.
+      </p>
       <PickFilesButton
         buttonText="Select files"
         onFilesSelected={files => setFilePaths(files)}
