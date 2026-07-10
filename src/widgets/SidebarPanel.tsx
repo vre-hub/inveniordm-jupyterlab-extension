@@ -7,6 +7,7 @@ import { ZenodoLoginForm } from '../components/ZenodoLoginForm';
 import { ZenodoSearch } from '../components/ZenodoSearch';
 import { setCurrentTabID, useCurrentTabID } from '../store';
 import { DeveloperSettings } from '../components/DeveloperSettings';
+import { Upload } from '../components/Upload';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
 
@@ -17,18 +18,20 @@ type SidebarTab = TabItem<string> & {
 const TABS: SidebarTab[] = [
   { id: 'login', label: 'Login', Component: ZenodoLoginForm },
   { id: 'search', label: 'Search', Component: ZenodoSearch },
+  { id: 'upload', label: 'Upload', Component: Upload },
   {
     id: 'settings',
     label: 'Settings',
-    Component: DeveloperSettings,
+    Component: DeveloperSettings
   },
   { id: 'account', label: 'My Account', Component: ZenodoDepositions }
 ];
 
-
 const Panel: React.FC = () => {
   const currentTabID = useCurrentTabID();
-  const SelectedTabComponent = (TABS.find(tab => tab.id === currentTabID) ?? TABS[0]).Component;
+  const SelectedTabComponent = (
+    TABS.find(tab => tab.id === currentTabID) ?? TABS[0]
+  ).Component;
 
   return (
     <div className={PANEL_CLASS}>

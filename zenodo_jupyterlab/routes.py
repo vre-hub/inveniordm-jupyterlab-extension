@@ -28,6 +28,34 @@ GetZenodoDownloadManager = Callable[[APIHandler], ZenodoDownloadManager]
 GetUserSettings = Callable[[APIHandler], ZenodoUserSettings]
 
 
+def _contents_root(handler: APIHandler) -> Path:
+    contents_manager = handler.settings["contents_manager"]
+    return Path(contents_manager.root_dir).resolve()
+
+
+def _resolve_contents_file_paths(
+    handler: APIHandler,
+    file_paths: list[str],
+) -> list[Path]:
+    """
+    Convert a list of file paths that are relative to the Jupyter root into absolute paths on the filesystem.
+    """
+    root_dir = _contents_root(handler)
+    resolved_paths = []
+
+    for file_path in file_paths:
+        path = (root_dir / file_path).resolve()
+        if not path.is_relative_to(root_dir):
+            raise ValueError(f"File is outside the Jupyter root: {file_path}")
+        if not path.exists():
+            raise ValueError(f"File does not exist: {file_path}")
+        if not path.is_file():
+            raise ValueError(f"Path is not a file: {file_path}")
+        resolved_paths.append(path)
+
+    return resolved_paths
+
+
 def get_user_id(handler: APIHandler) -> str:
     """
     Get a unique ID for the current user.
@@ -208,6 +236,48 @@ class ZenodoDepositionsHandler(APIHandler):
             return
 
         self.finish(json.dumps(depositions))
+
+class ZenodoMinimalDepositionDraftHandler(APIHandler):
+    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+        self.get_zenodo_requests = get_zenodo_requests
+
+    @tornado.web.authenticated
+    def post(self):
+        data = self.get_json_body() or {}
+        file_paths = data.get("file_paths")
+
+        if not isinstance(file_paths, list) or not file_paths:
+            self.set_status(400)
+            self.finish(json.dumps({"message": "Missing file_paths"}))
+            return
+
+        if not all(isinstance(file_path, str) for file_path in file_paths):
+            self.set_status(400)
+            self.finish(json.dumps({"message": "file_paths must be strings"}))
+            return
+
+        try:
+            deposition = self.get_zenodo_requests(
+                self
+            ).create_minimal_deposition_draft(
+                file_paths=_resolve_contents_file_paths(self, file_paths),
+            )
+        except ValueError as error:
+            self.set_status(400)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+        except KeyError as error:
+            self.set_status(502)
+            self.finish(
+                json.dumps({"message": f"Missing field in Zenodo response: {error}"})
+            )
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps(deposition))
 
 
 class ZenodoFileDownloadHandler(APIHandler):
@@ -454,9 +524,7 @@ def setup_route_handlers(web_app):
         return zenodo_requests_factory.create_zenodo_requests(handler)
 
     def get_user_settings(handler: APIHandler) -> ZenodoUserSettings:
-        contents_manager = handler.settings["contents_manager"]
-        root_dir = Path(contents_manager.root_dir)
-        return ZenodoUserSettingsFromFile(root_dir)
+        return ZenodoUserSettingsFromFile(_contents_root(handler))
 
     def get_zenodo_download_manager(handler: APIHandler) -> ZenodoDownloadManager:
         settings = get_user_settings(handler)
@@ -493,6 +561,11 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "depositions"),
             ZenodoDepositionsHandler,
+            {"get_zenodo_requests": get_zenodo_requests},
+        ),
+        (
+            url_path_join(zenodo_base_url, "depositions", "minimal-draft"),
+            ZenodoMinimalDepositionDraftHandler,
             {"get_zenodo_requests": get_zenodo_requests},
         ),
         (

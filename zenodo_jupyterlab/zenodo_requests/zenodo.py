@@ -4,8 +4,8 @@ TODO consider using httpx instead of requests, for async support.
 """
 
 from collections.abc import Iterable
-from typing import Any, Protocol
-from urllib.parse import urlparse, urlunparse
+from typing import Any, BinaryIO, Protocol
+from urllib.parse import quote, urlparse, urlunparse
 
 import requests
 
@@ -243,6 +243,48 @@ def list_zenodo_depositions(
         params={"page": page, "size": size},
         headers=_headers(headers),
         timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def create_zenodo_deposition(
+    *,
+    base_url: str,
+    headers: dict[str, str] | None,
+) -> dict[str, Any]:
+    """
+    Create an empty Zenodo deposition draft.
+    """
+    response = requests.post(
+        f"{_normalize_base_url(base_url)}/api/deposit/depositions",
+        json={},
+        headers=_headers({"Content-Type": "application/json", **(headers or {})}),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def upload_zenodo_deposition_file(
+    bucket_url: str,
+    *,
+    base_url: str,
+    headers: dict[str, str] | None,
+    filename: str,
+    content: bytes | BinaryIO,
+) -> dict[str, Any]:
+    """
+    Upload one file to a Zenodo deposition bucket.
+    """
+    upload_url = f"{bucket_url.rstrip('/')}/{quote(filename)}"
+    response = requests.put(
+        _rebase_zenodo_url(upload_url, base_url=base_url),
+        data=content,
+        headers=_headers(
+            {"Content-Type": "application/octet-stream", **(headers or {})}
+        ),
+        timeout=30,
     )
     response.raise_for_status()
     return response.json()

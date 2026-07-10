@@ -129,6 +129,32 @@ export async function listZenodoDepositions(
   );
 }
 
+export type MinimalDepositionDraftResponse = {
+  id: number;
+  links?: {
+    latest_draft_html?: string;
+    self?: string;
+  };
+  title?: string;
+  state?: string;
+  submitted?: boolean;
+};
+
+export async function createMinimalDepositionDraft(
+  serverSettings: ServerConnection.ISettings,
+  filePaths: string[]
+): Promise<MinimalDepositionDraftResponse> {
+  return await requestAPI<MinimalDepositionDraftResponse>(
+    'depositions/minimal-draft',
+    serverSettings,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_paths: filePaths })
+    }
+  );
+}
+
 export type DownloadZenodoFileResponse = {
   download_id: string;
 };
