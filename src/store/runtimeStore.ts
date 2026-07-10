@@ -1,7 +1,7 @@
 import { ServerConnection } from '@jupyterlab/services';
 import { create } from 'zustand';
 
-import type { InsertZenodoCellAction } from '../insertCell';
+import type { InsertZenodoCellAction } from '../jupyterlab_interactions';
 
 interface IZenodoRuntimeState {
   insertZenodoCell: ((action: InsertZenodoCellAction) => void) | undefined;

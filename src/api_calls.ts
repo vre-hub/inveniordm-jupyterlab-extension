@@ -2,7 +2,7 @@ import React from 'react';
 import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 
-import type { InsertZenodoCellAction } from './insertCell';
+import type { InsertZenodoCellAction } from './jupyterlab_interactions';
 import { requestAPI } from './request';
 import { useEventData, useEventListener } from './sse';
 import { useServerSettings } from './store';

@@ -2,11 +2,14 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { FileDialog } from '@jupyterlab/filebrowser';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { IDocumentManager } from '@jupyterlab/docmanager';
 
-import { insertZenodoCell } from './insertCell';
+import {
+  insertZenodoCell,
+  pickDownloadDirectory,
+  pickUploadFiles
+} from './jupyterlab_interactions';
 import { requestAPI } from './request';
 import { initializeZenodoStore } from './store';
 import { SidebarPanel } from './widgets/SidebarPanel';
@@ -28,44 +31,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
     initializeZenodoStore({
       insertZenodoCell: action => insertZenodoCell(action, notebooks),
-      pickDownloadDirectory: async () => {
-        const result = await FileDialog.getExistingDirectory({
-          manager: docManager,
-          title: 'Select download directory',
-          label: 'Choose a directory for Zenodo downloads'
-        });
-
-        if (
-          !result.button.accept ||
-          !result.value ||
-          result.value.length === 0
-        ) {
-          return null;
-        }
-
-        return result.value[0].path;
-      },
-      pickUploadFiles: async () => {
-        const result = await FileDialog.getOpenFiles({
-          manager: docManager,
-          title: 'Select files',
-          label: 'Choose files to upload to Zenodo',
-          filter: model => {
-            return model.type === 'file' ? {} : null;
-          }
-        });
-
-        if (!result.button.accept || !result.value) {
-          return null;
-        }
-
-        const files = result.value.filter(model => model.type === 'file');
-        if (files.length === 0) {
-          return null;
-        }
-
-        return files.map(file => file.path);
-      },
+      pickDownloadDirectory: () => pickDownloadDirectory(docManager),
+      pickUploadFiles: () => pickUploadFiles(docManager),
       serverSettings: app.serviceManager.serverSettings
     });
 
