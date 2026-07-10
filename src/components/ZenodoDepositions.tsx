@@ -25,11 +25,14 @@ export const ZenodoDepositions: React.FC = () => {
     }
   };
 
+  React.useEffect(() => {
+    loadDepositions();
+  }, [serverSettings]);
+
   return (
     <div>
-      <button disabled={isLoading} onClick={loadDepositions} type="button">
-        {isLoading ? 'Loading...' : 'Load depositions'}
-      </button>
+      <h2>My Records</h2>
+      {isLoading && <p>Loading...</p>}
       {Array.isArray(depositions)
         ? depositions.map(deposition => (
             <ZenodoResource resource={deposition} key={deposition.id} />
