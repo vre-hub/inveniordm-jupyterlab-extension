@@ -8,7 +8,10 @@ export function DeveloperSettings(): JSX.Element {
   return (
     <>
       <ZenodoSandboxOverrideSetting />
+      <hr />
       <AuthButtons sandbox={true} />
+      <hr />
+      <b>Download Directory: </b>
       <SelectDownloadDirectory />
     </>
   );
