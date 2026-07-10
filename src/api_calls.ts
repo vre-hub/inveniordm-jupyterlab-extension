@@ -140,11 +140,24 @@ export type MinimalDepositionDraftResponse = {
   submitted?: boolean;
 };
 
+export type CreateMinimalDepositionDraftResponse = {
+  upload_id: string;
+};
+
+export type UploadProgressResponse = {
+  status: 'pending' | 'running' | 'done' | 'error';
+  bytes_uploaded: number;
+  total_bytes: number;
+  current_file: string | null;
+  message: string | null;
+  deposition: MinimalDepositionDraftResponse | null;
+};
+
 export async function createMinimalDepositionDraft(
   serverSettings: ServerConnection.ISettings,
   filePaths: string[]
-): Promise<MinimalDepositionDraftResponse> {
-  return await requestAPI<MinimalDepositionDraftResponse>(
+): Promise<CreateMinimalDepositionDraftResponse> {
+  return await requestAPI<CreateMinimalDepositionDraftResponse>(
     'depositions/minimal-draft',
     serverSettings,
     {
@@ -152,6 +165,23 @@ export async function createMinimalDepositionDraft(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ file_paths: filePaths })
     }
+  );
+}
+
+export function useUploadProgress(uploadId: string) {
+  return useEventData<UploadProgressResponse | null>(
+    `upload.progress.${uploadId}`,
+    null
+  );
+}
+
+export async function getUploadProgress(
+  serverSettings: ServerConnection.ISettings,
+  uploadId: string
+): Promise<UploadProgressResponse> {
+  return await requestAPI<UploadProgressResponse>(
+    `depositions/uploads/${uploadId}`,
+    serverSettings
   );
 }
 

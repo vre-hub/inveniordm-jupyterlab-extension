@@ -11,6 +11,7 @@ import requests
 
 from zenodo_jupyterlab.user_settings import ZenodoUserSettingsFromFile, ZenodoUserSettings
 from zenodo_jupyterlab.util.download_job_manager import DownloadJobManager
+from zenodo_jupyterlab.util.upload_job_manager import UploadJobManager
 
 from .cell_actions import make_zenodo_import_cell_action
 from .zenodo_auth.auth_controller import ZenodoAuthController
@@ -25,6 +26,7 @@ from .util.sse import EventBus, stream_user_events
 
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 GetZenodoDownloadManager = Callable[[APIHandler], ZenodoDownloadManager]
+GetZenodoUploadManager = Callable[[APIHandler], UploadJobManager]
 GetUserSettings = Callable[[APIHandler], ZenodoUserSettings]
 
 
@@ -238,8 +240,15 @@ class ZenodoDepositionsHandler(APIHandler):
         self.finish(json.dumps(depositions))
 
 class ZenodoMinimalDepositionDraftHandler(APIHandler):
-    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+    def initialize(
+        self,
+        get_zenodo_requests: GetZenodoRequests,
+        get_zenodo_upload_manager: GetZenodoUploadManager,
+        event_bus: EventBus,
+    ):
         self.get_zenodo_requests = get_zenodo_requests
+        self.get_zenodo_upload_manager = get_zenodo_upload_manager
+        self.event_bus = event_bus
 
     @tornado.web.authenticated
     def post(self):
@@ -257,27 +266,48 @@ class ZenodoMinimalDepositionDraftHandler(APIHandler):
             return
 
         try:
-            deposition = self.get_zenodo_requests(
-                self
-            ).create_minimal_deposition_draft(
-                file_paths=_resolve_contents_file_paths(self, file_paths),
-            )
+            resolved_file_paths = _resolve_contents_file_paths(self, file_paths)
         except ValueError as error:
             self.set_status(400)
             self.finish(json.dumps({"message": str(error)}))
             return
-        except KeyError as error:
-            self.set_status(502)
-            self.finish(
-                json.dumps({"message": f"Missing field in Zenodo response: {error}"})
+
+        zenodo_requests = self.get_zenodo_requests(self)
+        user_id = get_user_id(self)
+
+        def publish_upload_progress(
+            upload_id: str,
+            progress: dict[str, object],
+        ) -> None:
+            self.event_bus.publish(
+                user_id,
+                f"upload.progress.{upload_id}",
+                progress,
             )
-            return
-        except requests.RequestException as error:
-            self.set_status(getattr(error.response, "status_code", 502))
-            self.finish(json.dumps({"message": str(error)}))
+
+        upload_id = self.get_zenodo_upload_manager(self).start_upload(
+            lambda on_progress: zenodo_requests.create_minimal_deposition_draft(
+                file_paths=resolved_file_paths,
+                on_upload_progress=on_progress,
+            ),
+            on_progress_changed=publish_upload_progress,
+        )
+        self.finish(json.dumps({"upload_id": upload_id}))
+
+
+class ZenodoUploadProgressHandler(APIHandler):
+    def initialize(self, get_zenodo_upload_manager: GetZenodoUploadManager):
+        self.get_zenodo_upload_manager = get_zenodo_upload_manager
+
+    @tornado.web.authenticated
+    def get(self, upload_id: str):
+        progress = self.get_zenodo_upload_manager(self).get_progress(upload_id)
+        if progress is None:
+            self.set_status(404)
+            self.finish(json.dumps({"message": "Unknown upload"}))
             return
 
-        self.finish(json.dumps(deposition))
+        self.finish(json.dumps(progress))
 
 
 class ZenodoFileDownloadHandler(APIHandler):
@@ -518,6 +548,7 @@ def setup_route_handlers(web_app):
     base_url = web_app.settings["base_url"]
     event_bus = EventBus()
     download_job_manager = DownloadJobManager()
+    upload_job_manager = UploadJobManager()
     zenodo_requests_factory = create_zenodo_requests_factory("local")
 
     def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
@@ -529,6 +560,9 @@ def setup_route_handlers(web_app):
     def get_zenodo_download_manager(handler: APIHandler) -> ZenodoDownloadManager:
         settings = get_user_settings(handler)
         return ZenodoDownloadManager(settings.get_downloads_directory(), download_job_manager=download_job_manager)
+
+    def get_zenodo_upload_manager(handler: APIHandler) -> UploadJobManager:
+        return upload_job_manager
 
     zenodo_base_url = url_path_join(base_url, "zenodo-jupyterlab")
     handlers = [
@@ -566,7 +600,21 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "depositions", "minimal-draft"),
             ZenodoMinimalDepositionDraftHandler,
-            {"get_zenodo_requests": get_zenodo_requests},
+            {
+                "get_zenodo_requests": get_zenodo_requests,
+                "get_zenodo_upload_manager": get_zenodo_upload_manager,
+                "event_bus": event_bus,
+            },
+        ),
+        (
+            url_path_join(
+                zenodo_base_url,
+                "depositions",
+                "uploads",
+                r"([^/]+)",
+            ),
+            ZenodoUploadProgressHandler,
+            {"get_zenodo_upload_manager": get_zenodo_upload_manager},
         ),
         (
             url_path_join(zenodo_base_url, "files", "download"),

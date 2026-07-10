@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO, Callable
 
 from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
@@ -20,6 +20,38 @@ class AccessTokenStatus:
     access_token_present: bool
     access_token_valid: bool
     sandbox: bool
+
+
+UploadProgressCallback = Callable[[int, int, str | None], None]
+
+
+class ProgressReportingReader:
+    def __init__(
+        self,
+        file: BinaryIO,
+        *,
+        on_bytes_read: Callable[[int], None],
+    ):
+        self.file = file
+        self.on_bytes_read = on_bytes_read
+
+    def read(self, size: int = -1) -> bytes:
+        chunk = self.file.read(size)
+        if chunk:
+            self.on_bytes_read(len(chunk))
+        return chunk
+
+    def tell(self) -> int:
+        return self.file.tell()
+
+    def seek(self, offset: int, whence: int = 0) -> int:
+        return self.file.seek(offset, whence)
+
+    def fileno(self) -> int:
+        return self.file.fileno()
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.file, name)
 
 
 class ZenodoRequests:
@@ -100,6 +132,7 @@ class ZenodoRequests:
         self,
         file_paths: list[Path],
         bucket_url: str,
+        on_upload_progress: UploadProgressCallback | None = None,
     ):
         """
         Upload files on the local filesystem to a Zenodo deposition bucket.
@@ -111,20 +144,43 @@ class ZenodoRequests:
         if len(filenames) != len(set(filenames)):
             raise ValueError("Selected files must have unique filenames")
 
+        total_bytes = sum(path.stat().st_size for path in file_paths)
+        bytes_uploaded = 0
+        if on_upload_progress is not None:
+            on_upload_progress(bytes_uploaded, total_bytes, None)
+
         for path in file_paths:
             with path.open("rb") as file:
+                def on_bytes_read(
+                    chunk_size: int,
+                    *,
+                    current_file: str = path.name,
+                ) -> None:
+                    nonlocal bytes_uploaded
+                    bytes_uploaded += chunk_size
+                    if on_upload_progress is not None:
+                        on_upload_progress(
+                            bytes_uploaded,
+                            total_bytes,
+                            current_file,
+                        )
+
                 upload_zenodo_deposition_file(
                     bucket_url,
                     base_url=self.url,
                     headers=self.headers,
                     filename=path.name,
-                    content=file,
+                    content=ProgressReportingReader(
+                        file,
+                        on_bytes_read=on_bytes_read,
+                    ),
                 )
 
     def create_minimal_deposition_draft(
         self,
         *,
         file_paths: list[Path],
+        on_upload_progress: UploadProgressCallback | None = None,
     ) -> dict[str, Any]:
         if not self.headers:
             raise ValueError("Missing Zenodo request authentication headers")
@@ -138,6 +194,7 @@ class ZenodoRequests:
         self.upload_files_to_bucket(
             file_paths=file_paths,
             bucket_url=bucket_url,
+            on_upload_progress=on_upload_progress,
         )
         return deposition
 

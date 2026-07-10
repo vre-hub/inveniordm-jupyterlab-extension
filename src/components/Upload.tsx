@@ -2,15 +2,117 @@ import React from 'react';
 
 import {
   MinimalDepositionDraftResponse,
-  createMinimalDepositionDraft
+  UploadProgressResponse,
+  createMinimalDepositionDraft,
+  getUploadProgress,
+  useUploadProgress
 } from '../api_calls';
 import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
+
+function getDraftUrl(deposition: MinimalDepositionDraftResponse): string {
+  return (
+    deposition.links?.latest_draft_html ??
+    `https://sandbox.zenodo.org/uploads/${deposition.id}`
+  );
+}
+
+const UploadProgress: React.FC<{
+  onDone: (deposition: MinimalDepositionDraftResponse) => void;
+  onError: (message: string) => void;
+  uploadId: string;
+}> = ({ onDone, onError, uploadId }) => {
+  const serverSettings = useServerSettings();
+  const eventProgress = useUploadProgress(uploadId);
+  const [progress, setProgress] =
+    React.useState<UploadProgressResponse | null>(null);
+  const hasHandledTerminalStatus = React.useRef(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    let timeout: number | undefined;
+
+    const loadProgress = async (): Promise<void> => {
+      try {
+        const latestProgress = await getUploadProgress(serverSettings, uploadId);
+        if (isMounted) {
+          setProgress(latestProgress);
+          if (
+            latestProgress.status !== 'done' &&
+            latestProgress.status !== 'error'
+          ) {
+            timeout = window.setTimeout(loadProgress, 1000);
+          }
+        }
+      } catch (reason) {
+        if (isMounted) {
+          onError(String(reason));
+        }
+      }
+    };
+
+    void loadProgress();
+
+    return () => {
+      isMounted = false;
+      if (timeout !== undefined) {
+        window.clearTimeout(timeout);
+      }
+    };
+  }, [onError, serverSettings, uploadId]);
+
+  React.useEffect(() => {
+    if (eventProgress) {
+      setProgress(eventProgress);
+    }
+  }, [eventProgress]);
+
+  React.useEffect(() => {
+    if (!progress || hasHandledTerminalStatus.current) {
+      return;
+    }
+
+    if (progress.status === 'error') {
+      hasHandledTerminalStatus.current = true;
+      onError(progress.message ?? 'Upload failed');
+      return;
+    }
+
+    if (progress.status === 'done' && progress.deposition) {
+      hasHandledTerminalStatus.current = true;
+      onDone(progress.deposition);
+    }
+  }, [onDone, onError, progress]);
+
+  if (!progress) {
+    return <p>Starting upload...</p>;
+  }
+
+  const progressLabel =
+    progress.total_bytes > 0
+      ? `${Math.round((progress.bytes_uploaded / progress.total_bytes) * 100)}%`
+      : `${progress.bytes_uploaded} bytes`;
+
+  return (
+    <div>
+      <progress
+        value={progress.bytes_uploaded}
+        max={progress.total_bytes || undefined}
+      />
+      <span>
+        {progress.status} {progressLabel}
+        {progress.current_file ? ` - ${progress.current_file}` : ''}
+      </span>
+      {progress.message ? <div>{progress.message}</div> : null}
+    </div>
+  );
+};
 
 export const Upload: React.FC = () => {
   const serverSettings = useServerSettings();
   const [filePaths, setFilePaths] = React.useState<string[]>([]);
   const [isCreatingDraft, setIsCreatingDraft] = React.useState(false);
+  const [uploadId, setUploadId] = React.useState<string | null>(null);
   const [result, setResult] =
     React.useState<MinimalDepositionDraftResponse | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -22,30 +124,37 @@ export const Upload: React.FC = () => {
       return;
     }
 
-    const draftTab = window.open('', '_blank');
     setIsCreatingDraft(true);
+    setUploadId(null);
     setResult(null);
     setError(null);
 
     try {
-      const deposition = await createMinimalDepositionDraft(
+      const upload = await createMinimalDepositionDraft(
         serverSettings,
         filePaths
       );
-      setResult(deposition);
-      const draftUrl = `https://sandbox.zenodo.org/uploads/${deposition.id}`;
-      if (draftTab) {
-        draftTab.location.href = draftUrl;
-      } else {
-        window.open(draftUrl, '_blank');
-      }
+      setUploadId(upload.upload_id);
     } catch (reason) {
-      draftTab?.close();
       setError(String(reason));
-    } finally {
       setIsCreatingDraft(false);
     }
   };
+
+  const completeUpload = React.useCallback(
+    (deposition: MinimalDepositionDraftResponse): void => {
+      setResult(deposition);
+      setIsCreatingDraft(false);
+      setUploadId(null);
+    },
+    []
+  );
+
+  const failUpload = React.useCallback((message: string): void => {
+    setError(message);
+    setIsCreatingDraft(false);
+    setUploadId(null);
+  }, []);
 
   return (
     <form onSubmit={onSubmit}>
@@ -66,10 +175,27 @@ export const Upload: React.FC = () => {
         </ul>
       )}
       <button disabled={!canCreateDraft} type="submit">
-        {isCreatingDraft ? 'Creating draft...' : 'Upload to Zenodo Draft'}
+        {isCreatingDraft ? 'Uploading files...' : 'Upload to Zenodo Draft'}
       </button>
+      {uploadId ? (
+        <UploadProgress
+          onDone={completeUpload}
+          onError={failUpload}
+          uploadId={uploadId}
+        />
+      ) : null}
       {error && <p>{error}</p>}
-      {result && <p>Created draft {result.id}</p>}
+      {result && (
+        <div>
+          <p>Created draft {result.id}.</p>
+          <button
+            onClick={() => window.open(getDraftUrl(result), '_blank')}
+            type="button"
+          >
+            Open draft
+          </button>
+        </div>
+      )}
     </form>
   );
 };
