@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, BinaryIO, Callable
 
 from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
+from ..util.progress_reporting_reader import ProgressReportingReader
 from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
     ZenodoFileResponse,
@@ -21,39 +22,6 @@ class AccessTokenStatus:
     access_token_present: bool
     access_token_valid: bool
     sandbox: bool
-
-
-class ProgressReportingReader:
-    def __init__(
-        self,
-        file: BinaryIO,
-        *,
-        on_bytes_read: Callable[[int], None],
-        should_cancel: CancelCheck | None = None,
-    ):
-        self.file = file
-        self.on_bytes_read = on_bytes_read
-        self.should_cancel = should_cancel
-
-    def read(self, size: int = -1) -> bytes:
-        if self.should_cancel is not None and self.should_cancel():
-            raise JobCancelled("Upload canceled")
-        chunk = self.file.read(size)
-        if chunk:
-            self.on_bytes_read(len(chunk))
-        return chunk
-
-    def tell(self) -> int:
-        return self.file.tell()
-
-    def seek(self, offset: int, whence: int = 0) -> int:
-        return self.file.seek(offset, whence)
-
-    def fileno(self) -> int:
-        return self.file.fileno()
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.file, name)
 
 
 class ZenodoRequests:
