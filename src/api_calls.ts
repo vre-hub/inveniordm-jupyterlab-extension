@@ -140,25 +140,35 @@ export type MinimalDepositionDraftResponse = {
   submitted?: boolean;
 };
 
-export type CreateMinimalDepositionDraftResponse = {
-  upload_id: string;
+export type StartJobResponse = {
+  job_id: string;
 };
 
-export type UploadProgressResponse = {
-  status: 'pending' | 'running' | 'canceling' | 'canceled' | 'done' | 'error';
-  bytes_uploaded: number;
-  total_bytes: number;
-  current_file: string | null;
+export type JobStatus =
+  'pending' | 'running' | 'canceling' | 'canceled' | 'done' | 'error';
+
+export type JobResult = {
+  deposition?: MinimalDepositionDraftResponse;
+  path?: string;
+};
+
+export type JobProgressResponse = {
+  job_id: string;
+  job_type: 'upload' | 'download';
+  status: JobStatus;
+  completed_bytes: number;
+  total_bytes: number | null;
+  current_item: string | null;
   message: string | null;
-  deposition: MinimalDepositionDraftResponse | null;
+  result: JobResult | null;
   cancel_requested: boolean;
 };
 
 export async function createMinimalDepositionDraft(
   serverSettings: ServerConnection.ISettings,
   filePaths: string[]
-): Promise<CreateMinimalDepositionDraftResponse> {
-  return await requestAPI<CreateMinimalDepositionDraftResponse>(
+): Promise<StartJobResponse> {
+  return await requestAPI<StartJobResponse>(
     'depositions/minimal-draft',
     serverSettings,
     {
@@ -173,8 +183,8 @@ export async function uploadFilesToDeposition(
   serverSettings: ServerConnection.ISettings,
   depositionId: number,
   filePaths: string[]
-): Promise<CreateMinimalDepositionDraftResponse> {
-  return await requestAPI<CreateMinimalDepositionDraftResponse>(
+): Promise<StartJobResponse> {
+  return await requestAPI<StartJobResponse>(
     `depositions/${depositionId}/files`,
     serverSettings,
     {
@@ -185,46 +195,30 @@ export async function uploadFilesToDeposition(
   );
 }
 
-export function useUploadProgress(uploadId: string) {
-  return useEventData<UploadProgressResponse | null>(
-    `upload.progress.${uploadId}`,
+export function useJobProgress(jobId: string) {
+  return useEventData<JobProgressResponse | null>(
+    `job.progress.${jobId}`,
     null
   );
 }
 
-export async function getUploadProgress(
+export async function getJobProgress(
   serverSettings: ServerConnection.ISettings,
-  uploadId: string
-): Promise<UploadProgressResponse> {
-  return await requestAPI<UploadProgressResponse>(
-    `depositions/uploads/${uploadId}`,
-    serverSettings
-  );
+  jobId: string
+): Promise<JobProgressResponse> {
+  return await requestAPI<JobProgressResponse>(`jobs/${jobId}`, serverSettings);
 }
 
-export async function cancelUpload(
+export async function cancelJob(
   serverSettings: ServerConnection.ISettings,
-  uploadId: string
-): Promise<UploadProgressResponse> {
-  return await requestAPI<UploadProgressResponse>(
-    `depositions/uploads/${uploadId}/cancel`,
+  jobId: string
+): Promise<JobProgressResponse> {
+  return await requestAPI<JobProgressResponse>(
+    `jobs/${jobId}/cancel`,
     serverSettings,
     { method: 'POST' }
   );
 }
-
-export type DownloadZenodoFileResponse = {
-  download_id: string;
-};
-
-export type DownloadProgressResponse = {
-  status: 'pending' | 'running' | 'canceling' | 'canceled' | 'done' | 'error';
-  bytes_downloaded: number;
-  total_bytes: number | null;
-  path: string | null;
-  message: string | null;
-  cancel_requested: boolean;
-};
 
 export type ZenodoFileDownloadStatusResponse = {
   downloaded: boolean;
@@ -240,16 +234,12 @@ export async function downloadZenodoFile(
   serverSettings: ServerConnection.ISettings,
   depositionId: number,
   fileId: string
-): Promise<DownloadZenodoFileResponse> {
-  return await requestAPI<DownloadZenodoFileResponse>(
-    'files/download',
-    serverSettings,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
-    }
-  );
+): Promise<StartJobResponse> {
+  return await requestAPI<StartJobResponse>('files/download', serverSettings, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
+  });
 }
 
 export async function getZenodoFileDownloadStatus(
@@ -281,24 +271,6 @@ export async function deleteZenodoFileDownload(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
     }
-  );
-}
-
-export function useDownloadProgress(downloadId: string) {
-  return useEventData<DownloadProgressResponse | null>(
-    `download.progress.${downloadId}`,
-    null
-  );
-}
-
-export async function cancelDownload(
-  serverSettings: ServerConnection.ISettings,
-  downloadId: string
-): Promise<DownloadProgressResponse> {
-  return await requestAPI<DownloadProgressResponse>(
-    `files/downloads/${downloadId}/cancel`,
-    serverSettings,
-    { method: 'POST' }
   );
 }
 

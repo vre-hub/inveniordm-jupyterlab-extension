@@ -12,24 +12,13 @@ class JobCancelled(Exception):
 
 
 @dataclass
-class UploadProgress:
+class JobProgress:
+    job_type: str
+    job_id: str = ""
     status: str = "pending"
-    bytes_uploaded: int = 0
-    total_bytes: int = 0
-    current_file: str | None = None
-    message: str | None = None
-    deposition: dict[str, object] | None = None
-    cancel_requested: bool = False
-
-
-@dataclass
-class DownloadProgress:
-    status: str = "pending"
-    bytes_downloaded: int = 0
+    completed_bytes: int = 0
     total_bytes: int | None = None
-    path: str | None = None
+    current_item: str | None = None
     message: str | None = None
+    result: dict[str, object] | None = None
     cancel_requested: bool = False
-
-
-JobProgress = UploadProgress | DownloadProgress

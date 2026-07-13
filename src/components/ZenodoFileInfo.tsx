@@ -2,7 +2,7 @@ import React from 'react';
 
 import { downloadZenodoFile, getZenodoFileImportCell } from '../api_calls';
 import { useInsertZenodoCell, useServerSettings } from '../store';
-import { ZenodoDownloadProgress } from './ZenodoDownloadProgress';
+import { JobProgress } from './JobProgress';
 import { ZenodoFileDownloadStatus } from './ZenodoFileDownloadStatus';
 import type { ZenodoFile } from './ZenodoResource';
 
@@ -22,7 +22,7 @@ export const ZenodoFileInfo: React.FC<{
       depositionId,
       fileId
     );
-    setDownloadId(response.download_id);
+    setDownloadId(response.job_id);
   };
   const insertImportCell = async (): Promise<void> => {
     insertZenodoCell(
@@ -52,7 +52,7 @@ export const ZenodoFileInfo: React.FC<{
       {fileId ? (
         <ZenodoFileDownloadStatus depositionId={depositionId} fileId={fileId} />
       ) : null}
-      {downloadId ? <ZenodoDownloadProgress downloadId={downloadId} /> : null}
+      {downloadId ? <JobProgress jobId={downloadId} /> : null}
     </div>
   );
 };

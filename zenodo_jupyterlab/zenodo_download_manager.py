@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from .util.job_manager import JobContext, JobManager, ProgressListener
-from .util.job_types import DownloadProgress
+from .util.job_types import JobProgress
 from .zenodo_downloads import ZenodoDownloads, ZenodoFileSource
 
 
@@ -32,7 +32,7 @@ class ZenodoDownloadManager:
                 deposition_id=deposition_id,
                 file_id=file_id,
                 on_progress=lambda bytes_downloaded, total_bytes: context.update(
-                    bytes_downloaded=bytes_downloaded,
+                    completed_bytes=bytes_downloaded,
                     total_bytes=total_bytes,
                 ),
                 should_cancel=context.should_cancel,
@@ -41,7 +41,7 @@ class ZenodoDownloadManager:
 
         return self.job_manager.start(
             download,
-            progress=DownloadProgress(),
+            progress=JobProgress(job_type="download"),
             on_progress_changed=on_progress_changed,
             cancel_message="Download canceled",
         )

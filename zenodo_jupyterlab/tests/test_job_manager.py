@@ -5,11 +5,7 @@ from threading import Event
 import pytest
 
 from zenodo_jupyterlab.util.job_manager import JobManager
-from zenodo_jupyterlab.util.job_types import (
-    DownloadProgress,
-    JobCancelled,
-    UploadProgress,
-)
+from zenodo_jupyterlab.util.job_types import JobCancelled, JobProgress
 from zenodo_jupyterlab.zenodo_requests.zenodo_requests import (
     ProgressReportingReader,
 )
@@ -35,15 +31,15 @@ async def test_upload_job_reports_progress_and_result():
 
     def upload(context):
         context.update(
-            bytes_uploaded=4,
+            completed_bytes=4,
             total_bytes=10,
-            current_file="data.csv",
+            current_item="data.csv",
         )
         return {"deposition": {"id": 123}}
 
     upload_id = manager.start(
         upload,
-        progress=UploadProgress(),
+        progress=JobProgress(job_type="upload"),
         on_progress_changed=lambda job_id, progress: progress_events.append(
             (job_id, progress)
         ),
@@ -53,34 +49,42 @@ async def test_upload_job_reports_progress_and_result():
     await asyncio.sleep(0)
 
     assert progress == {
+        "job_id": upload_id,
+        "job_type": "upload",
         "status": "done",
-        "bytes_uploaded": 4,
+        "completed_bytes": 4,
         "total_bytes": 10,
-        "current_file": "data.csv",
+        "current_item": "data.csv",
         "message": None,
-        "deposition": {"id": 123},
+        "result": {"deposition": {"id": 123}},
         "cancel_requested": False,
     }
     assert progress_events[-1] == (upload_id, progress)
 
 
 @pytest.mark.asyncio
-async def test_download_job_keeps_its_own_progress_shape():
+async def test_download_job_uses_common_progress_shape():
     manager = JobManager()
 
     def download(context):
-        context.update(bytes_downloaded=5, total_bytes=None)
+        context.update(completed_bytes=5, total_bytes=None)
         return {"path": "/tmp/data.csv"}
 
-    download_id = manager.start(download, progress=DownloadProgress())
+    download_id = manager.start(
+        download,
+        progress=JobProgress(job_type="download"),
+    )
     progress = await wait_for_terminal_progress(manager, download_id)
 
     assert progress == {
+        "job_id": download_id,
+        "job_type": "download",
         "status": "done",
-        "bytes_downloaded": 5,
+        "completed_bytes": 5,
         "total_bytes": None,
-        "path": "/tmp/data.csv",
+        "current_item": None,
         "message": None,
+        "result": {"path": "/tmp/data.csv"},
         "cancel_requested": False,
     }
 
@@ -97,7 +101,7 @@ async def test_cancel_pending_job_does_not_run_it():
 
     job_id = manager.start(
         job,
-        progress=UploadProgress(),
+        progress=JobProgress(job_type="upload"),
         cancel_message="Upload canceled",
     )
     cancel_progress = manager.cancel(job_id)
@@ -124,7 +128,7 @@ async def test_cancel_running_job_is_reported_as_canceled():
             raise JobCancelled("Upload canceled")
         return {"deposition": {"id": 123}}
 
-    job_id = manager.start(job, progress=UploadProgress())
+    job_id = manager.start(job, progress=JobProgress(job_type="upload"))
     assert await asyncio.to_thread(started.wait, 1)
 
     cancel_progress = manager.cancel(job_id)
@@ -144,7 +148,7 @@ async def test_job_error_is_stored():
     def job(context):
         raise ValueError("Could not transfer file")
 
-    job_id = manager.start(job, progress=DownloadProgress())
+    job_id = manager.start(job, progress=JobProgress(job_type="download"))
     progress = await wait_for_terminal_progress(manager, job_id)
 
     assert progress["status"] == "error"

@@ -17,11 +17,10 @@ async def test_hello(jp_fetch):
     }
 
 
-async def test_cancel_unknown_upload(jp_fetch):
+async def test_cancel_unknown_job(jp_fetch):
     response = await jp_fetch(
         "zenodo-jupyterlab",
-        "depositions",
-        "uploads",
+        "jobs",
         "unknown",
         "cancel",
         method="POST",
@@ -30,4 +29,4 @@ async def test_cancel_unknown_upload(jp_fetch):
     )
 
     assert response.code == 404
-    assert json.loads(response.body) == {"message": "Unknown upload"}
+    assert json.loads(response.body) == {"message": "Unknown job"}

@@ -22,6 +22,7 @@ class JobProgressStore:
 
     def create(self, progress: JobProgress) -> str:
         job_id = uuid4().hex
+        progress.job_id = job_id
         with self._lock:
             self._progress[job_id] = progress
         return job_id
@@ -131,7 +132,7 @@ class JobManager:
                     context.update(status="error", message=str(error))
                     return
 
-                context.update(status="done", **result)
+                context.update(status="done", result=dict(result))
             finally:
                 self._progress_listeners.pop(job_id, None)
                 self._io_loops.pop(job_id, None)

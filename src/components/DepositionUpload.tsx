@@ -6,7 +6,7 @@ import {
 } from '../api_calls';
 import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
-import { UploadProgress } from './UploadProgress';
+import { JobProgress } from './JobProgress';
 
 export const DepositionUpload: React.FC<{
   depositionId: number;
@@ -27,7 +27,7 @@ export const DepositionUpload: React.FC<{
         depositionId,
         filePaths
       );
-      setUploadId(upload.upload_id);
+      setUploadId(upload.job_id);
     } catch (reason) {
       setError(String(reason));
     }
@@ -61,11 +61,18 @@ export const DepositionUpload: React.FC<{
         />
       ) : null}
       {uploadId ? (
-        <UploadProgress
+        <JobProgress
           onCanceled={cancelUpload}
-          onDone={completeUpload}
+          onDone={progress => {
+            const deposition = progress.result?.deposition;
+            if (deposition) {
+              completeUpload(deposition);
+            } else {
+              failUpload('Upload completed without a deposition');
+            }
+          }}
           onError={failUpload}
-          uploadId={uploadId}
+          jobId={uploadId}
         />
       ) : null}
       {error ? <p>{error}</p> : null}

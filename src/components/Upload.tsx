@@ -6,7 +6,7 @@ import {
 } from '../api_calls';
 import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
-import { UploadProgress } from './UploadProgress';
+import { JobProgress } from './JobProgress';
 
 function getDraftUrl(deposition: MinimalDepositionDraftResponse): string {
   return (
@@ -43,7 +43,7 @@ export const Upload: React.FC = () => {
         serverSettings,
         filePaths
       );
-      setUploadId(upload.upload_id);
+      setUploadId(upload.job_id);
     } catch (reason) {
       setError(String(reason));
       setIsCreatingDraft(false);
@@ -93,11 +93,18 @@ export const Upload: React.FC = () => {
         {isCreatingDraft ? 'Uploading files...' : 'Upload to Zenodo Draft'}
       </button>
       {uploadId ? (
-        <UploadProgress
+        <JobProgress
           onCanceled={cancelUploadJob}
-          onDone={completeUpload}
+          onDone={progress => {
+            const deposition = progress.result?.deposition;
+            if (deposition) {
+              completeUpload(deposition);
+            } else {
+              failUpload('Upload completed without a deposition');
+            }
+          }}
           onError={failUpload}
-          uploadId={uploadId}
+          jobId={uploadId}
         />
       ) : null}
       {error && <p>{error}</p>}
