@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import asdict
 from threading import Lock
 from typing import Callable
@@ -9,7 +10,7 @@ from .job_types import JobCancelled, JobProgress
 
 
 ProgressListener = Callable[[str, dict[str, object]], None]
-JobCallable = Callable[["JobContext"], dict[str, object]]
+JobCallable = Callable[["JobContext"], Mapping[str, object]]
 
 _TERMINAL_STATUSES = {"done", "error", "canceled"}
 
