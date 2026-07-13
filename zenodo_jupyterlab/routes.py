@@ -313,7 +313,7 @@ class ZenodoMinimalDepositionDraftHandler(APIHandler):
         self.finish(json.dumps({"job_id": job_id}))
 
 
-class ZenodoDepositionFilesUploadHandler(APIHandler):
+class ZenodoDepositionFilesHandler(APIHandler):
     def initialize(
         self,
         get_zenodo_requests: GetZenodoRequests,
@@ -371,12 +371,12 @@ class ZenodoDepositionFilesUploadHandler(APIHandler):
                     current_item=current_file,
                 )
 
-            deposition = zenodo_requests.get_zenodo_deposition_upload_target(
+            deposition = zenodo_requests.get_zenodo_deposition_file_edit_target(
                 deposition_id
             )
             bucket_url = deposition.get("links", {}).get("bucket")
             if not bucket_url:
-                raise ValueError("Deposition does not provide an upload bucket")
+                raise ValueError("Deposition does not provide a file bucket")
 
             zenodo_requests.upload_files_to_bucket(
                 file_paths=resolved_file_paths,
@@ -393,6 +393,42 @@ class ZenodoDepositionFilesUploadHandler(APIHandler):
             cancel_message="Upload canceled",
         )
         self.finish(json.dumps({"job_id": job_id}))
+
+    @tornado.web.authenticated
+    def delete(self, deposition_id: str):
+        data = self.get_json_body() or {}
+        file_key = data.get("key")
+
+        if not isinstance(file_key, str) or not file_key:
+            self.set_status(400)
+            self.finish(json.dumps({"message": "Missing key"}))
+            return
+
+        try:
+            zenodo_requests = self.get_zenodo_requests(self)
+            deposition = zenodo_requests.get_zenodo_deposition_file_edit_target(
+                deposition_id
+            )
+            bucket_url = deposition.get("links", {}).get("bucket")
+            if not bucket_url:
+                raise ValueError("Deposition does not provide a file bucket")
+
+            zenodo_requests.delete_file_from_bucket(
+                bucket_url=bucket_url,
+                file_key=file_key,
+            )
+        except ValueError as error:
+            self.set_status(400)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(
+            json.dumps({"deposition": deposition, "deleted_key": file_key})
+        )
 
 
 class JobProgressHandler(APIHandler):
@@ -715,7 +751,7 @@ def setup_route_handlers(web_app):
                 r"([^/]+)",
                 "files",
             ),
-            ZenodoDepositionFilesUploadHandler,
+            ZenodoDepositionFilesHandler,
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_job_manager": get_job_manager,

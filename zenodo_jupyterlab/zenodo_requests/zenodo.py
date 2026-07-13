@@ -353,3 +353,22 @@ def upload_zenodo_deposition_file(
     )
     response.raise_for_status()
     return response.json()
+
+
+def delete_zenodo_deposition_file(
+    bucket_url: str,
+    *,
+    base_url: str,
+    headers: dict[str, str] | None,
+    file_key: str,
+) -> None:
+    """
+    Delete one file from a Zenodo deposition bucket by its object key.
+    """
+    delete_url = f"{bucket_url.rstrip('/')}/{quote(file_key)}"
+    response = requests.delete(
+        _rebase_zenodo_url(delete_url, base_url=base_url),
+        headers=_headers(headers),
+        timeout=10,
+    )
+    response.raise_for_status()

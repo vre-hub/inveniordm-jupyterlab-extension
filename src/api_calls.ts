@@ -195,6 +195,27 @@ export async function uploadFilesToDeposition(
   );
 }
 
+export type DeleteZenodoDepositionFileResponse = {
+  deposition: MinimalDepositionDraftResponse;
+  deleted_key: string;
+};
+
+export async function deleteZenodoDepositionFile(
+  serverSettings: ServerConnection.ISettings,
+  depositionId: number,
+  fileKey: string
+): Promise<DeleteZenodoDepositionFileResponse> {
+  return await requestAPI<DeleteZenodoDepositionFileResponse>(
+    `depositions/${depositionId}/files`,
+    serverSettings,
+    {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: fileKey })
+    }
+  );
+}
+
 export function useJobProgress(jobId: string) {
   return useEventData<JobProgressResponse | null>(
     `job.progress.${jobId}`,

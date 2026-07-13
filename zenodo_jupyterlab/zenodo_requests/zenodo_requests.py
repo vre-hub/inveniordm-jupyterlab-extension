@@ -9,6 +9,7 @@ from .zenodo import (
     ZenodoFileResponse,
     create_zenodo_deposition,
     create_zenodo_deposition_version,
+    delete_zenodo_deposition_file,
     get_zenodo_deposition,
     get_zenodo_deposition_at_url,
     get_zenodo_deposition_file,
@@ -111,25 +112,25 @@ class ZenodoRequests:
             headers=self.headers,
         )
 
-    def get_zenodo_deposition_upload_target(
+    def get_zenodo_deposition_file_edit_target(
         self,
         deposition_id: int | str,
     ) -> dict[str, Any]:
         """
         Return a deposition whose files can be changed.
 
-        Published depositions are immutable, so uploading to one creates (or
-        reuses) its unpublished latest-version draft.
+        Published depositions are immutable, so changing their files creates
+        (or reuses) the unpublished latest-version draft.
         """
         deposition = self.get_zenodo_deposition(deposition_id)
         if not deposition.get("submitted"):
             print(
-                f"Deposition {deposition_id} is not published, so it can be used for uploads"
+                f"Deposition {deposition_id} is not published, so its files can be changed"
             )
             return deposition
 
         print(
-            f"Deposition {deposition_id} is published, so we will create or reuse its latest draft for uploads"
+            f"Deposition {deposition_id} is published, so we will create or reuse its latest draft to change files"
         )
         version = create_zenodo_deposition_version(
             deposition_id,
@@ -144,6 +145,25 @@ class ZenodoRequests:
             latest_draft_url,
             base_url=self.url,
             headers=self.headers,
+        )
+
+    def delete_file_from_bucket(
+        self,
+        *,
+        bucket_url: str,
+        file_key: str,
+    ) -> None:
+        """
+        Delete a file from a Zenodo deposition bucket by its object key.
+        """
+        if not self.headers:
+            raise ValueError("Missing Zenodo request authentication headers")
+
+        delete_zenodo_deposition_file(
+            bucket_url,
+            base_url=self.url,
+            headers=self.headers,
+            file_key=file_key,
         )
 
     def upload_files_to_bucket(
