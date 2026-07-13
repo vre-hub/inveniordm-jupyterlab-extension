@@ -112,7 +112,7 @@ class ZenodoRequests:
             headers=self.headers,
         )
 
-    def get_zenodo_deposition_file_edit_target(
+    def _get_zenodo_deposition_file_edit_target(
         self,
         deposition_id: int | str,
     ) -> dict[str, Any]:
@@ -122,7 +122,6 @@ class ZenodoRequests:
         Published depositions are immutable, so changing their files creates
         (or reuses) the unpublished latest-version draft.
         """
-        #TODO modify surrounding code so this can become a private method and the delete and upload methods are called on this object
         deposition = self.get_zenodo_deposition(deposition_id)
         if not deposition.get("submitted"):
             print(
@@ -147,6 +146,43 @@ class ZenodoRequests:
             base_url=self.url,
             headers=self.headers,
         )
+
+    def delete_file_from_deposition(
+        self,
+        *,
+        deposition_id: int | str,
+        file_key: str,
+    ) -> dict[str, Any]:
+        """Delete a file from the editable draft of a deposition."""
+        deposition = self._get_zenodo_deposition_file_edit_target(deposition_id)
+        bucket_url = deposition.get("links", {}).get("bucket")
+        if not bucket_url:
+            raise ValueError("Deposition does not provide a file bucket")
+
+        self.delete_file_from_bucket(bucket_url=bucket_url, file_key=file_key)
+        return deposition
+
+    def upload_files_to_deposition(
+        self,
+        *,
+        deposition_id: int | str,
+        file_paths: list[Path],
+        on_upload_progress: UploadProgressCallback | None = None,
+        should_cancel: CancelCheck | None = None,
+    ) -> dict[str, Any]:
+        """Upload files to the editable draft of a deposition."""
+        deposition = self._get_zenodo_deposition_file_edit_target(deposition_id)
+        bucket_url = deposition.get("links", {}).get("bucket")
+        if not bucket_url:
+            raise ValueError("Deposition does not provide a file bucket")
+
+        self.upload_files_to_bucket(
+            file_paths=file_paths,
+            bucket_url=bucket_url,
+            on_upload_progress=on_upload_progress,
+            should_cancel=should_cancel,
+        )
+        return deposition
 
     def delete_file_from_bucket(
         self,

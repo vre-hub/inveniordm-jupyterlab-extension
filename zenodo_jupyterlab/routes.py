@@ -371,16 +371,9 @@ class ZenodoDepositionFilesHandler(APIHandler):
                     current_item=current_file,
                 )
 
-            deposition = zenodo_requests.get_zenodo_deposition_file_edit_target(
-                deposition_id
-            )
-            bucket_url = deposition.get("links", {}).get("bucket")
-            if not bucket_url:
-                raise ValueError("Deposition does not provide a file bucket")
-
-            zenodo_requests.upload_files_to_bucket(
+            deposition = zenodo_requests.upload_files_to_deposition(
+                deposition_id=deposition_id,
                 file_paths=resolved_file_paths,
-                bucket_url=bucket_url,
                 on_upload_progress=on_upload_progress,
                 should_cancel=context.should_cancel,
             )
@@ -406,15 +399,8 @@ class ZenodoDepositionFilesHandler(APIHandler):
 
         try:
             zenodo_requests = self.get_zenodo_requests(self)
-            deposition = zenodo_requests.get_zenodo_deposition_file_edit_target(
-                deposition_id
-            )
-            bucket_url = deposition.get("links", {}).get("bucket")
-            if not bucket_url:
-                raise ValueError("Deposition does not provide a file bucket")
-
-            zenodo_requests.delete_file_from_bucket(
-                bucket_url=bucket_url,
+            deposition = zenodo_requests.delete_file_from_deposition(
+                deposition_id=deposition_id,
                 file_key=file_key,
             )
         except ValueError as error:
