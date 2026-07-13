@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, BinaryIO, Callable
+from typing import Any
 
 from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
 from ..util.progress_reporting_reader import ProgressReportingReader
