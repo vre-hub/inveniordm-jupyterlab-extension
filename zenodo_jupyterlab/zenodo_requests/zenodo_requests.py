@@ -122,6 +122,7 @@ class ZenodoRequests:
         Published depositions are immutable, so changing their files creates
         (or reuses) the unpublished latest-version draft.
         """
+        #TODO modify surrounding code so this can become a private method and the delete and upload methods are called on this object
         deposition = self.get_zenodo_deposition(deposition_id)
         if not deposition.get("submitted"):
             print(
