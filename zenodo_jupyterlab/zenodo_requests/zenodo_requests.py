@@ -184,9 +184,6 @@ class ZenodoRequests:
         *,
         file_url: str,
     ) -> ZenodoFileResponse:
-        if not self.headers:
-            raise ValueError("Missing Zenodo request authentication headers")
-
         return open_zenodo_file(
             file_url,
             base_url=self.url,
@@ -199,9 +196,6 @@ class ZenodoRequests:
         deposition_id: int | str,
         file_id: str,
     ) -> dict[str, Any]:
-        if not self.headers:
-            raise ValueError("Missing Zenodo request authentication headers")
-
         return get_zenodo_deposition_file(
             deposition_id,
             file_id,
