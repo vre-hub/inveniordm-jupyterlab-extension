@@ -49,8 +49,9 @@ async def test_upload_job_reports_progress_and_result():
     await asyncio.sleep(0)
 
     assert progress == {
-        "job_id": upload_id,
         "job_type": "upload",
+        "metadata": {},
+        "job_id": upload_id,
         "status": "done",
         "completed_bytes": 4,
         "total_bytes": 10,
@@ -77,8 +78,9 @@ async def test_download_job_uses_common_progress_shape():
     progress = await wait_for_terminal_progress(manager, download_id)
 
     assert progress == {
-        "job_id": download_id,
         "job_type": "download",
+        "metadata": {},
+        "job_id": download_id,
         "status": "done",
         "completed_bytes": 5,
         "total_bytes": None,
@@ -157,6 +159,36 @@ async def test_job_error_is_stored():
 
 def test_cancel_unknown_job_returns_none():
     assert JobManager().cancel("unknown") is None
+
+
+def test_find_progress_filters_metadata_and_returns_latest_first():
+    manager = JobManager()
+    first_id = manager.progress_store.create(
+        JobProgress(
+            job_type="download",
+            metadata={"deposition_id": "123", "file_id": "file-1"},
+        )
+    )
+    latest_id = manager.progress_store.create(
+        JobProgress(
+            job_type="download",
+            metadata={"deposition_id": "123", "file_id": "file-1"},
+        )
+    )
+    manager.progress_store.create(
+        JobProgress(
+            job_type="download",
+            metadata={"deposition_id": "other", "file_id": "file-1"},
+        )
+    )
+
+    matches = manager.find_progress(
+        job_type="download",
+        statuses={"pending", "running", "canceling"},
+        metadata={"deposition_id": "123", "file_id": "file-1"},
+    )
+
+    assert [match["job_id"] for match in matches] == [latest_id, first_id]
 
 
 def test_progress_reporting_reader_checks_for_upload_cancellation():

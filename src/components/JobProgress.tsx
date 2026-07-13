@@ -90,7 +90,7 @@ export const JobProgress: React.FC<{
   }, [jobId, onCanceled, onDone, onError, progress]);
 
   if (!progress || progress.job_id !== jobId) {
-    return <p>Starting job...</p>;
+    return <p>Loading...</p>;
   }
 
   const progressLabel =

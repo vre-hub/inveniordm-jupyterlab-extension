@@ -164,6 +164,35 @@ export type JobProgressResponse = {
   cancel_requested: boolean;
 };
 
+export type FindJobsResponse = {
+  job_ids: string[];
+};
+
+export async function getLatestActiveJobId(
+  serverSettings: ServerConnection.ISettings,
+  options: {
+    jobType: 'upload' | 'download';
+    depositionId: number;
+    fileId?: string;
+  }
+): Promise<string | null> {
+  const params = new URLSearchParams({
+    job_type: options.jobType,
+    deposition_id: String(options.depositionId),
+    status: 'active',
+    latest: 'true'
+  });
+  if (options.fileId !== undefined) {
+    params.set('file_id', options.fileId);
+  }
+
+  const response = await requestAPI<FindJobsResponse>(
+    `jobs?${params.toString()}`,
+    serverSettings
+  );
+  return response.job_ids[0] ?? null;
+}
+
 export async function createMinimalDepositionDraft(
   serverSettings: ServerConnection.ISettings,
   filePaths: string[]

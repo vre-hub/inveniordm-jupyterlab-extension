@@ -3,6 +3,7 @@ import React from 'react';
 import {
   deleteZenodoDepositionFile,
   downloadZenodoFile,
+  getLatestActiveJobId,
   getZenodoFileImportCell
 } from '../api_calls';
 import { useInsertZenodoCell, useServerSettings } from '../store';
@@ -51,6 +52,28 @@ const ZenodoFileDownload: React.FC<{
 }> = ({ depositionId, fileId }) => {
   const serverSettings = useServerSettings();
   const [downloadId, setDownloadId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const findDownload = async (): Promise<void> => {
+      const jobId = fileId
+        ? await getLatestActiveJobId(serverSettings, {
+            jobType: 'download',
+            depositionId,
+            fileId
+          })
+        : null;
+      if (isMounted) {
+        setDownloadId(jobId);
+      }
+    };
+
+    void findDownload();
+    return () => {
+      isMounted = false;
+    };
+  }, [depositionId, fileId, serverSettings]);
 
   const download = async (): Promise<void> => {
     if (!fileId) {

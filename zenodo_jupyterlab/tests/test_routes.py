@@ -30,3 +30,20 @@ async def test_cancel_unknown_job(jp_fetch):
 
     assert response.code == 404
     assert json.loads(response.body) == {"message": "Unknown job"}
+
+
+async def test_find_active_download_jobs(jp_fetch):
+    response = await jp_fetch(
+        "zenodo-jupyterlab",
+        "jobs",
+        params={
+            "job_type": "download",
+            "deposition_id": "123",
+            "file_id": "file-1",
+            "status": "active",
+            "latest": "true",
+        },
+    )
+
+    assert response.code == 200
+    assert json.loads(response.body) == {"job_ids": []}

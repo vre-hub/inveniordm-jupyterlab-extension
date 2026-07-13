@@ -41,7 +41,13 @@ class ZenodoDownloadManager:
 
         return self.job_manager.start(
             download,
-            progress=JobProgress(job_type="download"),
+            progress=JobProgress(
+                job_type="download",
+                metadata={
+                    "deposition_id": str(deposition_id),
+                    "file_id": file_id,
+                },
+            ),
             on_progress_changed=on_progress_changed,
             cancel_message="Download canceled",
         )

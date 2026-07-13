@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable
 
 
@@ -14,6 +14,7 @@ class JobCancelled(Exception):
 @dataclass
 class JobProgress:
     job_type: str
+    metadata: dict[str, object] = field(default_factory=dict)
     job_id: str = ""
     status: str = "pending"
     completed_bytes: int = 0

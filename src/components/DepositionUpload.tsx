@@ -1,6 +1,7 @@
 import React from 'react';
 
 import {
+  getLatestActiveJobId,
   MinimalDepositionDraftResponse,
   uploadFilesToDeposition
 } from '../api_calls';
@@ -16,6 +17,25 @@ export const DepositionUpload: React.FC<{
   const [uploadId, setUploadId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const findUpload = async (): Promise<void> => {
+      const jobId = await getLatestActiveJobId(serverSettings, {
+        jobType: 'upload',
+        depositionId
+      });
+      if (isMounted) {
+        setUploadId(jobId);
+      }
+    };
+
+    void findUpload();
+    return () => {
+      isMounted = false;
+    };
+  }, [depositionId, serverSettings]);
 
   const uploadFiles = async (filePaths: string[]): Promise<void> => {
     setError(null);

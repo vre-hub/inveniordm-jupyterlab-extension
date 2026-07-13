@@ -55,6 +55,28 @@ class JobProgressStore:
             progress = self._progress.get(job_id)
             return asdict(progress) if progress is not None else None
 
+    def find(
+        self,
+        *,
+        job_type: str | None = None,
+        statuses: set[str] | None = None,
+        metadata: Mapping[str, object] | None = None,
+    ) -> list[dict[str, object]]:
+        with self._lock:
+            matches = []
+            for progress in reversed(self._progress.values()):
+                if job_type is not None and progress.job_type != job_type:
+                    continue
+                if statuses is not None and progress.status not in statuses:
+                    continue
+                if metadata is not None and any(
+                    progress.metadata.get(key) != value
+                    for key, value in metadata.items()
+                ):
+                    continue
+                matches.append(asdict(progress))
+            return matches
+
 
 class JobContext:
     def __init__(
@@ -142,6 +164,19 @@ class JobManager:
 
     def get_progress(self, job_id: str) -> dict[str, object] | None:
         return self.progress_store.get(job_id)
+
+    def find_progress(
+        self,
+        *,
+        job_type: str | None = None,
+        statuses: set[str] | None = None,
+        metadata: Mapping[str, object] | None = None,
+    ) -> list[dict[str, object]]:
+        return self.progress_store.find(
+            job_type=job_type,
+            statuses=statuses,
+            metadata=metadata,
+        )
 
     def cancel(self, job_id: str) -> dict[str, object] | None:
         progress = self.progress_store.request_cancel(job_id)

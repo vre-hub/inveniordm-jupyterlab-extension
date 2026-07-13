@@ -27,6 +27,7 @@ from .util.sse import EventBus, stream_user_events
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 GetZenodoDownloadManager = Callable[[APIHandler], ZenodoDownloadManager]
 GetJobManager = Callable[[APIHandler], JobManager]
+CreateJobMetadata = Callable[[ZenodoRequests], dict[str, object]]
 GetUserSettings = Callable[[APIHandler], ZenodoUserSettings]
 
 
@@ -318,10 +319,12 @@ class ZenodoDepositionFilesHandler(APIHandler):
         self,
         get_zenodo_requests: GetZenodoRequests,
         get_job_manager: GetJobManager,
+        create_job_metadata: CreateJobMetadata,
         event_bus: EventBus,
     ):
         self.get_zenodo_requests = get_zenodo_requests
         self.get_job_manager = get_job_manager
+        self.create_job_metadata = create_job_metadata
         self.event_bus = event_bus
 
     @tornado.web.authenticated
@@ -347,6 +350,22 @@ class ZenodoDepositionFilesHandler(APIHandler):
             return
 
         zenodo_requests = self.get_zenodo_requests(self)
+        try:
+            account_metadata = self.create_job_metadata(zenodo_requests)
+        except ValueError as error:
+            self.set_status(401)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+        except KeyError as error:
+            self.set_status(502)
+            self.finish(
+                json.dumps({"message": f"Missing field in Zenodo profile: {error}"})
+            )
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
         user_id = get_user_id(self)
 
         def publish_job_progress(
@@ -381,7 +400,13 @@ class ZenodoDepositionFilesHandler(APIHandler):
 
         job_id = self.get_job_manager(self).start(
             upload,
-            progress=JobProgress(job_type="upload"),
+            progress=JobProgress(
+                job_type="upload",
+                metadata={
+                    **account_metadata,
+                    "deposition_id": str(deposition_id),
+                },
+            ),
             on_progress_changed=publish_job_progress,
             cancel_message="Upload canceled",
         )
@@ -415,6 +440,77 @@ class ZenodoDepositionFilesHandler(APIHandler):
         self.finish(
             json.dumps({"deposition": deposition, "deleted_key": file_key})
         )
+
+
+class JobsHandler(APIHandler):
+    """
+    Allows clients to list all jobs, optionally filtered by job type and status.
+    Can be used to display e.g. download progress after page reload.
+    """
+    # TODO add SSE to notify clients of new jobs so that client does not have to keep track of the jobs it starts itself
+    def initialize(
+        self,
+        get_job_manager: GetJobManager,
+        get_zenodo_requests: GetZenodoRequests,
+        create_job_metadata: CreateJobMetadata,
+    ):
+        self.get_job_manager = get_job_manager
+        self.get_zenodo_requests = get_zenodo_requests
+        self.create_job_metadata = create_job_metadata
+
+    @tornado.web.authenticated
+    def get(self):
+        job_type = self.get_query_argument("job_type", None)
+        status = self.get_query_argument("status", None)
+        latest = self.get_query_argument("latest", "false").lower() in {
+            "1",
+            "true",
+        }
+
+        statuses = None
+        if status == "active":
+            statuses = {"pending", "running", "canceling"}
+        elif status is not None:
+            statuses = {status}
+
+        metadata: dict[str, object] = {}
+        deposition_id = self.get_query_argument("deposition_id", None)
+        file_id = self.get_query_argument("file_id", None)
+        if deposition_id is not None:
+            metadata["deposition_id"] = deposition_id
+        if file_id is not None:
+            metadata["file_id"] = file_id
+
+        if job_type == "upload":
+            zenodo_requests = self.get_zenodo_requests(self)
+            try:
+                account_metadata = self.create_job_metadata(zenodo_requests)
+            except ValueError as error:
+                self.set_status(401)
+                self.finish(json.dumps({"message": str(error)}))
+                return
+            except KeyError as error:
+                self.set_status(502)
+                self.finish(
+                    json.dumps(
+                        {"message": f"Missing field in Zenodo profile: {error}"}
+                    )
+                )
+                return
+            except requests.RequestException as error:
+                self.set_status(getattr(error.response, "status_code", 502))
+                self.finish(json.dumps({"message": str(error)}))
+                return
+            metadata.update(account_metadata)
+
+        jobs = self.get_job_manager(self).find_progress(
+            job_type=job_type,
+            statuses=statuses,
+            metadata=metadata,
+        )
+        if latest:
+            jobs = jobs[:1]
+        self.finish(json.dumps({"job_ids": [job["job_id"] for job in jobs]}))
 
 
 class JobProgressHandler(APIHandler):
@@ -675,6 +771,15 @@ def setup_route_handlers(web_app):
     def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
         return zenodo_requests_factory.create_zenodo_requests(handler)
 
+    def create_job_metadata(
+        zenodo_requests: ZenodoRequests,
+    ) -> dict[str, object]:
+        profile = zenodo_requests.get_zenodo_me()
+        return {
+            "zenodo_user_id": str(profile["id"]),
+            "sandbox": zenodo_requests_factory.is_sandbox(zenodo_requests),
+        }
+
     def get_user_settings(handler: APIHandler) -> ZenodoUserSettings:
         return ZenodoUserSettingsFromFile(_contents_root(handler))
 
@@ -741,7 +846,17 @@ def setup_route_handlers(web_app):
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_job_manager": get_job_manager,
+                "create_job_metadata": create_job_metadata,
                 "event_bus": event_bus,
+            },
+        ),
+        (
+            url_path_join(zenodo_base_url, "jobs"),
+            JobsHandler,
+            {
+                "get_job_manager": get_job_manager,
+                "get_zenodo_requests": get_zenodo_requests,
+                "create_job_metadata": create_job_metadata,
             },
         ),
         (
