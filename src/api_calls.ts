@@ -169,6 +169,22 @@ export async function createMinimalDepositionDraft(
   );
 }
 
+export async function uploadFilesToDeposition(
+  serverSettings: ServerConnection.ISettings,
+  depositionId: number,
+  filePaths: string[]
+): Promise<CreateMinimalDepositionDraftResponse> {
+  return await requestAPI<CreateMinimalDepositionDraftResponse>(
+    `depositions/${depositionId}/files`,
+    serverSettings,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_paths: filePaths })
+    }
+  );
+}
+
 export function useUploadProgress(uploadId: string) {
   return useEventData<UploadProgressResponse | null>(
     `upload.progress.${uploadId}`,

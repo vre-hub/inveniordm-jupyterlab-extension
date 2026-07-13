@@ -8,6 +8,9 @@ from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
     ZenodoFileResponse,
     create_zenodo_deposition,
+    create_zenodo_deposition_version,
+    get_zenodo_deposition,
+    get_zenodo_deposition_at_url,
     get_zenodo_deposition_file,
     get_zenodo_me,
     list_zenodo_depositions,
@@ -97,6 +100,51 @@ class ZenodoRequests:
             )
 
         return depositions
+
+    def get_zenodo_deposition(
+        self,
+        deposition_id: int | str,
+    ) -> dict[str, Any]:
+        return get_zenodo_deposition(
+            deposition_id,
+            base_url=self.url,
+            headers=self.headers,
+        )
+
+    def get_zenodo_deposition_upload_target(
+        self,
+        deposition_id: int | str,
+    ) -> dict[str, Any]:
+        """
+        Return a deposition whose files can be changed.
+
+        Published depositions are immutable, so uploading to one creates (or
+        reuses) its unpublished latest-version draft.
+        """
+        deposition = self.get_zenodo_deposition(deposition_id)
+        if not deposition.get("submitted"):
+            print(
+                f"Deposition {deposition_id} is not published, so it can be used for uploads"
+            )
+            return deposition
+
+        print(
+            f"Deposition {deposition_id} is published, so we will create or reuse its latest draft for uploads"
+        )
+        version = create_zenodo_deposition_version(
+            deposition_id,
+            base_url=self.url,
+            headers=self.headers,
+        )
+        latest_draft_url = version.get("links", {}).get("latest_draft")
+        if not latest_draft_url:
+            raise ValueError("Published deposition does not provide a latest draft")
+
+        return get_zenodo_deposition_at_url(
+            latest_draft_url,
+            base_url=self.url,
+            headers=self.headers,
+        )
 
     def upload_files_to_bucket(
         self,

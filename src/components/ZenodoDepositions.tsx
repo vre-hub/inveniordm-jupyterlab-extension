@@ -2,6 +2,7 @@ import React from 'react';
 
 import { listZenodoDepositions } from '../api_calls';
 import { useServerSettings } from '../store';
+import { DepositionUpload } from './DepositionUpload';
 import { ZenodoResource, ZenodoResourceData } from './ZenodoResource';
 
 export const ZenodoDepositions: React.FC = () => {
@@ -11,7 +12,7 @@ export const ZenodoDepositions: React.FC = () => {
   >(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const loadDepositions = async (): Promise<void> => {
+  const loadDepositions = React.useCallback(async (): Promise<void> => {
     setIsLoading(true);
 
     try {
@@ -23,11 +24,11 @@ export const ZenodoDepositions: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [serverSettings]);
 
   React.useEffect(() => {
-    loadDepositions();
-  }, [serverSettings]);
+    void loadDepositions();
+  }, [loadDepositions]);
 
   return (
     <div>
@@ -35,7 +36,13 @@ export const ZenodoDepositions: React.FC = () => {
       {isLoading && <p>Loading...</p>}
       {Array.isArray(depositions)
         ? depositions.map(deposition => (
-            <ZenodoResource resource={deposition} key={deposition.id} />
+            <React.Fragment key={deposition.id}>
+              <ZenodoResource resource={deposition} />
+              <DepositionUpload
+                depositionId={deposition.id}
+                onDone={() => void loadDepositions()}
+              />
+            </React.Fragment>
           ))
         : depositions?.error}
     </div>

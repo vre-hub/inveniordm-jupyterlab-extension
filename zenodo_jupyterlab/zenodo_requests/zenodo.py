@@ -253,6 +253,66 @@ def list_zenodo_depositions(
     return response.json()
 
 
+def get_zenodo_deposition(
+    deposition_id: int | str,
+    *,
+    base_url: str,
+    headers: dict[str, str] | None,
+) -> dict[str, Any]:
+    """
+    Fetch a deposition owned by the authenticated user.
+    """
+    response = requests.get(
+        (
+            f"{_normalize_base_url(base_url)}/api/deposit/depositions/"
+            f"{quote(str(deposition_id), safe='')}"
+        ),
+        headers=_headers(headers),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def get_zenodo_deposition_at_url(
+    deposition_url: str,
+    *,
+    base_url: str,
+    headers: dict[str, str] | None,
+) -> dict[str, Any]:
+    """
+    Fetch a deposition using a link returned by the Zenodo API.
+    """
+    response = requests.get(
+        _rebase_zenodo_url(deposition_url, base_url=base_url),
+        headers=_headers(headers),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def create_zenodo_deposition_version(
+    deposition_id: int | str,
+    *,
+    base_url: str,
+    headers: dict[str, str] | None,
+) -> dict[str, Any]:
+    """
+    Create or return the editable latest draft for a published deposition.
+    """
+    response = requests.post(
+        (
+            f"{_normalize_base_url(base_url)}/api/deposit/depositions/"
+            f"{quote(str(deposition_id), safe='')}/actions/newversion"
+        ),
+        headers=_headers(headers),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 def create_zenodo_deposition(
     *,
     base_url: str,

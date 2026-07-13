@@ -313,6 +313,88 @@ class ZenodoMinimalDepositionDraftHandler(APIHandler):
         self.finish(json.dumps({"upload_id": upload_id}))
 
 
+class ZenodoDepositionFilesUploadHandler(APIHandler):
+    def initialize(
+        self,
+        get_zenodo_requests: GetZenodoRequests,
+        get_zenodo_upload_manager: GetZenodoUploadManager,
+        event_bus: EventBus,
+    ):
+        self.get_zenodo_requests = get_zenodo_requests
+        self.get_zenodo_upload_manager = get_zenodo_upload_manager
+        self.event_bus = event_bus
+
+    @tornado.web.authenticated
+    def post(self, deposition_id: str):
+        data = self.get_json_body() or {}
+        file_paths = data.get("file_paths")
+
+        if not isinstance(file_paths, list) or not file_paths:
+            self.set_status(400)
+            self.finish(json.dumps({"message": "Missing file_paths"}))
+            return
+
+        if not all(isinstance(file_path, str) for file_path in file_paths):
+            self.set_status(400)
+            self.finish(json.dumps({"message": "file_paths must be strings"}))
+            return
+
+        try:
+            resolved_file_paths = _resolve_contents_file_paths(self, file_paths)
+        except ValueError as error:
+            self.set_status(400)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        zenodo_requests = self.get_zenodo_requests(self)
+        user_id = get_user_id(self)
+
+        def publish_upload_progress(
+            upload_id: str,
+            progress: dict[str, object],
+        ) -> None:
+            self.event_bus.publish(
+                user_id,
+                f"upload.progress.{upload_id}",
+                progress,
+            )
+
+        def upload(context: JobContext) -> dict[str, object]:
+            def on_upload_progress(
+                bytes_uploaded: int,
+                total_bytes: int,
+                current_file: str | None,
+            ) -> None:
+                context.update(
+                    bytes_uploaded=bytes_uploaded,
+                    total_bytes=total_bytes,
+                    current_file=current_file,
+                )
+
+            deposition = zenodo_requests.get_zenodo_deposition_upload_target(
+                deposition_id
+            )
+            bucket_url = deposition.get("links", {}).get("bucket")
+            if not bucket_url:
+                raise ValueError("Deposition does not provide an upload bucket")
+
+            zenodo_requests.upload_files_to_bucket(
+                file_paths=resolved_file_paths,
+                bucket_url=bucket_url,
+                on_upload_progress=on_upload_progress,
+                should_cancel=context.should_cancel,
+            )
+            return {"deposition": deposition}
+
+        upload_id = self.get_zenodo_upload_manager(self).start(
+            upload,
+            progress=UploadProgress(),
+            on_progress_changed=publish_upload_progress,
+            cancel_message="Upload canceled",
+        )
+        self.finish(json.dumps({"upload_id": upload_id}))
+
+
 class ZenodoUploadProgressHandler(APIHandler):
     def initialize(self, get_zenodo_upload_manager: GetZenodoUploadManager):
         self.get_zenodo_upload_manager = get_zenodo_upload_manager
@@ -635,6 +717,20 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "depositions", "minimal-draft"),
             ZenodoMinimalDepositionDraftHandler,
+            {
+                "get_zenodo_requests": get_zenodo_requests,
+                "get_zenodo_upload_manager": get_zenodo_upload_manager,
+                "event_bus": event_bus,
+            },
+        ),
+        (
+            url_path_join(
+                zenodo_base_url,
+                "depositions",
+                r"([^/]+)",
+                "files",
+            ),
+            ZenodoDepositionFilesUploadHandler,
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_zenodo_upload_manager": get_zenodo_upload_manager,
