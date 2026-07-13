@@ -10,8 +10,8 @@ import tornado
 import requests
 
 from zenodo_jupyterlab.user_settings import ZenodoUserSettingsFromFile, ZenodoUserSettings
-from zenodo_jupyterlab.util.download_job_manager import DownloadJobManager
-from zenodo_jupyterlab.util.upload_job_manager import UploadJobManager
+from zenodo_jupyterlab.util.job_manager import JobContext, JobManager
+from zenodo_jupyterlab.util.job_types import UploadProgress
 
 from .cell_actions import make_zenodo_import_cell_action
 from .zenodo_auth.auth_controller import ZenodoAuthController
@@ -26,7 +26,7 @@ from .util.sse import EventBus, stream_user_events
 
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 GetZenodoDownloadManager = Callable[[APIHandler], ZenodoDownloadManager]
-GetZenodoUploadManager = Callable[[APIHandler], UploadJobManager]
+GetZenodoUploadManager = Callable[[APIHandler], JobManager]
 GetUserSettings = Callable[[APIHandler], ZenodoUserSettings]
 
 
@@ -285,12 +285,30 @@ class ZenodoMinimalDepositionDraftHandler(APIHandler):
                 progress,
             )
 
-        upload_id = self.get_zenodo_upload_manager(self).start_upload(
-            lambda on_progress: zenodo_requests.create_minimal_deposition_draft(
+        def upload(context: JobContext) -> dict[str, object]:
+            def on_upload_progress(
+                bytes_uploaded: int,
+                total_bytes: int,
+                current_file: str | None,
+            ) -> None:
+                context.update(
+                    bytes_uploaded=bytes_uploaded,
+                    total_bytes=total_bytes,
+                    current_file=current_file,
+                )
+
+            deposition = zenodo_requests.create_minimal_deposition_draft(
                 file_paths=resolved_file_paths,
-                on_upload_progress=on_progress,
-            ),
+                on_upload_progress=on_upload_progress,
+                should_cancel=context.should_cancel,
+            )
+            return {"deposition": deposition}
+
+        upload_id = self.get_zenodo_upload_manager(self).start(
+            upload,
+            progress=UploadProgress(),
             on_progress_changed=publish_upload_progress,
+            cancel_message="Upload canceled",
         )
         self.finish(json.dumps({"upload_id": upload_id}))
 
@@ -302,6 +320,21 @@ class ZenodoUploadProgressHandler(APIHandler):
     @tornado.web.authenticated
     def get(self, upload_id: str):
         progress = self.get_zenodo_upload_manager(self).get_progress(upload_id)
+        if progress is None:
+            self.set_status(404)
+            self.finish(json.dumps({"message": "Unknown upload"}))
+            return
+
+        self.finish(json.dumps(progress))
+
+
+class ZenodoUploadCancelHandler(APIHandler):
+    def initialize(self, get_zenodo_upload_manager: GetZenodoUploadManager):
+        self.get_zenodo_upload_manager = get_zenodo_upload_manager
+
+    @tornado.web.authenticated
+    def post(self, upload_id: str):
+        progress = self.get_zenodo_upload_manager(self).cancel(upload_id)
         if progress is None:
             self.set_status(404)
             self.finish(json.dumps({"message": "Unknown upload"}))
@@ -547,8 +580,7 @@ def setup_route_handlers(web_app):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
     event_bus = EventBus()
-    download_job_manager = DownloadJobManager()
-    upload_job_manager = UploadJobManager()
+    job_manager = JobManager()
     zenodo_requests_factory = create_zenodo_requests_factory("local")
 
     def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
@@ -559,10 +591,13 @@ def setup_route_handlers(web_app):
 
     def get_zenodo_download_manager(handler: APIHandler) -> ZenodoDownloadManager:
         settings = get_user_settings(handler)
-        return ZenodoDownloadManager(settings.get_downloads_directory(), download_job_manager=download_job_manager)
+        return ZenodoDownloadManager(
+            settings.get_downloads_directory(),
+            job_manager=job_manager,
+        )
 
-    def get_zenodo_upload_manager(handler: APIHandler) -> UploadJobManager:
-        return upload_job_manager
+    def get_zenodo_upload_manager(handler: APIHandler) -> JobManager:
+        return job_manager
 
     zenodo_base_url = url_path_join(base_url, "zenodo-jupyterlab")
     handlers = [
@@ -605,6 +640,17 @@ def setup_route_handlers(web_app):
                 "get_zenodo_upload_manager": get_zenodo_upload_manager,
                 "event_bus": event_bus,
             },
+        ),
+        (
+            url_path_join(
+                zenodo_base_url,
+                "depositions",
+                "uploads",
+                r"([^/]+)",
+                "cancel",
+            ),
+            ZenodoUploadCancelHandler,
+            {"get_zenodo_upload_manager": get_zenodo_upload_manager},
         ),
         (
             url_path_join(

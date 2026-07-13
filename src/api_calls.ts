@@ -145,12 +145,13 @@ export type CreateMinimalDepositionDraftResponse = {
 };
 
 export type UploadProgressResponse = {
-  status: 'pending' | 'running' | 'done' | 'error';
+  status: 'pending' | 'running' | 'canceling' | 'canceled' | 'done' | 'error';
   bytes_uploaded: number;
   total_bytes: number;
   current_file: string | null;
   message: string | null;
   deposition: MinimalDepositionDraftResponse | null;
+  cancel_requested: boolean;
 };
 
 export async function createMinimalDepositionDraft(
@@ -182,6 +183,17 @@ export async function getUploadProgress(
   return await requestAPI<UploadProgressResponse>(
     `depositions/uploads/${uploadId}`,
     serverSettings
+  );
+}
+
+export async function cancelUpload(
+  serverSettings: ServerConnection.ISettings,
+  uploadId: string
+): Promise<UploadProgressResponse> {
+  return await requestAPI<UploadProgressResponse>(
+    `depositions/uploads/${uploadId}/cancel`,
+    serverSettings,
+    { method: 'POST' }
   );
 }
 

@@ -3,6 +3,7 @@ import React from 'react';
 import {
   MinimalDepositionDraftResponse,
   UploadProgressResponse,
+  cancelUpload,
   createMinimalDepositionDraft,
   getUploadProgress,
   useUploadProgress
@@ -19,13 +20,15 @@ function getDraftUrl(deposition: MinimalDepositionDraftResponse): string {
 
 const UploadProgress: React.FC<{
   onDone: (deposition: MinimalDepositionDraftResponse) => void;
+  onCanceled: (message: string) => void;
   onError: (message: string) => void;
   uploadId: string;
-}> = ({ onDone, onError, uploadId }) => {
+}> = ({ onDone, onCanceled, onError, uploadId }) => {
   const serverSettings = useServerSettings();
   const eventProgress = useUploadProgress(uploadId);
-  const [progress, setProgress] =
-    React.useState<UploadProgressResponse | null>(null);
+  const [progress, setProgress] = React.useState<UploadProgressResponse | null>(
+    null
+  );
   const hasHandledTerminalStatus = React.useRef(false);
 
   React.useEffect(() => {
@@ -34,12 +37,16 @@ const UploadProgress: React.FC<{
 
     const loadProgress = async (): Promise<void> => {
       try {
-        const latestProgress = await getUploadProgress(serverSettings, uploadId);
+        const latestProgress = await getUploadProgress(
+          serverSettings,
+          uploadId
+        );
         if (isMounted) {
           setProgress(latestProgress);
           if (
             latestProgress.status !== 'done' &&
-            latestProgress.status !== 'error'
+            latestProgress.status !== 'error' &&
+            latestProgress.status !== 'canceled'
           ) {
             timeout = window.setTimeout(loadProgress, 1000);
           }
@@ -78,11 +85,17 @@ const UploadProgress: React.FC<{
       return;
     }
 
+    if (progress.status === 'canceled') {
+      hasHandledTerminalStatus.current = true;
+      onCanceled(progress.message ?? 'Upload canceled');
+      return;
+    }
+
     if (progress.status === 'done' && progress.deposition) {
       hasHandledTerminalStatus.current = true;
       onDone(progress.deposition);
     }
-  }, [onDone, onError, progress]);
+  }, [onCanceled, onDone, onError, progress]);
 
   if (!progress) {
     return <p>Starting upload...</p>;
@@ -92,9 +105,25 @@ const UploadProgress: React.FC<{
     progress.total_bytes > 0
       ? `${Math.round((progress.bytes_uploaded / progress.total_bytes) * 100)}%`
       : `${progress.bytes_uploaded} bytes`;
+  const canCancel =
+    progress.status === 'pending' || progress.status === 'running';
+
+  const cancel = async (): Promise<void> => {
+    try {
+      const cancelProgress = await cancelUpload(serverSettings, uploadId);
+      setProgress(cancelProgress);
+    } catch (reason) {
+      onError(String(reason));
+    }
+  };
 
   return (
     <div>
+      {canCancel ? (
+        <button onClick={cancel} type="button">
+          Cancel upload
+        </button>
+      ) : null}
       <progress
         value={progress.bytes_uploaded}
         max={progress.total_bytes || undefined}
@@ -116,6 +145,7 @@ export const Upload: React.FC = () => {
   const [result, setResult] =
     React.useState<MinimalDepositionDraftResponse | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [message, setMessage] = React.useState<string | null>(null);
   const canCreateDraft = filePaths.length > 0 && !isCreatingDraft;
 
   const onSubmit = async (event: React.FormEvent): Promise<void> => {
@@ -128,6 +158,7 @@ export const Upload: React.FC = () => {
     setUploadId(null);
     setResult(null);
     setError(null);
+    setMessage(null);
 
     try {
       const upload = await createMinimalDepositionDraft(
@@ -156,12 +187,18 @@ export const Upload: React.FC = () => {
     setUploadId(null);
   }, []);
 
+  const cancelUploadJob = React.useCallback((message: string): void => {
+    setMessage(message);
+    setIsCreatingDraft(false);
+    setUploadId(null);
+  }, []);
+
   return (
     <form onSubmit={onSubmit}>
       <h2>Upload</h2>
       <p>
-        Upload files to a Zenodo draft.
-        You will be able to edit the draft metadata and publish it on Zenodo after the upload.
+        Upload files to a Zenodo draft. You will be able to edit the draft
+        metadata and publish it on Zenodo after the upload.
       </p>
       <PickFilesButton
         buttonText="Select files"
@@ -179,12 +216,14 @@ export const Upload: React.FC = () => {
       </button>
       {uploadId ? (
         <UploadProgress
+          onCanceled={cancelUploadJob}
           onDone={completeUpload}
           onError={failUpload}
           uploadId={uploadId}
         />
       ) : null}
       {error && <p>{error}</p>}
+      {message && <p>{message}</p>}
       {result && (
         <div>
           <p>Created draft {result.id}.</p>

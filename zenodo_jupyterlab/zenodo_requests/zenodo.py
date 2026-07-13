@@ -4,7 +4,7 @@ TODO consider using httpx instead of requests, for async support.
 """
 
 from collections.abc import Iterable
-from typing import Any, BinaryIO, Protocol
+from typing import Any, Protocol
 from urllib.parse import quote, urlparse, urlunparse
 
 import requests
@@ -22,6 +22,11 @@ class ZenodoFileResponse(Protocol):
         ...
 
     def close(self) -> None:
+        ...
+
+
+class BinaryReader(Protocol):
+    def read(self, size: int = -1, /) -> bytes:
         ...
 
 
@@ -272,7 +277,7 @@ def upload_zenodo_deposition_file(
     base_url: str,
     headers: dict[str, str] | None,
     filename: str,
-    content: bytes | BinaryIO,
+    content: bytes | BinaryReader,
 ) -> dict[str, Any]:
     """
     Upload one file to a Zenodo deposition bucket.

@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from .util.download_job_manager import DownloadJobManager, ProgressListener
+from .util.job_manager import JobContext, JobManager, ProgressListener
+from .util.job_types import DownloadProgress
 from .zenodo_downloads import ZenodoDownloads, ZenodoFileSource
 
 
@@ -12,10 +13,10 @@ class ZenodoDownloadManager:
     def __init__(
         self,
         downloads_dir: Path,
-        download_job_manager: DownloadJobManager | None = None,
+        job_manager: JobManager | None = None,
     ):
         self.zenodo_downloads = ZenodoDownloads(downloads_dir)
-        self.download_job_manager = download_job_manager or DownloadJobManager()
+        self.job_manager = job_manager or JobManager()
 
     def start_download(
         self,
@@ -25,22 +26,31 @@ class ZenodoDownloadManager:
         file_id: str,
         on_progress_changed: ProgressListener | None = None,
     ) -> str:
-        return self.download_job_manager.start_download(
-            lambda on_progress, should_cancel: self.zenodo_downloads.download_file(
+        def download(context: JobContext) -> dict[str, object]:
+            destination = self.zenodo_downloads.download_file(
                 zenodo_requests,
                 deposition_id=deposition_id,
                 file_id=file_id,
-                on_progress=on_progress,
-                should_cancel=should_cancel,
-            ),
+                on_progress=lambda bytes_downloaded, total_bytes: context.update(
+                    bytes_downloaded=bytes_downloaded,
+                    total_bytes=total_bytes,
+                ),
+                should_cancel=context.should_cancel,
+            )
+            return {"path": str(destination)}
+
+        return self.job_manager.start(
+            download,
+            progress=DownloadProgress(),
             on_progress_changed=on_progress_changed,
+            cancel_message="Download canceled",
         )
 
     def get_progress(self, download_id: str) -> dict[str, object] | None:
-        return self.download_job_manager.get_progress(download_id)
+        return self.job_manager.get_progress(download_id)
 
     def cancel(self, download_id: str) -> dict[str, object] | None:
-        return self.download_job_manager.cancel(download_id)
+        return self.job_manager.cancel(download_id)
 
     def get_download_status(
         self,

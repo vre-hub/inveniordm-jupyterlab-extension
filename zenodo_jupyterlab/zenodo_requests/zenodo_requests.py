@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, BinaryIO, Callable
 
+from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
 from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
     ZenodoFileResponse,
@@ -22,20 +23,21 @@ class AccessTokenStatus:
     sandbox: bool
 
 
-UploadProgressCallback = Callable[[int, int, str | None], None]
-
-
 class ProgressReportingReader:
     def __init__(
         self,
         file: BinaryIO,
         *,
         on_bytes_read: Callable[[int], None],
+        should_cancel: CancelCheck | None = None,
     ):
         self.file = file
         self.on_bytes_read = on_bytes_read
+        self.should_cancel = should_cancel
 
     def read(self, size: int = -1) -> bytes:
+        if self.should_cancel is not None and self.should_cancel():
+            raise JobCancelled("Upload canceled")
         chunk = self.file.read(size)
         if chunk:
             self.on_bytes_read(len(chunk))
@@ -133,6 +135,7 @@ class ZenodoRequests:
         file_paths: list[Path],
         bucket_url: str,
         on_upload_progress: UploadProgressCallback | None = None,
+        should_cancel: CancelCheck | None = None,
     ):
         """
         Upload files on the local filesystem to a Zenodo deposition bucket.
@@ -150,6 +153,8 @@ class ZenodoRequests:
             on_upload_progress(bytes_uploaded, total_bytes, None)
 
         for path in file_paths:
+            if should_cancel is not None and should_cancel():
+                raise JobCancelled("Upload canceled")
             with path.open("rb") as file:
                 def on_bytes_read(
                     chunk_size: int,
@@ -173,6 +178,7 @@ class ZenodoRequests:
                     content=ProgressReportingReader(
                         file,
                         on_bytes_read=on_bytes_read,
+                        should_cancel=should_cancel,
                     ),
                 )
 
@@ -181,20 +187,27 @@ class ZenodoRequests:
         *,
         file_paths: list[Path],
         on_upload_progress: UploadProgressCallback | None = None,
+        should_cancel: CancelCheck | None = None,
     ) -> dict[str, Any]:
         if not self.headers:
             raise ValueError("Missing Zenodo request authentication headers")
+
+        if should_cancel is not None and should_cancel():
+            raise JobCancelled("Upload canceled")
 
         deposition = create_zenodo_deposition(
             base_url=self.url,
             headers=self.headers,
         )
+        if should_cancel is not None and should_cancel():
+            raise JobCancelled("Upload canceled")
         bucket_url = deposition["links"]["bucket"]
-        
+
         self.upload_files_to_bucket(
             file_paths=file_paths,
             bucket_url=bucket_url,
             on_upload_progress=on_upload_progress,
+            should_cancel=should_cancel,
         )
         return deposition
 

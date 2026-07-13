@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from .util.download_types import CancelCheck, DownloadCancelled, ProgressCallback
+from .util.job_types import (
+    CancelCheck,
+    DownloadProgressCallback,
+    JobCancelled,
+)
 from .zenodo_download_location_manager import (
     ZenodoDownloadLocationManager,
     ZenodoFileSource,
@@ -78,7 +82,7 @@ class ZenodoDownloads:
         *,
         deposition_id: int | str,
         file_id: str,
-        on_progress: ProgressCallback | None = None,
+        on_progress: DownloadProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
     ) -> Path:
         file_metadata = zenodo_requests.get_zenodo_deposition_file(
@@ -112,7 +116,7 @@ class ZenodoDownloads:
         response: ZenodoFileResponse,
         destination: Path,
         *,
-        on_progress: ProgressCallback | None = None,
+        on_progress: DownloadProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
     ) -> Path:
         bytes_downloaded = 0
@@ -124,14 +128,14 @@ class ZenodoDownloads:
             with temporary_destination.open("wb") as file:
                 for chunk in response.iter_bytes(chunk_size=1024 * 1024):
                     if should_cancel is not None and should_cancel():
-                        raise DownloadCancelled("Download canceled")
+                        raise JobCancelled("Download canceled")
                     if chunk:
                         file.write(chunk)
                         bytes_downloaded += len(chunk)
                         if on_progress is not None:
                             on_progress(bytes_downloaded, total_bytes)
             temporary_destination.replace(destination)
-        except DownloadCancelled:
+        except JobCancelled:
             temporary_destination.unlink(missing_ok=True)
             raise
 
