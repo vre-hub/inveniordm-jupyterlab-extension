@@ -16,7 +16,7 @@ function encodeTopicPart(value: string): string {
 }
 
 function downloadStatusChangedTopic(
-  depositionId: number,
+  depositionId: string,
   fileId: string
 ): string {
   return [
@@ -27,7 +27,7 @@ function downloadStatusChangedTopic(
 }
 
 export const ZenodoFileDownloadStatus: React.FC<{
-  depositionId: number;
+  depositionId: string;
   fileId: string;
 }> = ({ depositionId, fileId }) => {
   const serverSettings = useServerSettings();

@@ -13,11 +13,11 @@ import type { ZenodoFile } from './ZenodoResource';
 
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;
-  depositionId: number;
+  depositionId: string;
 }> = ({ file, depositionId }) => {
   const filename = file.key ?? file.filename ?? file.id ?? 'download';
   const fileKey = file.key ?? file.filename ?? null;
-  const fileId = file.file_id ?? file.id ?? null;
+  const fileId = file.key ?? file.filename ?? null;
 
   return (
     <div
@@ -47,7 +47,7 @@ const ZenodoFileDetails: React.FC<{
 );
 
 const ZenodoFileDownload: React.FC<{
-  depositionId: number;
+  depositionId: string;
   fileId: string | null;
 }> = ({ depositionId, fileId }) => {
   const serverSettings = useServerSettings();
@@ -102,7 +102,7 @@ const ZenodoFileDownload: React.FC<{
 };
 
 const ZenodoFileImportCellButton: React.FC<{
-  depositionId: number;
+  depositionId: string;
   fileId: string | null;
 }> = ({ depositionId, fileId }) => {
   const serverSettings = useServerSettings();
@@ -126,7 +126,7 @@ const ZenodoFileImportCellButton: React.FC<{
 };
 
 const ZenodoFileDeleteButton: React.FC<{
-  depositionId: number;
+  depositionId: string;
   fileKey: string | null;
 }> = ({ depositionId, fileKey }) => {
   const serverSettings = useServerSettings();

@@ -10,7 +10,7 @@ import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 
 export const DepositionUpload: React.FC<{
-  depositionId: number;
+  depositionId: string;
   onDone: () => void;
 }> = ({ depositionId, onDone }) => {
   const serverSettings = useServerSettings();

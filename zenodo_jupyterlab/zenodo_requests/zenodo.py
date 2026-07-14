@@ -5,7 +5,7 @@ TODO consider using httpx instead of requests, for async support.
 
 from collections.abc import Iterable
 from typing import Any, Protocol
-from urllib.parse import quote, urlparse, urlunparse
+from urllib.parse import quote, urljoin, urlparse, urlunparse
 
 import requests
 
@@ -64,7 +64,7 @@ def _rebase_zenodo_url(url: str, *, base_url: str) -> str:
     """
     Rebase absolute API links onto the configured Zenodo server URL.
     """
-    parsed_url = urlparse(url)
+    parsed_url = urlparse(urljoin(f"{_normalize_base_url(base_url)}/", url))
     if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
         raise ValueError("URL must be absolute")
     if not parsed_url.path.startswith("/api/"):
@@ -194,15 +194,26 @@ def get_zenodo_deposition_file(
 ) -> dict[str, Any]:
     """
     Fetch one file for a Zenodo deposition.
+    Works for files in both draft and published depositions.
     """
+    record_id = quote(str(deposition_id), safe="")
+    filename = quote(file_id, safe="")
     response = requests.get(
         (
-            f"{_normalize_base_url(base_url)}/api/deposit/depositions/"
-            f"{deposition_id}/files/{file_id}"
+            f"{_normalize_base_url(base_url)}/api/records/{record_id}"
+            f"/draft/files/{filename}"
         ),
         headers=_headers(headers),
         timeout=10,
     )
+
+    # If the file is not in the draft, try the published version.
+    if response.status_code == 404:
+        response = requests.get(
+            f"{_normalize_base_url(base_url)}/api/records/{record_id}/files/{filename}",
+            headers=_headers(headers),
+            timeout=10,
+        )
     response.raise_for_status()
     return response.json()
 
@@ -244,13 +255,13 @@ def list_zenodo_depositions(
     List depositions owned by the authenticated user.
     """
     response = requests.get(
-        f"{_normalize_base_url(base_url)}/api/deposit/depositions",
+        f"{_normalize_base_url(base_url)}/api/user/records",
         params={"page": page, "size": size},
         headers=_headers(headers),
         timeout=10,
     )
     response.raise_for_status()
-    return response.json()
+    return response.json().get("hits", {}).get("hits", [])
 
 
 def get_zenodo_deposition(
@@ -263,15 +274,20 @@ def get_zenodo_deposition(
     Fetch a deposition owned by the authenticated user.
     """
     response = requests.get(
-        (
-            f"{_normalize_base_url(base_url)}/api/deposit/depositions/"
-            f"{quote(str(deposition_id), safe='')}"
-        ),
+        f"{_normalize_base_url(base_url)}/api/user/records",
+        params={"q": f"id:{deposition_id}", "size": 10},
         headers=_headers(headers),
         timeout=10,
     )
     response.raise_for_status()
-    return response.json()
+    hits = response.json().get("hits", {}).get("hits", [])
+    deposition = next(
+        (item for item in hits if str(item.get("id")) == str(deposition_id)),
+        None,
+    )
+    if deposition is None:
+        raise ValueError(f"Deposition not found: {deposition_id}")
+    return deposition
 
 
 def get_zenodo_deposition_at_url(
@@ -303,14 +319,28 @@ def create_zenodo_deposition_version(
     """
     response = requests.post(
         (
-            f"{_normalize_base_url(base_url)}/api/deposit/depositions/"
-            f"{quote(str(deposition_id), safe='')}/actions/newversion"
+            f"{_normalize_base_url(base_url)}/api/records/"
+            f"{quote(str(deposition_id), safe='')}/versions"
         ),
         headers=_headers(headers),
         timeout=10,
     )
     response.raise_for_status()
-    return response.json()
+    draft = response.json()
+
+    # InvenioRDM creates a file-empty new version. Import the previous
+    # version's files to preserve the existing file-editing workflow.
+    draft_id = quote(str(draft["id"]), safe="")
+    import_response = requests.post(
+        (
+            f"{_normalize_base_url(base_url)}/api/records/{draft_id}"
+            "/draft/actions/files-import"
+        ),
+        headers=_headers(headers),
+        timeout=10,
+    )
+    import_response.raise_for_status()
+    return draft
 
 
 def create_zenodo_deposition(
@@ -322,8 +352,8 @@ def create_zenodo_deposition(
     Create an empty Zenodo deposition draft.
     """
     response = requests.post(
-        f"{_normalize_base_url(base_url)}/api/deposit/depositions",
-        json={},
+        f"{_normalize_base_url(base_url)}/api/records",
+        json={"files": {"enabled": True}},
         headers=_headers({"Content-Type": "application/json", **(headers or {})}),
         timeout=10,
     )
@@ -340,11 +370,33 @@ def upload_zenodo_deposition_file(
     content: bytes | BinaryReader,
 ) -> dict[str, Any]:
     """
-    Upload one file to a Zenodo deposition bucket.
+    Initialize, upload, and commit one InvenioRDM draft file.
     """
-    upload_url = f"{bucket_url.rstrip('/')}/{quote(filename)}"
+
+    # Initialize the file in the draft's file collection
+    # which returns the content and commit links for the file upload.
+    files_url = _rebase_zenodo_url(bucket_url, base_url=base_url)
+    initialize_response = requests.post(
+        files_url,
+        json=[{"key": filename}],
+        headers=_headers({"Content-Type": "application/json", **(headers or {})}),
+        timeout=10,
+    )
+    initialize_response.raise_for_status()
+    entries = initialize_response.json().get("entries", [])
+    entry = next((entry for entry in entries if entry.get("key") == filename), None)
+    if entry is None:
+        raise ValueError(f"Initialized file is missing from response: {filename}")
+
+    content_url = entry.get("links", {}).get("content")
+    commit_url = entry.get("links", {}).get("commit")
+    if not content_url or not commit_url:
+        raise ValueError(f"Initialized file has incomplete links: {filename}")
+
+
+    # Upload the file content to the draft's file collection
     response = requests.put(
-        _rebase_zenodo_url(upload_url, base_url=base_url),
+        _rebase_zenodo_url(content_url, base_url=base_url),
         data=content,
         headers=_headers(
             {"Content-Type": "application/octet-stream", **(headers or {})}
@@ -352,7 +404,15 @@ def upload_zenodo_deposition_file(
         timeout=30,
     )
     response.raise_for_status()
-    return response.json()
+
+    # Commit the file to finalize the upload and make it available in the draft.
+    commit_response = requests.post(
+        _rebase_zenodo_url(commit_url, base_url=base_url),
+        headers=_headers(headers),
+        timeout=10,
+    )
+    commit_response.raise_for_status()
+    return commit_response.json()
 
 
 def delete_zenodo_deposition_file(
@@ -363,9 +423,9 @@ def delete_zenodo_deposition_file(
     file_key: str,
 ) -> None:
     """
-    Delete one file from a Zenodo deposition bucket by its object key.
+    Delete one file from an InvenioRDM draft by its object key.
     """
-    delete_url = f"{bucket_url.rstrip('/')}/{quote(file_key)}"
+    delete_url = f"{bucket_url.rstrip('/')}/{quote(file_key, safe='')}"
     response = requests.delete(
         _rebase_zenodo_url(delete_url, base_url=base_url),
         headers=_headers(headers),

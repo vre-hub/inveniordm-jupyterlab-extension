@@ -10,7 +10,7 @@ import { JobProgress } from './JobProgress';
 
 function getDraftUrl(deposition: MinimalDepositionDraftResponse): string {
   return (
-    deposition.links?.latest_draft_html ??
+    deposition.links?.self_html ??
     `https://sandbox.zenodo.org/uploads/${deposition.id}`
   );
 }

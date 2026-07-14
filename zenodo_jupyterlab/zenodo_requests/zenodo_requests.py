@@ -11,7 +11,6 @@ from .zenodo import (
     create_zenodo_deposition_version,
     delete_zenodo_deposition_file,
     get_zenodo_deposition,
-    get_zenodo_deposition_at_url,
     get_zenodo_deposition_file,
     get_zenodo_me,
     list_zenodo_depositions,
@@ -120,29 +119,22 @@ class ZenodoRequests:
         Return a deposition whose files can be changed.
 
         Published depositions are immutable, so changing their files creates
-        (or reuses) the unpublished latest-version draft.
+        an unpublished latest-version draft.
         """
         deposition = self.get_zenodo_deposition(deposition_id)
-        if not deposition.get("submitted"):
+        if not deposition.get("is_published"):
             print(
-                f"Deposition {deposition_id} is not published, so its files can be changed"
+                f"Deposition {deposition_id} is not published, "
+                "so its files can be changed"
             )
             return deposition
 
         print(
-            f"Deposition {deposition_id} is published, so we will create or reuse its latest draft to change files"
+            f"Deposition {deposition_id} is published, so we will create "
+            "a new version draft to change files"
         )
-        version = create_zenodo_deposition_version(
+        return create_zenodo_deposition_version(
             deposition_id,
-            base_url=self.url,
-            headers=self.headers,
-        )
-        latest_draft_url = version.get("links", {}).get("latest_draft")
-        if not latest_draft_url:
-            raise ValueError("Published deposition does not provide a latest draft")
-
-        return get_zenodo_deposition_at_url(
-            latest_draft_url,
             base_url=self.url,
             headers=self.headers,
         )
@@ -155,11 +147,11 @@ class ZenodoRequests:
     ) -> dict[str, Any]:
         """Delete a file from the editable draft of a deposition."""
         deposition = self._get_zenodo_deposition_file_edit_target(deposition_id)
-        bucket_url = deposition.get("links", {}).get("bucket")
-        if not bucket_url:
-            raise ValueError("Deposition does not provide a file bucket")
+        files_url = deposition.get("links", {}).get("files")
+        if not files_url:
+            raise ValueError("Deposition does not provide a files link")
 
-        self.delete_file_from_bucket(bucket_url=bucket_url, file_key=file_key)
+        self.delete_file_from_bucket(bucket_url=files_url, file_key=file_key)
         return deposition
 
     def upload_files_to_deposition(
@@ -172,13 +164,13 @@ class ZenodoRequests:
     ) -> dict[str, Any]:
         """Upload files to the editable draft of a deposition."""
         deposition = self._get_zenodo_deposition_file_edit_target(deposition_id)
-        bucket_url = deposition.get("links", {}).get("bucket")
-        if not bucket_url:
-            raise ValueError("Deposition does not provide a file bucket")
+        files_url = deposition.get("links", {}).get("files")
+        if not files_url:
+            raise ValueError("Deposition does not provide a files link")
 
         self.upload_files_to_bucket(
             file_paths=file_paths,
-            bucket_url=bucket_url,
+            bucket_url=files_url,
             on_upload_progress=on_upload_progress,
             should_cancel=should_cancel,
         )
@@ -191,7 +183,7 @@ class ZenodoRequests:
         file_key: str,
     ) -> None:
         """
-        Delete a file from a Zenodo deposition bucket by its object key.
+        Delete a file from an InvenioRDM draft's file collection.
         """
         if not self.headers:
             raise ValueError("Missing Zenodo request authentication headers")
@@ -211,7 +203,7 @@ class ZenodoRequests:
         should_cancel: CancelCheck | None = None,
     ):
         """
-        Upload files on the local filesystem to a Zenodo deposition bucket.
+        Upload files on the local filesystem to an InvenioRDM draft.
         """
         if not self.headers:
             raise ValueError("Missing Zenodo request authentication headers")
@@ -274,11 +266,11 @@ class ZenodoRequests:
         )
         if should_cancel is not None and should_cancel():
             raise JobCancelled("Upload canceled")
-        bucket_url = deposition["links"]["bucket"]
+        files_url = deposition["links"]["files"]
 
         self.upload_files_to_bucket(
             file_paths=file_paths,
-            bucket_url=bucket_url,
+            bucket_url=files_url,
             on_upload_progress=on_upload_progress,
             should_cancel=should_cancel,
         )

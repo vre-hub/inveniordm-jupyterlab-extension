@@ -14,7 +14,7 @@ export type ZenodoFile = {
 };
 
 export type ZenodoResourceData = {
-  id: number;
+  id: string;
   doi?: string;
   title?: string;
   state?: string;

@@ -130,14 +130,14 @@ export async function listZenodoDepositions(
 }
 
 export type MinimalDepositionDraftResponse = {
-  id: number;
+  id: string;
   links?: {
-    latest_draft_html?: string;
+    self_html?: string;
     self?: string;
   };
   title?: string;
   state?: string;
-  submitted?: boolean;
+  is_published?: boolean;
 };
 
 export type StartJobResponse = {
@@ -172,7 +172,7 @@ export async function getLatestActiveJobId(
   serverSettings: ServerConnection.ISettings,
   options: {
     jobType: 'upload' | 'download';
-    depositionId: number;
+    depositionId: string;
     fileId?: string;
   }
 ): Promise<string | null> {
@@ -210,7 +210,7 @@ export async function createMinimalDepositionDraft(
 
 export async function uploadFilesToDeposition(
   serverSettings: ServerConnection.ISettings,
-  depositionId: number,
+  depositionId: string,
   filePaths: string[]
 ): Promise<StartJobResponse> {
   return await requestAPI<StartJobResponse>(
@@ -231,7 +231,7 @@ export type DeleteZenodoDepositionFileResponse = {
 
 export async function deleteZenodoDepositionFile(
   serverSettings: ServerConnection.ISettings,
-  depositionId: number,
+  depositionId: string,
   fileKey: string
 ): Promise<DeleteZenodoDepositionFileResponse> {
   return await requestAPI<DeleteZenodoDepositionFileResponse>(
@@ -282,7 +282,7 @@ export type DeleteZenodoFileDownloadResponse = {
 
 export async function downloadZenodoFile(
   serverSettings: ServerConnection.ISettings,
-  depositionId: number,
+  depositionId: string,
   fileId: string
 ): Promise<StartJobResponse> {
   return await requestAPI<StartJobResponse>('files/download', serverSettings, {
@@ -294,7 +294,7 @@ export async function downloadZenodoFile(
 
 export async function getZenodoFileDownloadStatus(
   serverSettings: ServerConnection.ISettings,
-  depositionId: number,
+  depositionId: string,
   fileId: string
 ): Promise<ZenodoFileDownloadStatusResponse> {
   return await requestAPI<ZenodoFileDownloadStatusResponse>(
@@ -310,7 +310,7 @@ export async function getZenodoFileDownloadStatus(
 
 export async function deleteZenodoFileDownload(
   serverSettings: ServerConnection.ISettings,
-  depositionId: number,
+  depositionId: string,
   fileId: string
 ): Promise<DeleteZenodoFileDownloadResponse> {
   return await requestAPI<DeleteZenodoFileDownloadResponse>(
@@ -326,7 +326,7 @@ export async function deleteZenodoFileDownload(
 
 export async function getZenodoFileImportCell(
   serverSettings: ServerConnection.ISettings,
-  depositionId: number,
+  depositionId: string,
   fileId: string
 ): Promise<InsertZenodoCellAction> {
   return await requestAPI<InsertZenodoCellAction>(
