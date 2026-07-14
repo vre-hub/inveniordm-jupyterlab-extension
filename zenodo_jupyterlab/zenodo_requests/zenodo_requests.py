@@ -233,17 +233,27 @@ class ZenodoRequests:
                             current_file,
                         )
 
-                upload_zenodo_draft_file(
-                    files_url,
-                    base_url=self.url,
-                    headers=self.headers,
-                    filename=path.name,
-                    content=ProgressReportingReader(
-                        file,
-                        on_bytes_read=on_bytes_read,
-                        should_cancel=should_cancel,
-                    ),
-                )
+                try:
+                    upload_zenodo_draft_file(
+                        files_url,
+                        base_url=self.url,
+                        headers=self.headers,
+                        filename=path.name,
+                        content=ProgressReportingReader(
+                            file,
+                            on_bytes_read=on_bytes_read,
+                            should_cancel=should_cancel,
+                        ),
+                    )
+                except JobCancelled:
+                    # Initializing an InvenioRDM upload creates the file entry
+                    # before the content is streamed. Remove that empty entry
+                    # when streaming is canceled.
+                    self.delete_draft_file(
+                        files_url=files_url,
+                        file_key=path.name,
+                    )
+                    raise
 
     def create_minimal_record_draft(
         self,

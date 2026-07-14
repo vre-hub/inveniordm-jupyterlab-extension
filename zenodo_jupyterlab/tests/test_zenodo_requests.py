@@ -1,6 +1,9 @@
+import pytest
+
 from zenodo_jupyterlab.zenodo_requests import zenodo as zenodo_module
 from zenodo_jupyterlab.zenodo_requests import zenodo_requests as zenodo_requests_module
 from zenodo_jupyterlab.zenodo_requests.zenodo_requests import ZenodoRequests
+from zenodo_jupyterlab.util.job_types import JobCancelled
 
 
 class Response:
@@ -213,6 +216,47 @@ def test_upload_zenodo_draft_file_initializes_uploads_and_commits(monkeypatch):
     assert post_calls[1][0] == (
         "https://zenodo.org/api/records/draft-1/draft/files/results%202026.csv/commit",
     )
+
+
+def test_cancelled_upload_deletes_initialized_file(monkeypatch, tmp_path):
+    file_path = tmp_path / "results 2026.csv"
+    file_path.write_bytes(b"content")
+    delete_calls = []
+
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "upload_zenodo_draft_file",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            JobCancelled("Upload canceled")
+        ),
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "delete_zenodo_draft_file",
+        lambda *args, **kwargs: delete_calls.append((args, kwargs)),
+    )
+
+    requests = ZenodoRequests(
+        "https://sandbox.zenodo.org",
+        {"Authorization": "x"},
+    )
+
+    with pytest.raises(JobCancelled, match="Upload canceled"):
+        requests.upload_files_to_draft(
+            [file_path],
+            "/api/records/draft-1/draft/files",
+        )
+
+    assert delete_calls == [
+        (
+            ("/api/records/draft-1/draft/files",),
+            {
+                "base_url": "https://sandbox.zenodo.org",
+                "headers": {"Authorization": "x"},
+                "file_key": "results 2026.csv",
+            },
+        )
+    ]
 
 
 def test_open_zenodo_file_uses_streaming_response(monkeypatch):
