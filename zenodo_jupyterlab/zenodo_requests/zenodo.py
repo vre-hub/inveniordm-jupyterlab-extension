@@ -141,8 +141,7 @@ def search_zenodo_records(
     page: int = 1,
     size: int = 10,
     sort: str = "bestmatch",
-    all_versions: bool = False,
-    filters: dict[str, str] | None = None,
+    allversions: bool = False,
 ) -> dict[str, Any]:
     """
     Search published Zenodo records.
@@ -152,10 +151,8 @@ def search_zenodo_records(
         "page": page,
         "size": size,
         "sort": sort,
-        "all_versions": all_versions,
+        "allversions": allversions,
     }
-    if filters:
-        params.update(filters)
 
     response = requests.get(
         f"{_normalize_base_url(base_url)}/api/records",

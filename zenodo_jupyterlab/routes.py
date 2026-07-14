@@ -132,11 +132,6 @@ class ZenodoRecordsHandler(APIHandler):
 
     @tornado.web.authenticated
     def get(self):
-        filters = {
-            key: self.get_query_argument(key, None)
-            for key in ("communities", "type", "subtype", "bounds", "custom")
-        }
-        filters = {key: value for key, value in filters.items() if value}
         include_files = self.get_query_argument("include_files", "false").lower() in (
             "1",
             "true",
@@ -149,9 +144,8 @@ class ZenodoRecordsHandler(APIHandler):
                 page=int(self.get_query_argument("page", "1")),
                 size=int(self.get_query_argument("size", "10")),
                 sort=self.get_query_argument("sort", "bestmatch"),
-                all_versions=self.get_query_argument("all_versions", "false").lower()
+                allversions=self.get_query_argument("allversions", "false").lower()
                 in ("1", "true"),
-                filters=filters,
                 include_files=include_files,
             )
         except ValueError:

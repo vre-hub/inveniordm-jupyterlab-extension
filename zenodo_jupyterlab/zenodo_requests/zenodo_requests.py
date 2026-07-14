@@ -56,8 +56,7 @@ class ZenodoRequests:
         page: int = 1,
         size: int = 10,
         sort: str = "bestmatch",
-        all_versions: bool = False,
-        filters: dict[str, str] | None = None,
+        allversions: bool = False,
         include_files: bool = False,
     ) -> dict[str, Any]:
         records = search_zenodo_records(
@@ -67,8 +66,7 @@ class ZenodoRequests:
             page=page,
             size=size,
             sort=sort,
-            all_versions=all_versions,
-            filters=filters,
+            allversions=allversions,
         )
         if include_files:
             include_zenodo_files(
