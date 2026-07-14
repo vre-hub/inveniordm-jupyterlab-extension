@@ -1,17 +1,16 @@
 import React from 'react';
 
 import {
-  MinimalDepositionDraftResponse,
-  createMinimalDepositionDraft
+  MinimalRecordDraftResponse,
+  createMinimalRecordDraft
 } from '../api_calls';
 import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 
-function getDraftUrl(deposition: MinimalDepositionDraftResponse): string {
+function getDraftUrl(record: MinimalRecordDraftResponse): string {
   return (
-    deposition.links?.self_html ??
-    `https://sandbox.zenodo.org/uploads/${deposition.id}`
+    record.links?.self_html ?? `https://sandbox.zenodo.org/uploads/${record.id}`
   );
 }
 
@@ -20,8 +19,9 @@ export const Upload: React.FC = () => {
   const [filePaths, setFilePaths] = React.useState<string[]>([]);
   const [isCreatingDraft, setIsCreatingDraft] = React.useState(false);
   const [uploadId, setUploadId] = React.useState<string | null>(null);
-  const [result, setResult] =
-    React.useState<MinimalDepositionDraftResponse | null>(null);
+  const [result, setResult] = React.useState<MinimalRecordDraftResponse | null>(
+    null
+  );
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
   const canCreateDraft = filePaths.length > 0 && !isCreatingDraft;
@@ -39,10 +39,7 @@ export const Upload: React.FC = () => {
     setMessage(null);
 
     try {
-      const upload = await createMinimalDepositionDraft(
-        serverSettings,
-        filePaths
-      );
+      const upload = await createMinimalRecordDraft(serverSettings, filePaths);
       setUploadId(upload.job_id);
     } catch (reason) {
       setError(String(reason));
@@ -51,8 +48,8 @@ export const Upload: React.FC = () => {
   };
 
   const completeUpload = React.useCallback(
-    (deposition: MinimalDepositionDraftResponse): void => {
-      setResult(deposition);
+    (record: MinimalRecordDraftResponse): void => {
+      setResult(record);
       setIsCreatingDraft(false);
       setUploadId(null);
     },
@@ -96,11 +93,11 @@ export const Upload: React.FC = () => {
         <JobProgress
           onCanceled={cancelUploadJob}
           onDone={progress => {
-            const deposition = progress.result?.deposition;
-            if (deposition) {
-              completeUpload(deposition);
+            const draft = progress.result?.draft;
+            if (draft) {
+              completeUpload(draft);
             } else {
-              failUpload('Upload completed without a deposition');
+              failUpload('Upload completed without a record');
             }
           }}
           onError={failUpload}

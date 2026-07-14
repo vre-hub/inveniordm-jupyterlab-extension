@@ -38,8 +38,8 @@ async def test_find_active_download_jobs(jp_fetch):
         "jobs",
         params={
             "job_type": "download",
-            "deposition_id": "123",
-            "file_id": "file-1",
+            "record_id": "123",
+            "file_key": "file-1",
             "status": "active",
             "latest": "true",
         },

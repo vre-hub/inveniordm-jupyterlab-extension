@@ -116,7 +116,7 @@ export async function searchZenodoRecords(
   return await requestAPI(`records?${params.toString()}`, serverSettings);
 }
 
-export async function listZenodoDepositions(
+export async function listZenodoUserRecords(
   serverSettings: ServerConnection.ISettings
 ): Promise<unknown> {
   const params = new URLSearchParams();
@@ -124,19 +124,17 @@ export async function listZenodoDepositions(
 
   const queryString = params.toString();
   return await requestAPI(
-    `depositions${queryString ? `?${queryString}` : ''}`,
+    `user-records${queryString ? `?${queryString}` : ''}`,
     serverSettings
   );
 }
 
-export type MinimalDepositionDraftResponse = {
+export type MinimalRecordDraftResponse = {
   id: string;
   links?: {
     self_html?: string;
     self?: string;
   };
-  title?: string;
-  state?: string;
   is_published?: boolean;
 };
 
@@ -148,7 +146,7 @@ export type JobStatus =
   'pending' | 'running' | 'canceling' | 'canceled' | 'done' | 'error';
 
 export type JobResult = {
-  deposition?: MinimalDepositionDraftResponse;
+  draft?: MinimalRecordDraftResponse;
   path?: string;
 };
 
@@ -172,18 +170,18 @@ export async function getLatestActiveJobId(
   serverSettings: ServerConnection.ISettings,
   options: {
     jobType: 'upload' | 'download';
-    depositionId: string;
-    fileId?: string;
+    recordId: string;
+    fileKey?: string;
   }
 ): Promise<string | null> {
   const params = new URLSearchParams({
     job_type: options.jobType,
-    deposition_id: String(options.depositionId),
+    record_id: String(options.recordId),
     status: 'active',
     latest: 'true'
   });
-  if (options.fileId !== undefined) {
-    params.set('file_id', options.fileId);
+  if (options.fileKey !== undefined) {
+    params.set('file_key', options.fileKey);
   }
 
   const response = await requestAPI<FindJobsResponse>(
@@ -193,12 +191,12 @@ export async function getLatestActiveJobId(
   return response.job_ids[0] ?? null;
 }
 
-export async function createMinimalDepositionDraft(
+export async function createMinimalRecordDraft(
   serverSettings: ServerConnection.ISettings,
   filePaths: string[]
 ): Promise<StartJobResponse> {
   return await requestAPI<StartJobResponse>(
-    'depositions/minimal-draft',
+    'user-records/minimal-draft',
     serverSettings,
     {
       method: 'POST',
@@ -208,13 +206,13 @@ export async function createMinimalDepositionDraft(
   );
 }
 
-export async function uploadFilesToDeposition(
+export async function uploadFilesToRecord(
   serverSettings: ServerConnection.ISettings,
-  depositionId: string,
+  recordId: string,
   filePaths: string[]
 ): Promise<StartJobResponse> {
   return await requestAPI<StartJobResponse>(
-    `depositions/${depositionId}/files`,
+    `user-records/${recordId}/files`,
     serverSettings,
     {
       method: 'POST',
@@ -224,18 +222,18 @@ export async function uploadFilesToDeposition(
   );
 }
 
-export type DeleteZenodoDepositionFileResponse = {
-  deposition: MinimalDepositionDraftResponse;
+export type DeleteZenodoRecordFileResponse = {
+  draft: MinimalRecordDraftResponse;
   deleted_key: string;
 };
 
-export async function deleteZenodoDepositionFile(
+export async function deleteZenodoRecordFile(
   serverSettings: ServerConnection.ISettings,
-  depositionId: string,
+  recordId: string,
   fileKey: string
-): Promise<DeleteZenodoDepositionFileResponse> {
-  return await requestAPI<DeleteZenodoDepositionFileResponse>(
-    `depositions/${depositionId}/files`,
+): Promise<DeleteZenodoRecordFileResponse> {
+  return await requestAPI<DeleteZenodoRecordFileResponse>(
+    `user-records/${recordId}/files`,
     serverSettings,
     {
       method: 'DELETE',
@@ -282,20 +280,20 @@ export type DeleteZenodoFileDownloadResponse = {
 
 export async function downloadZenodoFile(
   serverSettings: ServerConnection.ISettings,
-  depositionId: string,
-  fileId: string
+  recordId: string,
+  fileKey: string
 ): Promise<StartJobResponse> {
   return await requestAPI<StartJobResponse>('files/download', serverSettings, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
+    body: JSON.stringify({ record_id: recordId, file_key: fileKey })
   });
 }
 
 export async function getZenodoFileDownloadStatus(
   serverSettings: ServerConnection.ISettings,
-  depositionId: string,
-  fileId: string
+  recordId: string,
+  fileKey: string
 ): Promise<ZenodoFileDownloadStatusResponse> {
   return await requestAPI<ZenodoFileDownloadStatusResponse>(
     'files/status',
@@ -303,15 +301,15 @@ export async function getZenodoFileDownloadStatus(
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
+      body: JSON.stringify({ record_id: recordId, file_key: fileKey })
     }
   );
 }
 
 export async function deleteZenodoFileDownload(
   serverSettings: ServerConnection.ISettings,
-  depositionId: string,
-  fileId: string
+  recordId: string,
+  fileKey: string
 ): Promise<DeleteZenodoFileDownloadResponse> {
   return await requestAPI<DeleteZenodoFileDownloadResponse>(
     'files/download',
@@ -319,15 +317,15 @@ export async function deleteZenodoFileDownload(
     {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deposition_id: depositionId, file_id: fileId })
+      body: JSON.stringify({ record_id: recordId, file_key: fileKey })
     }
   );
 }
 
 export async function getZenodoFileImportCell(
   serverSettings: ServerConnection.ISettings,
-  depositionId: string,
-  fileId: string
+  recordId: string,
+  fileKey: string
 ): Promise<InsertZenodoCellAction> {
   return await requestAPI<InsertZenodoCellAction>(
     'files/import-cell',
@@ -336,8 +334,8 @@ export async function getZenodoFileImportCell(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        deposition_id: depositionId,
-        file_id: fileId
+        record_id: recordId,
+        file_key: fileKey
       })
     }
   );

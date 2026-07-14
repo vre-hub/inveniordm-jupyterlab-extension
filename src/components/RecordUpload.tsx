@@ -2,17 +2,17 @@ import React from 'react';
 
 import {
   getLatestActiveJobId,
-  MinimalDepositionDraftResponse,
-  uploadFilesToDeposition
+  MinimalRecordDraftResponse,
+  uploadFilesToRecord
 } from '../api_calls';
 import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 
-export const DepositionUpload: React.FC<{
-  depositionId: string;
+export const RecordUpload: React.FC<{
+  recordId: string;
   onDone: () => void;
-}> = ({ depositionId, onDone }) => {
+}> = ({ recordId, onDone }) => {
   const serverSettings = useServerSettings();
   const [uploadId, setUploadId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -24,7 +24,7 @@ export const DepositionUpload: React.FC<{
     const findUpload = async (): Promise<void> => {
       const jobId = await getLatestActiveJobId(serverSettings, {
         jobType: 'upload',
-        depositionId
+        recordId
       });
       if (isMounted) {
         setUploadId(jobId);
@@ -35,16 +35,16 @@ export const DepositionUpload: React.FC<{
     return () => {
       isMounted = false;
     };
-  }, [depositionId, serverSettings]);
+  }, [recordId, serverSettings]);
 
   const uploadFiles = async (filePaths: string[]): Promise<void> => {
     setError(null);
     setMessage(null);
 
     try {
-      const upload = await uploadFilesToDeposition(
+      const upload = await uploadFilesToRecord(
         serverSettings,
-        depositionId,
+        recordId,
         filePaths
       );
       setUploadId(upload.job_id);
@@ -54,7 +54,7 @@ export const DepositionUpload: React.FC<{
   };
 
   const completeUpload = React.useCallback(
-    (_deposition: MinimalDepositionDraftResponse): void => {
+    (_record: MinimalRecordDraftResponse): void => {
       setUploadId(null);
       setMessage('Files uploaded.');
       onDone();
@@ -84,11 +84,11 @@ export const DepositionUpload: React.FC<{
         <JobProgress
           onCanceled={cancelUpload}
           onDone={progress => {
-            const deposition = progress.result?.deposition;
-            if (deposition) {
-              completeUpload(deposition);
+            const draft = progress.result?.draft;
+            if (draft) {
+              completeUpload(draft);
             } else {
-              failUpload('Upload completed without a deposition');
+              failUpload('Upload completed without a record');
             }
           }}
           onError={failUpload}

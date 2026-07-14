@@ -8,7 +8,7 @@ from .zenodo_downloads import ZenodoDownloads, ZenodoFileSource
 class ZenodoDownloadManager:
     """
     Manages Zenodo file downloads:
-    Allows starting and managing downloads for deposition files.
+    Allows starting and managing downloads for record files.
     """
     def __init__(
         self,
@@ -22,15 +22,15 @@ class ZenodoDownloadManager:
         self,
         zenodo_requests: ZenodoFileSource,
         *,
-        deposition_id: int | str,
-        file_id: str,
+        record_id: int | str,
+        file_key: str,
         on_progress_changed: ProgressListener | None = None,
     ) -> str:
         def download(context: JobContext) -> dict[str, object]:
             destination = self.zenodo_downloads.download_file(
                 zenodo_requests,
-                deposition_id=deposition_id,
-                file_id=file_id,
+                record_id=record_id,
+                file_key=file_key,
                 on_progress=lambda bytes_downloaded, total_bytes: context.update(
                     completed_bytes=bytes_downloaded,
                     total_bytes=total_bytes,
@@ -44,8 +44,8 @@ class ZenodoDownloadManager:
             progress=JobProgress(
                 job_type="download",
                 metadata={
-                    "deposition_id": str(deposition_id),
-                    "file_id": file_id,
+                    "record_id": str(record_id),
+                    "file_key": file_key,
                 },
             ),
             on_progress_changed=on_progress_changed,
@@ -62,37 +62,37 @@ class ZenodoDownloadManager:
         self,
         zenodo_requests: ZenodoFileSource,
         *,
-        deposition_id: int | str,
-        file_id: str,
+        record_id: int | str,
+        file_key: str,
     ) -> dict[str, object]:
         return self.zenodo_downloads.get_download_status(
             zenodo_requests,
-            deposition_id=deposition_id,
-            file_id=file_id,
+            record_id=record_id,
+            file_key=file_key,
         )
 
     def delete_download(
         self,
         zenodo_requests: ZenodoFileSource,
         *,
-        deposition_id: int | str,
-        file_id: str,
+        record_id: int | str,
+        file_key: str,
     ) -> dict[str, object]:
         return self.zenodo_downloads.delete_download(
             zenodo_requests,
-            deposition_id=deposition_id,
-            file_id=file_id,
+            record_id=record_id,
+            file_key=file_key,
         )
 
     def get_download_location(
         self,
         zenodo_requests: ZenodoFileSource,
         *,
-        deposition_id: int | str,
-        file_id: str,
+        record_id: int | str,
+        file_key: str,
     ) -> Path:
         return self.zenodo_downloads.get_download_location(
             zenodo_requests,
-            deposition_id=deposition_id,
-            file_id=file_id,
+            record_id=record_id,
+            file_key=file_key,
         )

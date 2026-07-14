@@ -35,7 +35,7 @@ async def test_upload_job_reports_progress_and_result():
             total_bytes=10,
             current_item="data.csv",
         )
-        return {"deposition": {"id": 123}}
+        return {"draft": {"id": 123}}
 
     upload_id = manager.start(
         upload,
@@ -57,7 +57,7 @@ async def test_upload_job_reports_progress_and_result():
         "total_bytes": 10,
         "current_item": "data.csv",
         "message": None,
-        "result": {"deposition": {"id": 123}},
+        "result": {"draft": {"id": 123}},
         "cancel_requested": False,
     }
     assert progress_events[-1] == (upload_id, progress)
@@ -128,7 +128,7 @@ async def test_cancel_running_job_is_reported_as_canceled():
         continue_job.wait(timeout=1)
         if context.should_cancel():
             raise JobCancelled("Upload canceled")
-        return {"deposition": {"id": 123}}
+        return {"draft": {"id": 123}}
 
     job_id = manager.start(job, progress=JobProgress(job_type="upload"))
     assert await asyncio.to_thread(started.wait, 1)
@@ -166,26 +166,26 @@ def test_find_progress_filters_metadata_and_returns_latest_first():
     first_id = manager.progress_store.create(
         JobProgress(
             job_type="download",
-            metadata={"deposition_id": "123", "file_id": "file-1"},
+            metadata={"record_id": "123", "file_key": "file-1"},
         )
     )
     latest_id = manager.progress_store.create(
         JobProgress(
             job_type="download",
-            metadata={"deposition_id": "123", "file_id": "file-1"},
+            metadata={"record_id": "123", "file_key": "file-1"},
         )
     )
     manager.progress_store.create(
         JobProgress(
             job_type="download",
-            metadata={"deposition_id": "other", "file_id": "file-1"},
+            metadata={"record_id": "other", "file_key": "file-1"},
         )
     )
 
     matches = manager.find_progress(
         job_type="download",
         statuses={"pending", "running", "canceling"},
-        metadata={"deposition_id": "123", "file_id": "file-1"},
+        metadata={"record_id": "123", "file_key": "file-1"},
     )
 
     assert [match["job_id"] for match in matches] == [latest_id, first_id]

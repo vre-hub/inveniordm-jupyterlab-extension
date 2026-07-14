@@ -7,16 +7,16 @@ from ..util.progress_reporting_reader import ProgressReportingReader
 from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
     ZenodoFileResponse,
-    create_zenodo_deposition,
-    create_zenodo_deposition_version,
-    delete_zenodo_deposition_file,
-    get_zenodo_deposition,
-    get_zenodo_deposition_file,
+    create_zenodo_record_draft,
+    create_zenodo_record_version,
+    delete_zenodo_draft_file,
+    get_zenodo_record,
+    get_zenodo_record_file,
     get_zenodo_me,
-    list_zenodo_depositions,
+    list_zenodo_user_records,
     open_zenodo_file,
     search_zenodo_records,
-    upload_zenodo_deposition_file,
+    upload_zenodo_draft_file,
 )
 
 
@@ -77,14 +77,14 @@ class ZenodoRequests:
 
         return records
 
-    def list_zenodo_depositions(
+    def list_zenodo_user_records(
         self,
         *,
         page: int = 1,
         size: int = 10,
         include_files: bool = False,
     ) -> list[dict[str, Any]]:
-        depositions = list_zenodo_depositions(
+        records = list_zenodo_user_records(
             base_url=self.url,
             headers=self.headers,
             page=page,
@@ -92,92 +92,92 @@ class ZenodoRequests:
         )
         if include_files:
             include_zenodo_files(
-                depositions,
+                records,
                 base_url=self.url,
                 headers=self.headers,
             )
 
-        return depositions
+        return records
 
-    def get_zenodo_deposition(
+    def get_zenodo_record(
         self,
-        deposition_id: int | str,
+        record_id: int | str,
     ) -> dict[str, Any]:
-        return get_zenodo_deposition(
-            deposition_id,
+        return get_zenodo_record(
+            record_id,
             base_url=self.url,
             headers=self.headers,
         )
 
-    def _get_zenodo_deposition_file_edit_target(
+    def _get_editable_record_draft(
         self,
-        deposition_id: int | str,
+        record_id: int | str,
     ) -> dict[str, Any]:
         """
-        Return a deposition whose files can be changed.
+        Return the editable draft used to change a record's files.
 
-        Published depositions are immutable, so changing their files creates
+        Published records are immutable, so changing their files creates
         an unpublished latest-version draft.
         """
-        deposition = self.get_zenodo_deposition(deposition_id)
-        if not deposition.get("is_published"):
+        record = self.get_zenodo_record(record_id)
+        if not record.get("is_published"):
             print(
-                f"Deposition {deposition_id} is not published, "
+                f"Record {record_id} is not published, "
                 "so its files can be changed"
             )
-            return deposition
+            return record
 
         print(
-            f"Deposition {deposition_id} is published, so we will create "
+            f"Record {record_id} is published, so we will create "
             "a new version draft to change files"
         )
-        return create_zenodo_deposition_version(
-            deposition_id,
+        return create_zenodo_record_version(
+            record_id,
             base_url=self.url,
             headers=self.headers,
         )
 
-    def delete_file_from_deposition(
+    def delete_file_from_record(
         self,
         *,
-        deposition_id: int | str,
+        record_id: int | str,
         file_key: str,
     ) -> dict[str, Any]:
-        """Delete a file from the editable draft of a deposition."""
-        deposition = self._get_zenodo_deposition_file_edit_target(deposition_id)
-        files_url = deposition.get("links", {}).get("files")
+        """Delete a file from the editable draft of a record."""
+        draft = self._get_editable_record_draft(record_id)
+        files_url = draft.get("links", {}).get("files")
         if not files_url:
-            raise ValueError("Deposition does not provide a files link")
+            raise ValueError("Record draft does not provide a files link")
 
-        self.delete_file_from_bucket(bucket_url=files_url, file_key=file_key)
-        return deposition
+        self.delete_draft_file(files_url=files_url, file_key=file_key)
+        return draft
 
-    def upload_files_to_deposition(
+    def upload_files_to_record(
         self,
         *,
-        deposition_id: int | str,
+        record_id: int | str,
         file_paths: list[Path],
         on_upload_progress: UploadProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
     ) -> dict[str, Any]:
-        """Upload files to the editable draft of a deposition."""
-        deposition = self._get_zenodo_deposition_file_edit_target(deposition_id)
-        files_url = deposition.get("links", {}).get("files")
+        """Upload files to the editable draft of a record."""
+        draft = self._get_editable_record_draft(record_id)
+        files_url = draft.get("links", {}).get("files")
         if not files_url:
-            raise ValueError("Deposition does not provide a files link")
+            raise ValueError("Record draft does not provide a files link")
 
-        self.upload_files_to_bucket(
+        self.upload_files_to_draft(
             file_paths=file_paths,
-            bucket_url=files_url,
+            files_url=files_url,
             on_upload_progress=on_upload_progress,
             should_cancel=should_cancel,
         )
-        return deposition
+        return draft
 
-    def delete_file_from_bucket(
+    def delete_draft_file(
         self,
         *,
-        bucket_url: str,
+        files_url: str,
         file_key: str,
     ) -> None:
         """
@@ -186,17 +186,17 @@ class ZenodoRequests:
         if not self.headers:
             raise ValueError("Missing Zenodo request authentication headers")
 
-        delete_zenodo_deposition_file(
-            bucket_url,
+        delete_zenodo_draft_file(
+            files_url,
             base_url=self.url,
             headers=self.headers,
             file_key=file_key,
         )
 
-    def upload_files_to_bucket(
+    def upload_files_to_draft(
         self,
         file_paths: list[Path],
-        bucket_url: str,
+        files_url: str,
         on_upload_progress: UploadProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
     ):
@@ -233,8 +233,8 @@ class ZenodoRequests:
                             current_file,
                         )
 
-                upload_zenodo_deposition_file(
-                    bucket_url,
+                upload_zenodo_draft_file(
+                    files_url,
                     base_url=self.url,
                     headers=self.headers,
                     filename=path.name,
@@ -245,7 +245,7 @@ class ZenodoRequests:
                     ),
                 )
 
-    def create_minimal_deposition_draft(
+    def create_minimal_record_draft(
         self,
         *,
         file_paths: list[Path],
@@ -258,21 +258,21 @@ class ZenodoRequests:
         if should_cancel is not None and should_cancel():
             raise JobCancelled("Upload canceled")
 
-        deposition = create_zenodo_deposition(
+        draft = create_zenodo_record_draft(
             base_url=self.url,
             headers=self.headers,
         )
         if should_cancel is not None and should_cancel():
             raise JobCancelled("Upload canceled")
-        files_url = deposition["links"]["files"]
+        files_url = draft["links"]["files"]
 
-        self.upload_files_to_bucket(
+        self.upload_files_to_draft(
             file_paths=file_paths,
-            bucket_url=files_url,
+            files_url=files_url,
             on_upload_progress=on_upload_progress,
             should_cancel=should_cancel,
         )
-        return deposition
+        return draft
 
     def open_zenodo_file(
         self,
@@ -285,15 +285,15 @@ class ZenodoRequests:
             headers=self.headers,
         )
 
-    def get_zenodo_deposition_file(
+    def get_zenodo_record_file(
         self,
         *,
-        deposition_id: int | str,
-        file_id: str,
+        record_id: int | str,
+        file_key: str,
     ) -> dict[str, Any]:
-        return get_zenodo_deposition_file(
-            deposition_id,
-            file_id,
+        return get_zenodo_record_file(
+            record_id,
+            file_key,
             base_url=self.url,
             headers=self.headers,
         )

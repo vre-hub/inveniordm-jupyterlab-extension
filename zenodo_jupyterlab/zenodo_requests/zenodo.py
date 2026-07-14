@@ -171,7 +171,7 @@ def get_zenodo_files(
     headers: dict[str, str] | None = None,
 ) -> list[dict[str, Any]] | dict[str, Any]:
     """
-    Fetch files from a Zenodo files URL provided by a record or deposition.
+    Fetch a record's file collection using its InvenioRDM ``links.files`` URL.
     """
     response = requests.get(
         _rebase_zenodo_url(files_url, base_url=base_url),
@@ -182,19 +182,19 @@ def get_zenodo_files(
     return response.json()
 
 
-def get_zenodo_deposition_file(
-    deposition_id: int | str,
-    file_id: str,
+def get_zenodo_record_file(
+    record_id: int | str,
+    file_key: str,
     *,
     base_url: str,
     headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """
-    Fetch one file for a Zenodo deposition.
-    Works for files in both draft and published depositions.
+    Fetch one file for a Zenodo record.
+    Works for files in both draft and published records.
     """
-    record_id = quote(str(deposition_id), safe="")
-    filename = quote(file_id, safe="")
+    record_id = quote(str(record_id), safe="")
+    filename = quote(file_key, safe="")
     response = requests.get(
         (
             f"{_normalize_base_url(base_url)}/api/records/{record_id}"
@@ -241,7 +241,7 @@ def open_zenodo_file(
     return _RequestsZenodoFileResponse(response)
 
 
-def list_zenodo_depositions(
+def list_zenodo_user_records(
     *,
     base_url: str,
     headers: dict[str, str] | None,
@@ -249,7 +249,7 @@ def list_zenodo_depositions(
     size: int = 10,
 ) -> list[dict[str, Any]]:
     """
-    List depositions owned by the authenticated user.
+    List records owned by the authenticated user.
     """
     response = requests.get(
         f"{_normalize_base_url(base_url)}/api/user/records",
@@ -261,43 +261,43 @@ def list_zenodo_depositions(
     return response.json().get("hits", {}).get("hits", [])
 
 
-def get_zenodo_deposition(
-    deposition_id: int | str,
+def get_zenodo_record(
+    record_id: int | str,
     *,
     base_url: str,
     headers: dict[str, str] | None,
 ) -> dict[str, Any]:
     """
-    Fetch a deposition owned by the authenticated user.
+    Fetch a record owned by the authenticated user.
     """
     response = requests.get(
         f"{_normalize_base_url(base_url)}/api/user/records",
-        params={"q": f"id:{deposition_id}", "size": 10},
+        params={"q": f"id:{record_id}", "size": 10},
         headers=_headers(headers),
         timeout=10,
     )
     response.raise_for_status()
     hits = response.json().get("hits", {}).get("hits", [])
-    deposition = next(
-        (item for item in hits if str(item.get("id")) == str(deposition_id)),
+    record = next(
+        (item for item in hits if str(item.get("id")) == str(record_id)),
         None,
     )
-    if deposition is None:
-        raise ValueError(f"Deposition not found: {deposition_id}")
-    return deposition
+    if record is None:
+        raise ValueError(f"Record not found: {record_id}")
+    return record
 
 
-def get_zenodo_deposition_at_url(
-    deposition_url: str,
+def get_zenodo_record_at_url(
+    record_url: str,
     *,
     base_url: str,
     headers: dict[str, str] | None,
 ) -> dict[str, Any]:
     """
-    Fetch a deposition using a link returned by the Zenodo API.
+    Fetch a record using a link returned by the Zenodo API.
     """
     response = requests.get(
-        _rebase_zenodo_url(deposition_url, base_url=base_url),
+        _rebase_zenodo_url(record_url, base_url=base_url),
         headers=_headers(headers),
         timeout=10,
     )
@@ -305,19 +305,19 @@ def get_zenodo_deposition_at_url(
     return response.json()
 
 
-def create_zenodo_deposition_version(
-    deposition_id: int | str,
+def create_zenodo_record_version(
+    record_id: int | str,
     *,
     base_url: str,
     headers: dict[str, str] | None,
 ) -> dict[str, Any]:
     """
-    Create or return the editable latest draft for a published deposition.
+    Create a new draft version from a published record and import its files.
     """
     response = requests.post(
         (
             f"{_normalize_base_url(base_url)}/api/records/"
-            f"{quote(str(deposition_id), safe='')}/versions"
+            f"{quote(str(record_id), safe='')}/versions"
         ),
         headers=_headers(headers),
         timeout=10,
@@ -340,13 +340,13 @@ def create_zenodo_deposition_version(
     return draft
 
 
-def create_zenodo_deposition(
+def create_zenodo_record_draft(
     *,
     base_url: str,
     headers: dict[str, str] | None,
 ) -> dict[str, Any]:
     """
-    Create an empty Zenodo deposition draft.
+    Create an empty Zenodo record draft.
     """
     response = requests.post(
         f"{_normalize_base_url(base_url)}/api/records",
@@ -358,8 +358,8 @@ def create_zenodo_deposition(
     return response.json()
 
 
-def upload_zenodo_deposition_file(
-    bucket_url: str,
+def upload_zenodo_draft_file(
+    files_url: str,
     *,
     base_url: str,
     headers: dict[str, str] | None,
@@ -372,7 +372,7 @@ def upload_zenodo_deposition_file(
 
     # Initialize the file in the draft's file collection
     # which returns the content and commit links for the file upload.
-    files_url = _rebase_zenodo_url(bucket_url, base_url=base_url)
+    files_url = _rebase_zenodo_url(files_url, base_url=base_url)
     initialize_response = requests.post(
         files_url,
         json=[{"key": filename}],
@@ -389,7 +389,6 @@ def upload_zenodo_deposition_file(
     commit_url = entry.get("links", {}).get("commit")
     if not content_url or not commit_url:
         raise ValueError(f"Initialized file has incomplete links: {filename}")
-
 
     # Upload the file content to the draft's file collection
     response = requests.put(
@@ -412,8 +411,8 @@ def upload_zenodo_deposition_file(
     return commit_response.json()
 
 
-def delete_zenodo_deposition_file(
-    bucket_url: str,
+def delete_zenodo_draft_file(
+    files_url: str,
     *,
     base_url: str,
     headers: dict[str, str] | None,
@@ -422,7 +421,7 @@ def delete_zenodo_deposition_file(
     """
     Delete one file from an InvenioRDM draft by its object key.
     """
-    delete_url = f"{bucket_url.rstrip('/')}/{quote(file_key, safe='')}"
+    delete_url = f"{files_url.rstrip('/')}/{quote(file_key, safe='')}"
     response = requests.delete(
         _rebase_zenodo_url(delete_url, base_url=base_url),
         headers=_headers(headers),

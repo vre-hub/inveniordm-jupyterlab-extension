@@ -9,7 +9,7 @@ This project consists of:
 - A jupyterlab extension, consisting of a react/TS frontend and a python backend.
     - The backend is used to
         - forward calls to the Zenodo API proxy
-        - create and manage downloaded deposition files so that they can be used inside the user's notebooks
+        - create and manage downloaded record files so that they can be used inside the user's notebooks
         - implement other functions available in the UI (such as providing code snippets to import the downloaded files in the notebooks) so that the client can stay thin.
     - The client is designed as a thin client and should only provide UI elements for the user, so that all important logic is implemented by the server and is not scattered across client and server.
 - An isolated Zenodo API Proxy that forwards the users requests to the Zenodo API and can store the Zenodo access tokens needed for that securely.
@@ -18,7 +18,7 @@ This project consists of:
 
 ### Why do we need an extra proxy for the Zenodo API requests and token storage?
 
-The Zenodo API requires the caller to send a Zenodo access token to execute requests on behalf of a user, e.g. for publishing depositions as the user or reading files the user, but not everyone has access to. We need to store this token somewhere securely.
+The Zenodo API requires the caller to send a Zenodo access token to execute requests on behalf of a user, e.g. for publishing record drafts as the user or reading files the user, but not everyone has access to. We need to store this token somewhere securely.
 
 The frontend is not the right place, because the users browser is the least controlled part of the system. Moreover, malicious extensions can read out the token and we cannot safeguard against that, since there is no isolation between jupyterlab extensions.
 

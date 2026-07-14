@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {
-  deleteZenodoDepositionFile,
+  deleteZenodoRecordFile,
   downloadZenodoFile,
   getLatestActiveJobId,
   getZenodoFileImportCell
@@ -13,11 +13,9 @@ import type { ZenodoFile } from './ZenodoResource';
 
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;
-  depositionId: string;
-}> = ({ file, depositionId }) => {
-  const filename = file.key ?? file.filename ?? file.id ?? 'download';
-  const fileKey = file.key ?? file.filename ?? null;
-  const fileId = file.key ?? file.filename ?? null;
+  recordId: string;
+}> = ({ file, recordId }) => {
+  const fileKey = file.key;
 
   return (
     <div
@@ -27,10 +25,10 @@ export const ZenodoFileInfo: React.FC<{
         marginBottom: '2px'
       }}
     >
-      <ZenodoFileDetails filename={filename} size={file.size} />
-      <ZenodoFileDownload depositionId={depositionId} fileId={fileId} />
-      <ZenodoFileImportCellButton depositionId={depositionId} fileId={fileId} />
-      <ZenodoFileDeleteButton depositionId={depositionId} fileKey={fileKey} />
+      <ZenodoFileDetails filename={fileKey} size={file.size} />
+      <ZenodoFileDownload recordId={recordId} fileKey={fileKey} />
+      <ZenodoFileImportCellButton recordId={recordId} fileKey={fileKey} />
+      <ZenodoFileDeleteButton recordId={recordId} fileKey={fileKey} />
     </div>
   );
 };
@@ -47,9 +45,9 @@ const ZenodoFileDetails: React.FC<{
 );
 
 const ZenodoFileDownload: React.FC<{
-  depositionId: string;
-  fileId: string | null;
-}> = ({ depositionId, fileId }) => {
+  recordId: string;
+  fileKey: string | null;
+}> = ({ recordId, fileKey }) => {
   const serverSettings = useServerSettings();
   const [downloadId, setDownloadId] = React.useState<string | null>(null);
 
@@ -57,11 +55,11 @@ const ZenodoFileDownload: React.FC<{
     let isMounted = true;
 
     const findDownload = async (): Promise<void> => {
-      const jobId = fileId
+      const jobId = fileKey
         ? await getLatestActiveJobId(serverSettings, {
             jobType: 'download',
-            depositionId,
-            fileId
+            recordId,
+            fileKey
           })
         : null;
       if (isMounted) {
@@ -73,28 +71,28 @@ const ZenodoFileDownload: React.FC<{
     return () => {
       isMounted = false;
     };
-  }, [depositionId, fileId, serverSettings]);
+  }, [recordId, fileKey, serverSettings]);
 
   const download = async (): Promise<void> => {
-    if (!fileId) {
+    if (!fileKey) {
       return;
     }
 
     const response = await downloadZenodoFile(
       serverSettings,
-      depositionId,
-      fileId
+      recordId,
+      fileKey
     );
     setDownloadId(response.job_id);
   };
 
   return (
     <>
-      <button disabled={!fileId} onClick={download} type="button">
+      <button disabled={!fileKey} onClick={download} type="button">
         Download in JupyterServer
       </button>
-      {fileId ? (
-        <ZenodoFileDownloadStatus depositionId={depositionId} fileId={fileId} />
+      {fileKey ? (
+        <ZenodoFileDownloadStatus recordId={recordId} fileKey={fileKey} />
       ) : null}
       {downloadId ? <JobProgress jobId={downloadId} /> : null}
     </>
@@ -102,33 +100,33 @@ const ZenodoFileDownload: React.FC<{
 };
 
 const ZenodoFileImportCellButton: React.FC<{
-  depositionId: string;
-  fileId: string | null;
-}> = ({ depositionId, fileId }) => {
+  recordId: string;
+  fileKey: string | null;
+}> = ({ recordId, fileKey }) => {
   const serverSettings = useServerSettings();
   const insertZenodoCell = useInsertZenodoCell();
 
   const insertImportCell = async (): Promise<void> => {
-    if (!fileId) {
+    if (!fileKey) {
       return;
     }
 
     insertZenodoCell(
-      await getZenodoFileImportCell(serverSettings, depositionId, fileId)
+      await getZenodoFileImportCell(serverSettings, recordId, fileKey)
     );
   };
 
   return (
-    <button disabled={!fileId} onClick={insertImportCell} type="button">
+    <button disabled={!fileKey} onClick={insertImportCell} type="button">
       Insert import cell
     </button>
   );
 };
 
 const ZenodoFileDeleteButton: React.FC<{
-  depositionId: string;
+  recordId: string;
   fileKey: string | null;
-}> = ({ depositionId, fileKey }) => {
+}> = ({ recordId, fileKey }) => {
   const serverSettings = useServerSettings();
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [isDeleted, setIsDeleted] = React.useState(false);
@@ -140,7 +138,7 @@ const ZenodoFileDeleteButton: React.FC<{
 
     setIsDeleting(true);
     try {
-      await deleteZenodoDepositionFile(serverSettings, depositionId, fileKey);
+      await deleteZenodoRecordFile(serverSettings, recordId, fileKey);
       setIsDeleted(true);
     } finally {
       setIsDeleting(false);

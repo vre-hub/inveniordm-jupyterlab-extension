@@ -24,16 +24,16 @@ def test_draft_is_its_own_file_edit_target(monkeypatch):
     }
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_deposition",
+        "get_zenodo_record",
         lambda *args, **kwargs: draft,
     )
 
     requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
 
-    assert requests._get_zenodo_deposition_file_edit_target("draft-1") is draft
+    assert requests._get_editable_record_draft("draft-1") is draft
 
 
-def test_published_deposition_creates_new_version(monkeypatch):
+def test_published_record_creates_new_version(monkeypatch):
     published = {"id": "record-1", "is_published": True}
     draft = {
         "id": "draft-2",
@@ -42,21 +42,21 @@ def test_published_deposition_creates_new_version(monkeypatch):
     }
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_deposition",
+        "get_zenodo_record",
         lambda *args, **kwargs: published,
     )
     monkeypatch.setattr(
         zenodo_requests_module,
-        "create_zenodo_deposition_version",
+        "create_zenodo_record_version",
         lambda *args, **kwargs: draft,
     )
 
     requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
 
-    assert requests._get_zenodo_deposition_file_edit_target("record-1") is draft
+    assert requests._get_editable_record_draft("record-1") is draft
 
 
-def test_get_zenodo_deposition_uses_user_records_to_resolve_state(monkeypatch):
+def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):
     calls = []
     draft = {"id": "draft-1", "is_published": False}
     monkeypatch.setattr(
@@ -75,7 +75,7 @@ def test_get_zenodo_deposition_uses_user_records_to_resolve_state(monkeypatch):
         ),
     )
 
-    result = zenodo_module.get_zenodo_deposition(
+    result = zenodo_module.get_zenodo_record(
         "draft-1",
         base_url="https://zenodo.org",
         headers={"Authorization": "x"},
@@ -86,7 +86,7 @@ def test_get_zenodo_deposition_uses_user_records_to_resolve_state(monkeypatch):
     assert calls[0][1]["params"] == {"q": "id:draft-1", "size": 10}
 
 
-def test_list_zenodo_depositions_uses_user_records(monkeypatch):
+def test_list_zenodo_user_records_uses_user_records(monkeypatch):
     calls = []
     monkeypatch.setattr(
         zenodo_module.requests,
@@ -95,7 +95,7 @@ def test_list_zenodo_depositions_uses_user_records(monkeypatch):
         or Response({"hits": {"hits": [{"id": "record-1"}]}}),
     )
 
-    result = zenodo_module.list_zenodo_depositions(
+    result = zenodo_module.list_zenodo_user_records(
         base_url="https://zenodo.org",
         headers={"Authorization": "x"},
         page=2,
@@ -107,7 +107,7 @@ def test_list_zenodo_depositions_uses_user_records(monkeypatch):
     assert calls[0][1]["params"] == {"page": 2, "size": 25}
 
 
-def test_create_zenodo_deposition_uses_records_api(monkeypatch):
+def test_create_zenodo_record_draft_uses_records_api(monkeypatch):
     calls = []
     monkeypatch.setattr(
         zenodo_module.requests,
@@ -116,7 +116,7 @@ def test_create_zenodo_deposition_uses_records_api(monkeypatch):
         or Response({"id": "draft-1"}, status_code=201),
     )
 
-    result = zenodo_module.create_zenodo_deposition(
+    result = zenodo_module.create_zenodo_record_draft(
         base_url="https://zenodo.org",
         headers={"Authorization": "x"},
     )
@@ -140,7 +140,7 @@ def test_create_version_imports_previous_files(monkeypatch):
         lambda *args, **kwargs: calls.append((args, kwargs)) or next(responses),
     )
 
-    result = zenodo_module.create_zenodo_deposition_version(
+    result = zenodo_module.create_zenodo_record_version(
         "record-1",
         base_url="https://zenodo.org",
         headers={"Authorization": "x"},
@@ -153,7 +153,7 @@ def test_create_version_imports_previous_files(monkeypatch):
     )
 
 
-def test_upload_zenodo_deposition_file_initializes_uploads_and_commits(monkeypatch):
+def test_upload_zenodo_draft_file_initializes_uploads_and_commits(monkeypatch):
     post_calls = []
     post_responses = iter(
         [
@@ -193,7 +193,7 @@ def test_upload_zenodo_deposition_file_initializes_uploads_and_commits(monkeypat
         lambda *args, **kwargs: put_calls.append((args, kwargs)) or Response({}),
     )
 
-    result = zenodo_module.upload_zenodo_deposition_file(
+    result = zenodo_module.upload_zenodo_draft_file(
         "/api/records/draft-1/draft/files",
         base_url="https://zenodo.org",
         headers={"Authorization": "x"},
@@ -214,7 +214,7 @@ def test_upload_zenodo_deposition_file_initializes_uploads_and_commits(monkeypat
     )
 
 
-def test_delete_zenodo_deposition_file_uses_draft_files_key(monkeypatch):
+def test_delete_zenodo_draft_file_uses_draft_files_key(monkeypatch):
     calls = []
     monkeypatch.setattr(
         zenodo_module.requests,
@@ -222,7 +222,7 @@ def test_delete_zenodo_deposition_file_uses_draft_files_key(monkeypatch):
         lambda *args, **kwargs: calls.append((args, kwargs)) or Response(),
     )
 
-    zenodo_module.delete_zenodo_deposition_file(
+    zenodo_module.delete_zenodo_draft_file(
         "/api/records/draft-1/draft/files",
         base_url="https://sandbox.zenodo.org",
         headers={"Authorization": "x"},

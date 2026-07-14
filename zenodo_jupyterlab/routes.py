@@ -69,11 +69,11 @@ def _default_downloads_dir() -> Path:
     return Path(jupyter_data_dir()) / "zenodo_jupyterlab" / "downloads"
 
 
-def _download_status_changed_topic(deposition_id: int | str, file_id: str) -> str:
+def _download_status_changed_topic(record_id: int | str, file_key: str) -> str:
     return (
         "file.download-status.changed."
-        f"{quote(str(deposition_id), safe='')}."
-        f"{quote(file_id, safe='')}"
+        f"{quote(str(record_id), safe='')}."
+        f"{quote(file_key, safe='')}"
     )
 
 
@@ -206,7 +206,7 @@ class ZenodoEventsHandler(APIHandler):
         )
 
 
-class ZenodoDepositionsHandler(APIHandler):
+class ZenodoUserRecordsHandler(APIHandler):
     def initialize(self, get_zenodo_requests: GetZenodoRequests):
         self.get_zenodo_requests = get_zenodo_requests
 
@@ -218,7 +218,7 @@ class ZenodoDepositionsHandler(APIHandler):
         )
 
         try:
-            depositions = self.get_zenodo_requests(self).list_zenodo_depositions(
+            records = self.get_zenodo_requests(self).list_zenodo_user_records(
                 page=int(self.get_query_argument("page", "1")),
                 size=int(self.get_query_argument("size", "10")),
                 include_files=include_files,
@@ -232,9 +232,9 @@ class ZenodoDepositionsHandler(APIHandler):
             self.finish(json.dumps({"message": str(error)}))
             return
 
-        self.finish(json.dumps(depositions))
+        self.finish(json.dumps(records))
 
-class ZenodoMinimalDepositionDraftHandler(APIHandler):
+class ZenodoMinimalRecordDraftHandler(APIHandler):
     def initialize(
         self,
         get_zenodo_requests: GetZenodoRequests,
@@ -292,12 +292,12 @@ class ZenodoMinimalDepositionDraftHandler(APIHandler):
                     current_item=current_file,
                 )
 
-            deposition = zenodo_requests.create_minimal_deposition_draft(
+            draft = zenodo_requests.create_minimal_record_draft(
                 file_paths=resolved_file_paths,
                 on_upload_progress=on_upload_progress,
                 should_cancel=context.should_cancel,
             )
-            return {"deposition": deposition}
+            return {"draft": draft}
 
         job_id = self.get_job_manager(self).start(
             upload,
@@ -308,7 +308,7 @@ class ZenodoMinimalDepositionDraftHandler(APIHandler):
         self.finish(json.dumps({"job_id": job_id}))
 
 
-class ZenodoDepositionFilesHandler(APIHandler):
+class ZenodoRecordFilesHandler(APIHandler):
     def initialize(
         self,
         get_zenodo_requests: GetZenodoRequests,
@@ -322,7 +322,7 @@ class ZenodoDepositionFilesHandler(APIHandler):
         self.event_bus = event_bus
 
     @tornado.web.authenticated
-    def post(self, deposition_id: str):
+    def post(self, record_id: str):
         data = self.get_json_body() or {}
         file_paths = data.get("file_paths")
 
@@ -384,13 +384,13 @@ class ZenodoDepositionFilesHandler(APIHandler):
                     current_item=current_file,
                 )
 
-            deposition = zenodo_requests.upload_files_to_deposition(
-                deposition_id=deposition_id,
+            draft = zenodo_requests.upload_files_to_record(
+                record_id=record_id,
                 file_paths=resolved_file_paths,
                 on_upload_progress=on_upload_progress,
                 should_cancel=context.should_cancel,
             )
-            return {"deposition": deposition}
+            return {"draft": draft}
 
         job_id = self.get_job_manager(self).start(
             upload,
@@ -398,7 +398,7 @@ class ZenodoDepositionFilesHandler(APIHandler):
                 job_type="upload",
                 metadata={
                     **account_metadata,
-                    "deposition_id": str(deposition_id),
+                    "record_id": str(record_id),
                 },
             ),
             on_progress_changed=publish_job_progress,
@@ -407,7 +407,7 @@ class ZenodoDepositionFilesHandler(APIHandler):
         self.finish(json.dumps({"job_id": job_id}))
 
     @tornado.web.authenticated
-    def delete(self, deposition_id: str):
+    def delete(self, record_id: str):
         data = self.get_json_body() or {}
         file_key = data.get("key")
 
@@ -418,8 +418,8 @@ class ZenodoDepositionFilesHandler(APIHandler):
 
         try:
             zenodo_requests = self.get_zenodo_requests(self)
-            deposition = zenodo_requests.delete_file_from_deposition(
-                deposition_id=deposition_id,
+            draft = zenodo_requests.delete_file_from_record(
+                record_id=record_id,
                 file_key=file_key,
             )
         except ValueError as error:
@@ -432,7 +432,7 @@ class ZenodoDepositionFilesHandler(APIHandler):
             return
 
         self.finish(
-            json.dumps({"deposition": deposition, "deleted_key": file_key})
+            json.dumps({"draft": draft, "deleted_key": file_key})
         )
 
 
@@ -468,12 +468,12 @@ class JobsHandler(APIHandler):
             statuses = {status}
 
         metadata: dict[str, object] = {}
-        deposition_id = self.get_query_argument("deposition_id", None)
-        file_id = self.get_query_argument("file_id", None)
-        if deposition_id is not None:
-            metadata["deposition_id"] = deposition_id
-        if file_id is not None:
-            metadata["file_id"] = file_id
+        record_id = self.get_query_argument("record_id", None)
+        file_key = self.get_query_argument("file_key", None)
+        if record_id is not None:
+            metadata["record_id"] = record_id
+        if file_key is not None:
+            metadata["file_key"] = file_key
 
         if job_type == "upload":
             zenodo_requests = self.get_zenodo_requests(self)
@@ -551,12 +551,12 @@ class ZenodoFileDownloadHandler(APIHandler):
     @tornado.web.authenticated
     def post(self):
         data = self.get_json_body() or {}
-        deposition_id = data.get("deposition_id")
-        file_id = data.get("file_id")
-        if deposition_id is None or not file_id:
+        record_id = data.get("record_id")
+        file_key = data.get("file_key")
+        if record_id is None or not file_key:
             self.set_status(400)
             self.finish(
-                json.dumps({"message": "Missing deposition_id or file_id"})
+                json.dumps({"message": "Missing record_id or file_key"})
             )
             return
 
@@ -575,13 +575,13 @@ class ZenodoFileDownloadHandler(APIHandler):
             if progress.get("status") == "done":
                 self.event_bus.publish(
                     user_id,
-                    _download_status_changed_topic(deposition_id, file_id),
+                    _download_status_changed_topic(record_id, file_key),
                 )
 
         job_id = self.get_zenodo_download_manager(self).start_download(
             zenodo_requests,
-            deposition_id=deposition_id,
-            file_id=file_id,
+            record_id=record_id,
+            file_key=file_key,
             on_progress_changed=publish_job_progress,
         )
         self.finish(json.dumps({"job_id": job_id}))
@@ -589,20 +589,20 @@ class ZenodoFileDownloadHandler(APIHandler):
     @tornado.web.authenticated
     def delete(self):
         data = self.get_json_body() or {}
-        deposition_id = data.get("deposition_id")
-        file_id = data.get("file_id")
-        if deposition_id is None or not file_id:
+        record_id = data.get("record_id")
+        file_key = data.get("file_key")
+        if record_id is None or not file_key:
             self.set_status(400)
             self.finish(
-                json.dumps({"message": "Missing deposition_id or file_id"})
+                json.dumps({"message": "Missing record_id or file_key"})
             )
             return
 
         try:
             result = self.get_zenodo_download_manager(self).delete_download(
                 self.get_zenodo_requests(self),
-                deposition_id=deposition_id,
-                file_id=file_id,
+                record_id=record_id,
+                file_key=file_key,
             )
         except ValueError as error:
             self.set_status(400)
@@ -616,7 +616,7 @@ class ZenodoFileDownloadHandler(APIHandler):
         if result.get("deleted"):
             self.event_bus.publish(
                 get_user_id(self),
-                _download_status_changed_topic(deposition_id, file_id),
+                _download_status_changed_topic(record_id, file_key),
             )
 
         self.finish(json.dumps(result))
@@ -634,20 +634,20 @@ class ZenodoFileDownloadStatusHandler(APIHandler):
     @tornado.web.authenticated
     def post(self):
         data = self.get_json_body() or {}
-        deposition_id = data.get("deposition_id")
-        file_id = data.get("file_id")
-        if deposition_id is None or not file_id:
+        record_id = data.get("record_id")
+        file_key = data.get("file_key")
+        if record_id is None or not file_key:
             self.set_status(400)
             self.finish(
-                json.dumps({"message": "Missing deposition_id or file_id"})
+                json.dumps({"message": "Missing record_id or file_key"})
             )
             return
 
         try:
             status = self.get_zenodo_download_manager(self).get_download_status(
                 self.get_zenodo_requests(self),
-                deposition_id=deposition_id,
-                file_id=file_id,
+                record_id=record_id,
+                file_key=file_key,
             )
         except ValueError as error:
             self.set_status(400)
@@ -673,12 +673,12 @@ class ZenodoFileImportCellHandler(APIHandler):
     @tornado.web.authenticated
     def post(self):
         data = self.get_json_body() or {}
-        deposition_id = data.get("deposition_id")
-        file_id = data.get("file_id")
-        if deposition_id is None or not file_id:
+        record_id = data.get("record_id")
+        file_key = data.get("file_key")
+        if record_id is None or not file_key:
             self.set_status(400)
             self.finish(
-                json.dumps({"message": "Missing deposition_id or file_id"})
+                json.dumps({"message": "Missing record_id or file_key"})
             )
             return
 
@@ -686,19 +686,19 @@ class ZenodoFileImportCellHandler(APIHandler):
             zenodo_requests = self.get_zenodo_requests(self)
             destination = self.get_zenodo_download_manager(self).get_download_location(
                 zenodo_requests,
-                deposition_id=deposition_id,
-                file_id=file_id,
+                record_id=record_id,
+                file_key=file_key,
             )
             if not destination.exists():
                 raise ValueError("Zenodo file has not been downloaded yet")
-            file_metadata = zenodo_requests.get_zenodo_deposition_file(
-                deposition_id=deposition_id,
-                file_id=file_id,
+            file_metadata = zenodo_requests.get_zenodo_record_file(
+                record_id=record_id,
+                file_key=file_key,
             )
             action = make_zenodo_import_cell_action(
                 path=destination,
-                deposition_id=deposition_id,
-                file_id=file_id,
+                record_id=record_id,
+                file_key=file_key,
                 file_metadata=file_metadata,
             )
         except ValueError as error:
@@ -816,13 +816,13 @@ def setup_route_handlers(web_app):
             {"event_bus": event_bus},
         ),
         (
-            url_path_join(zenodo_base_url, "depositions"),
-            ZenodoDepositionsHandler,
+            url_path_join(zenodo_base_url, "user-records"),
+            ZenodoUserRecordsHandler,
             {"get_zenodo_requests": get_zenodo_requests},
         ),
         (
-            url_path_join(zenodo_base_url, "depositions", "minimal-draft"),
-            ZenodoMinimalDepositionDraftHandler,
+            url_path_join(zenodo_base_url, "user-records", "minimal-draft"),
+            ZenodoMinimalRecordDraftHandler,
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_job_manager": get_job_manager,
@@ -832,11 +832,11 @@ def setup_route_handlers(web_app):
         (
             url_path_join(
                 zenodo_base_url,
-                "depositions",
+                "user-records",
                 r"([^/]+)",
                 "files",
             ),
-            ZenodoDepositionFilesHandler,
+            ZenodoRecordFilesHandler,
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_job_manager": get_job_manager,

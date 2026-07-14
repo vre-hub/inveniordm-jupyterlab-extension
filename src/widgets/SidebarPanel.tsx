@@ -2,7 +2,7 @@ import React from 'react';
 import { VDomRenderer } from '@jupyterlab/apputils';
 
 import { Tabs, TabItem } from '../components/Tabs';
-import { ZenodoDepositions } from '../components/ZenodoDepositions';
+import { ZenodoUserRecords } from '../components/ZenodoUserRecords';
 import { ZenodoLoginForm } from '../components/ZenodoLoginForm';
 import { ZenodoSearch } from '../components/ZenodoSearch';
 import { setCurrentTabID, useCurrentTabID } from '../store';
@@ -24,7 +24,7 @@ const TABS: SidebarTab[] = [
     label: 'Settings',
     Component: DeveloperSettings
   },
-  { id: 'account', label: 'My Account', Component: ZenodoDepositions }
+  { id: 'account', label: 'My Account', Component: ZenodoUserRecords }
 ];
 
 const Panel: React.FC = () => {

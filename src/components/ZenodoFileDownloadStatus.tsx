@@ -15,41 +15,38 @@ function encodeTopicPart(value: string): string {
   );
 }
 
-function downloadStatusChangedTopic(
-  depositionId: string,
-  fileId: string
-): string {
+function downloadStatusChangedTopic(recordId: string, fileKey: string): string {
   return [
     'file.download-status.changed',
-    encodeTopicPart(String(depositionId)),
-    encodeTopicPart(fileId)
+    encodeTopicPart(String(recordId)),
+    encodeTopicPart(fileKey)
   ].join('.');
 }
 
 export const ZenodoFileDownloadStatus: React.FC<{
-  depositionId: string;
-  fileId: string;
-}> = ({ depositionId, fileId }) => {
+  recordId: string;
+  fileKey: string;
+}> = ({ recordId, fileKey }) => {
   const serverSettings = useServerSettings();
   const [status, setStatus] =
     React.useState<ZenodoFileDownloadStatusResponse | null>(null);
 
   const reloadStatus = React.useCallback(async (): Promise<void> => {
     setStatus(
-      await getZenodoFileDownloadStatus(serverSettings, depositionId, fileId)
+      await getZenodoFileDownloadStatus(serverSettings, recordId, fileKey)
     );
-  }, [depositionId, fileId, serverSettings]);
+  }, [recordId, fileKey, serverSettings]);
 
   React.useEffect(() => {
     void reloadStatus();
   }, [reloadStatus]);
 
-  useEventListener(downloadStatusChangedTopic(depositionId, fileId), () => {
+  useEventListener(downloadStatusChangedTopic(recordId, fileKey), () => {
     void reloadStatus();
   });
 
   const deleteDownload = async (): Promise<void> => {
-    await deleteZenodoFileDownload(serverSettings, depositionId, fileId);
+    await deleteZenodoFileDownload(serverSettings, recordId, fileKey);
   };
 
   if (status === null) {

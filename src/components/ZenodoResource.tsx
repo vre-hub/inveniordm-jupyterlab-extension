@@ -3,23 +3,24 @@ import React from 'react';
 import { ZenodoFileInfo } from './ZenodoFileInfo';
 
 export type ZenodoFile = {
-  id?: string;
-  file_id: string;
-  key?: string;
-  filename?: string;
+  key: string;
   size?: number;
   links?: {
     content?: string;
+    download?: string;
   };
 };
 
 export type ZenodoResourceData = {
   id: string;
-  doi?: string;
-  title?: string;
-  state?: string;
+  is_published?: boolean;
   metadata?: {
     title?: string;
+  };
+  pids?: {
+    doi?: {
+      identifier?: string;
+    };
   };
   files?: ZenodoFile[] | { entries?: ZenodoFile[] };
 };
@@ -36,17 +37,15 @@ export const ZenodoResource: React.FC<{
 }> = ({ resource }) => {
   return (
     <section>
-      <h4>{resource.title ?? resource.metadata?.title ?? resource.id}</h4>
+      <h4>{resource.metadata?.title ?? resource.id}</h4>
       <div>ID: {resource.id}</div>
-      {resource.doi ? <div>DOI: {resource.doi}</div> : null}
-      {resource.state ? <div>State: {resource.state}</div> : null}
+      {resource.pids?.doi?.identifier ? (
+        <div>DOI: {resource.pids.doi.identifier}</div>
+      ) : null}
+      <div>Status: {resource.is_published ? 'Published' : 'Draft'}</div>
       <div>
         {getFiles(resource.files).map(file => (
-          <ZenodoFileInfo
-            file={file}
-            key={file.file_id ?? file.id ?? file.key ?? file.filename}
-            depositionId={resource.id}
-          />
+          <ZenodoFileInfo file={file} key={file.key} recordId={resource.id} />
         ))}
       </div>
     </section>
