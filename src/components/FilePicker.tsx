@@ -4,11 +4,13 @@ import { usePickUploadFiles } from '../store';
 
 type PickFilesButtonProps = {
   buttonText: string;
+  disabled?: boolean;
   onFilesSelected: (files: string[]) => void;
 };
 
 export function PickFilesButton({
   buttonText,
+  disabled = false,
   onFilesSelected
 }: PickFilesButtonProps): JSX.Element {
   const pickUploadFiles = usePickUploadFiles();
@@ -24,7 +26,7 @@ export function PickFilesButton({
   };
 
   return (
-    <button onClick={selectFiles} type="button">
+    <button disabled={disabled} onClick={selectFiles} type="button">
       {buttonText}
     </button>
   );

@@ -16,7 +16,6 @@ function getDraftUrl(record: MinimalRecordDraftResponse): string {
 
 export const Upload: React.FC = () => {
   const serverSettings = useServerSettings();
-  const [filePaths, setFilePaths] = React.useState<string[]>([]);
   const [isCreatingDraft, setIsCreatingDraft] = React.useState(false);
   const [uploadId, setUploadId] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<MinimalRecordDraftResponse | null>(
@@ -24,11 +23,9 @@ export const Upload: React.FC = () => {
   );
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
-  const canCreateDraft = filePaths.length > 0 && !isCreatingDraft;
 
-  const onSubmit = async (event: React.FormEvent): Promise<void> => {
-    event.preventDefault();
-    if (!canCreateDraft) {
+  const uploadFiles = async (filePaths: string[]): Promise<void> => {
+    if (filePaths.length === 0 || isCreatingDraft) {
       return;
     }
 
@@ -69,26 +66,17 @@ export const Upload: React.FC = () => {
   }, []);
 
   return (
-    <form onSubmit={onSubmit}>
+    <div>
       <h2>Upload</h2>
       <p>
         Upload files to a Zenodo draft. You will be able to edit the draft
         metadata and publish it on Zenodo after the upload.
       </p>
       <PickFilesButton
-        buttonText="Select files"
-        onFilesSelected={files => setFilePaths(files)}
+        buttonText={isCreatingDraft ? 'Uploading files...' : 'Select files'}
+        disabled={isCreatingDraft}
+        onFilesSelected={files => void uploadFiles(files)}
       />
-      {filePaths.length > 0 && (
-        <ul>
-          {filePaths.map(filePath => (
-            <li key={filePath}>{filePath}</li>
-          ))}
-        </ul>
-      )}
-      <button disabled={!canCreateDraft} type="submit">
-        {isCreatingDraft ? 'Uploading files...' : 'Upload to Zenodo Draft'}
-      </button>
       {uploadId ? (
         <JobProgress
           onCanceled={cancelUploadJob}
@@ -117,6 +105,6 @@ export const Upload: React.FC = () => {
           </button>
         </div>
       )}
-    </form>
+    </div>
   );
 };
