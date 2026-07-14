@@ -8,6 +8,7 @@ OAuth login flow against the Zenodo sandbox.
 from __future__ import annotations
 
 import secrets
+import sys
 from http import HTTPStatus
 from urllib.parse import urlparse
 
@@ -136,7 +137,12 @@ def create_server(
     token_store: MultiTokenStore | None = None,
 ) -> tornado.httpserver.HTTPServer:
     app = create_app(config, state, oauth_config, token_store)
-    server = tornado.httpserver.HTTPServer(app)
+    server = tornado.httpserver.HTTPServer(
+        app,
+        # ApiProxyHandler streams request bodies, so no file-size-dependent
+        # application limit or equivalent in-memory allocation is needed.
+        max_body_size=sys.maxsize,
+    )
     server.listen(port, address=host)
     return server
 

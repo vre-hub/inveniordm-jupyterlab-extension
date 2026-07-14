@@ -209,9 +209,31 @@ def test_upload_zenodo_draft_file_initializes_uploads_and_commits(monkeypatch):
     assert put_calls[0][0] == (
         "https://zenodo.org/api/records/draft-1/draft/files/results%202026.csv/content",
     )
+    assert put_calls[0][1]["timeout"] == 30
     assert post_calls[1][0] == (
         "https://zenodo.org/api/records/draft-1/draft/files/results%202026.csv/commit",
     )
+
+
+def test_open_zenodo_file_uses_streaming_response(monkeypatch):
+    calls = []
+    response = Response()
+    response.headers = {}
+    monkeypatch.setattr(
+        zenodo_module.requests,
+        "get",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or response,
+    )
+
+    result = zenodo_module.open_zenodo_file(
+        "/api/records/record-1/files/results.csv/content",
+        base_url="https://zenodo.org",
+        headers={"Authorization": "x"},
+    )
+
+    assert result.response is response
+    assert calls[0][1]["stream"] is True
+    assert calls[0][1]["timeout"] == 30
 
 
 def test_delete_zenodo_draft_file_uses_draft_files_key(monkeypatch):
