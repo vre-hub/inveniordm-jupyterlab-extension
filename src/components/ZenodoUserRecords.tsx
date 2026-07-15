@@ -2,7 +2,6 @@ import React from 'react';
 
 import { listZenodoUserRecords } from '../api_calls';
 import { useServerSettings } from '../store';
-import { RecordUpload } from './RecordUpload';
 import { ZenodoResource, ZenodoResourceData } from './ZenodoResource';
 
 export const ZenodoUserRecords: React.FC = () => {
@@ -38,10 +37,6 @@ export const ZenodoUserRecords: React.FC = () => {
         ? records.map(record => (
             <React.Fragment key={record.id}>
               <ZenodoResource resource={record} />
-              <RecordUpload
-                recordId={record.id}
-                onDone={() => void loadRecords()}
-              />
             </React.Fragment>
           ))
         : records?.error}

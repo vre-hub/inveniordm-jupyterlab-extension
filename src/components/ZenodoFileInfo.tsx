@@ -14,7 +14,8 @@ import type { ZenodoFile } from './ZenodoResource';
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;
   recordId: string;
-}> = ({ file, recordId }) => {
+  editable: boolean;
+}> = ({ file, recordId, editable }) => {
   const fileKey = file.key;
 
   return (
@@ -28,7 +29,7 @@ export const ZenodoFileInfo: React.FC<{
       <ZenodoFileDetails filename={fileKey} size={file.size} />
       <ZenodoFileDownload recordId={recordId} fileKey={fileKey} />
       <ZenodoFileImportCellButton recordId={recordId} fileKey={fileKey} />
-      <ZenodoFileDeleteButton recordId={recordId} fileKey={fileKey} />
+      {editable && <ZenodoFileDeleteButton recordId={recordId} fileKey={fileKey} />}
     </div>
   );
 };

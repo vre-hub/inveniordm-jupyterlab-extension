@@ -2,6 +2,7 @@ import React from 'react';
 
 import { ZenodoFileInfo } from './ZenodoFileInfo';
 import { EditRecordButton } from './EditRecordButton';
+import { RecordUpload } from './RecordUpload';
 
 // TODO check if these fields exist/ if they are always present
 export type ZenodoFile = {
@@ -13,10 +14,12 @@ export type ZenodoFile = {
   };
 };
 
+type ResourceStatus = 'draft' | 'published'
+
 // TODO check if these fields exist/ if they are always present
 export type ZenodoResourceData = {
   id: string;
-  status: string;
+  status: ResourceStatus;
   metadata?: {
     title?: string;
   };
@@ -38,6 +41,8 @@ const getFiles = (files: ZenodoResourceData['files']): ZenodoFile[] => {
 export const ZenodoResource: React.FC<{
   resource: ZenodoResourceData;
 }> = ({ resource }) => {
+  const editable = resource.status === 'draft';
+
   return (
     <section>
       <h4>{resource.metadata?.title ?? resource.id}</h4>
@@ -48,10 +53,20 @@ export const ZenodoResource: React.FC<{
       <div>Status: {resource.status}</div>
       <div>
         {getFiles(resource.files).map(file => (
-          <ZenodoFileInfo file={file} key={file.key} recordId={resource.id} />
+          <ZenodoFileInfo file={file} key={file.key} recordId={resource.id} editable={editable} />
         ))}
       </div>
-      <EditRecordButton id={resource.id} />
+      {
+      editable && <>
+        <EditRecordButton id={resource.id} />
+        <RecordUpload
+          recordId={resource.id}
+          onDone={() => {
+            // TODO refresh the resource data after upload or other edits
+          }}
+        />
+        </>
+      }
     </section>
   );
 };
