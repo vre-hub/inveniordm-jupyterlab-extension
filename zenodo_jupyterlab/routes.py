@@ -234,6 +234,27 @@ class ZenodoUserRecordsHandler(APIHandler):
 
         self.finish(json.dumps(records))
 
+
+class ZenodoUserRecordHandler(APIHandler):
+    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+        self.get_zenodo_requests = get_zenodo_requests
+
+    @tornado.web.authenticated
+    def get(self, record_id: str):
+        try:
+            record = self.get_zenodo_requests(self).get_zenodo_record(record_id)
+        except ValueError as error:
+            self.set_status(404)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps(record))
+
+
 class ZenodoMinimalRecordDraftHandler(APIHandler):
     def initialize(
         self,
@@ -828,6 +849,11 @@ def setup_route_handlers(web_app):
                 "get_job_manager": get_job_manager,
                 "event_bus": event_bus,
             },
+        ),
+        (
+            url_path_join(zenodo_base_url, "user-records", r"([^/]+)"),
+            ZenodoUserRecordHandler,
+            {"get_zenodo_requests": get_zenodo_requests},
         ),
         (
             url_path_join(

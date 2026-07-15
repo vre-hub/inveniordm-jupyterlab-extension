@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { ZenodoFileInfo } from './ZenodoFileInfo';
+import { EditRecordButton } from './EditRecordButton';
 
 export type ZenodoFile = {
   key: string;
@@ -48,6 +49,7 @@ export const ZenodoResource: React.FC<{
           <ZenodoFileInfo file={file} key={file.key} recordId={resource.id} />
         ))}
       </div>
+      <EditRecordButton id={resource.id} />
     </section>
   );
 };

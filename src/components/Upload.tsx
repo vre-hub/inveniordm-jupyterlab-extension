@@ -7,12 +7,7 @@ import {
 import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
-
-function getDraftUrl(record: MinimalRecordDraftResponse): string {
-  return (
-    record.links?.self_html ?? `https://sandbox.zenodo.org/uploads/${record.id}`
-  );
-}
+import { EditRecordButton } from './EditRecordButton';
 
 export const Upload: React.FC = () => {
   const serverSettings = useServerSettings();
@@ -97,12 +92,7 @@ export const Upload: React.FC = () => {
       {result && (
         <div>
           <p>Created draft {result.id}.</p>
-          <button
-            onClick={() => window.open(getDraftUrl(result), '_blank')}
-            type="button"
-          >
-            Open draft
-          </button>
+          <EditRecordButton id={result.id} />
         </div>
       )}
     </div>

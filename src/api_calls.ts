@@ -138,6 +138,16 @@ export type MinimalRecordDraftResponse = {
   is_published?: boolean;
 };
 
+export async function getZenodoUserRecord(
+  serverSettings: ServerConnection.ISettings,
+  recordId: string
+): Promise<MinimalRecordDraftResponse> {
+  return await requestAPI<MinimalRecordDraftResponse>(
+    `user-records/${encodeURIComponent(recordId)}`,
+    serverSettings
+  );
+}
+
 export type StartJobResponse = {
   job_id: string;
 };
