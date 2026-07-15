@@ -59,6 +59,32 @@ def test_published_record_creates_new_version(monkeypatch):
     assert requests._get_editable_record_draft("record-1") is draft
 
 
+def test_create_record_version_uses_authenticated_request(monkeypatch):
+    draft = {"id": "draft-2", "is_published": False}
+    calls = []
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "create_zenodo_record_version",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or draft,
+    )
+
+    requests = ZenodoRequests(
+        "https://sandbox.zenodo.org",
+        {"Authorization": "Bearer token"},
+    )
+
+    assert requests.create_zenodo_record_version("record-1") is draft
+    assert calls == [
+        (
+            ("record-1",),
+            {
+                "base_url": "https://sandbox.zenodo.org",
+                "headers": {"Authorization": "Bearer token"},
+            },
+        )
+    ]
+
+
 def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):
     calls = []
     draft = {"id": "draft-1", "is_published": False}

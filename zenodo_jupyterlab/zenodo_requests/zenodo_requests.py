@@ -109,6 +109,20 @@ class ZenodoRequests:
             headers=self.headers,
         )
 
+    def create_zenodo_record_version(
+        self,
+        record_id: int | str,
+    ) -> dict[str, Any]:
+        """Create an editable new-version draft for a published record."""
+        if not self.headers:
+            raise ValueError("Missing Zenodo request authentication headers")
+
+        return create_zenodo_record_version(
+            record_id,
+            base_url=self.url,
+            headers=self.headers,
+        )
+
     def _get_editable_record_draft(
         self,
         record_id: int | str,
@@ -131,11 +145,7 @@ class ZenodoRequests:
             f"Record {record_id} is published, so we will create "
             "a new version draft to change files"
         )
-        return create_zenodo_record_version(
-            record_id,
-            base_url=self.url,
-            headers=self.headers,
-        )
+        return self.create_zenodo_record_version(record_id)
 
     def delete_file_from_record(
         self,

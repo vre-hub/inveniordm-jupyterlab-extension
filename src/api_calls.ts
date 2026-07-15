@@ -148,6 +148,21 @@ export async function getZenodoUserRecord(
   );
 }
 
+export type CreateZenodoRecordVersionResponse = {
+  draft: MinimalRecordDraftResponse;
+};
+
+export async function createZenodoRecordVersion(
+  serverSettings: ServerConnection.ISettings,
+  recordId: string
+): Promise<CreateZenodoRecordVersionResponse> {
+  return await requestAPI<CreateZenodoRecordVersionResponse>(
+    `user-records/${encodeURIComponent(recordId)}/versions`,
+    serverSettings,
+    { method: 'POST' }
+  );
+}
+
 export type StartJobResponse = {
   job_id: string;
 };

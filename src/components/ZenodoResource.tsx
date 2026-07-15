@@ -3,6 +3,7 @@ import React from 'react';
 import { ZenodoFileInfo } from './ZenodoFileInfo';
 import { EditRecordButton } from './EditRecordButton';
 import { RecordUpload } from './RecordUpload';
+import { CreateNewVersionButton } from './CreateNewVersionButton';
 
 // TODO check if these fields exist/ if they are always present
 export type ZenodoFile = {
@@ -51,6 +52,7 @@ export const ZenodoResource: React.FC<{
         <div>DOI: {resource.pids.doi.identifier}</div>
       ) : null}
       <div>Status: {resource.status}</div>
+      {!editable && <CreateNewVersionButton id={resource.id} />}
       <div>
         {getFiles(resource.files).map(file => (
           <ZenodoFileInfo file={file} key={file.key} recordId={resource.id} editable={editable} />
