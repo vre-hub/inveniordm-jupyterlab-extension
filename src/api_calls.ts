@@ -131,8 +131,8 @@ export async function listZenodoUserRecords(
 
 export type MinimalRecordDraftResponse = {
   id: string;
-  links?: {
-    self_html?: string;
+  links: {
+    self_html: string;
     self?: string;
   };
   is_published?: boolean;

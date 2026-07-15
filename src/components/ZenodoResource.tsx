@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { ZenodoFileInfo } from './ZenodoFileInfo';
-import { EditRecordButton } from './EditRecordButton';
+import { OpenRecordButton } from './OpenRecordButton';
 import { RecordUpload } from './RecordUpload';
 import { CreateNewVersionButton } from './CreateNewVersionButton';
 import { useRecordPermissions } from '../api_calls';
@@ -31,6 +31,9 @@ export type ZenodoResourceData = {
     };
   };
   files?: ZenodoFile[] | { entries?: ZenodoFile[] };
+  links: {
+    self_html: string;
+  };
 };
 
 const getFiles = (files: ZenodoResourceData['files']): ZenodoFile[] => {
@@ -61,9 +64,12 @@ export const ZenodoResource: React.FC<{
           <ZenodoFileInfo file={file} key={file.key} recordId={resource.id} editable={isDraft} />
         ))}
       </div>
+        <OpenRecordButton
+          resource={resource}
+          text={isDraft && hasEditingRights ? 'Edit Record' : 'Open Record'}
+        />
       {
       isDraft && <>
-        <EditRecordButton id={resource.id} />
         <RecordUpload
           recordId={resource.id}
           onDone={() => {

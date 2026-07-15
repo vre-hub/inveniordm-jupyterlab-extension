@@ -7,7 +7,7 @@ import {
 import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
-import { EditRecordButton } from './EditRecordButton';
+import { OpenRecordButton } from './OpenRecordButton';
 
 export const Upload: React.FC = () => {
   const serverSettings = useServerSettings();
@@ -92,7 +92,7 @@ export const Upload: React.FC = () => {
       {result && (
         <div>
           <p>Created draft {result.id}.</p>
-          <EditRecordButton id={result.id} />
+          <OpenRecordButton resource={result} text="Edit metadata" />
         </div>
       )}
     </div>
