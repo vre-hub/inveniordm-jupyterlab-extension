@@ -14,7 +14,7 @@ export type ZenodoFile = {
 
 export type ZenodoResourceData = {
   id: string;
-  is_published?: boolean;
+  status: string;
   metadata?: {
     title?: string;
   };
@@ -43,7 +43,7 @@ export const ZenodoResource: React.FC<{
       {resource.pids?.doi?.identifier ? (
         <div>DOI: {resource.pids.doi.identifier}</div>
       ) : null}
-      <div>Status: {resource.is_published ? 'Published' : 'Draft'}</div>
+      <div>Status: {resource.status}</div>
       <div>
         {getFiles(resource.files).map(file => (
           <ZenodoFileInfo file={file} key={file.key} recordId={resource.id} />
