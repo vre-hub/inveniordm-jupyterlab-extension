@@ -1,9 +1,10 @@
-import { ServerConnection } from "@jupyterlab/services";
-import { subscribeToEvents, ZenodoEvent } from "./sse_events";
+import { ServerConnection } from '@jupyterlab/services';
+import { subscribeToEvents, ZenodoEvent } from './sse_events';
 
 type ZenodoEventListener = (event: ZenodoEvent) => void;
 
 class SharedEventStream {
+  private consecutiveNetworkFailures = 0;
   private controller: AbortController | null = null;
   private listeners = new Set<ZenodoEventListener>();
   private restartTimer: ReturnType<typeof setTimeout> | null = null;
@@ -53,14 +54,28 @@ class SharedEventStream {
       event => {
         this.dispatch(event);
       },
-      controller.signal
+      controller.signal,
+      () => {
+        this.consecutiveNetworkFailures = 0;
+      }
     )
       .catch(reason => {
-        if (reason?.name === 'AbortError') {
+        // Firefox can reject a pending response-body read with a TypeError
+        // instead of an AbortError when the request is aborted. Check the
+        // signal itself so intentional cleanup is not reported as a failure.
+        if (controller.signal.aborted) {
           return;
         }
 
         retryDelayMs = 1000;
+        if (reason instanceof ServerConnection.NetworkError) {
+          this.consecutiveNetworkFailures += 1;
+          if (this.consecutiveNetworkFailures === 3) {
+            console.error('Zenodo event stream failed repeatedly.', reason);
+          }
+          return;
+        }
+
         console.error('Zenodo event stream failed.', reason);
       })
       .finally(() => {

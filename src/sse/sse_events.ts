@@ -20,13 +20,15 @@ export type ZenodoEvent = {
  * @param serverSettings - The server settings to use for the request.
  * @param onEvent - The callback to call for each event received.
  * @param signal - The AbortSignal to use for aborting the request.
+ * @param onConnected - The callback to call once the response stream is open.
  * Passing an AbortSignal allows the caller to cancel the subscription when it is no longer needed.
  * @returns A promise that resolves when the subscription is established.
  */
 export async function subscribeToEvents(
   serverSettings: ServerConnection.ISettings,
   onEvent: (event: ZenodoEvent) => void,
-  signal: AbortSignal
+  signal: AbortSignal,
+  onConnected?: () => void
 ): Promise<void> {
   const response = await ServerConnection.makeRequest(
     eventSourceUrl(serverSettings),
@@ -45,6 +47,8 @@ export async function subscribeToEvents(
   if (!response.body) {
     throw new Error('The browser does not support streaming responses.');
   }
+
+  onConnected?.();
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
