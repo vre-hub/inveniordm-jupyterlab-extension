@@ -223,8 +223,8 @@ def get_zenodo_record_file(
         timeout=10,
     )
 
-    # If the file is not in the draft, try the published version.
-    if response.status_code == 404:
+    # If the file is not in the draft or we cannot access the draft, try the published version.
+    if response.status_code in {403, 404}:
         response = requests.get(
             f"{_normalize_base_url(base_url)}/api/records/{record_id}/files/{filename}",
             headers=_headers(headers),
