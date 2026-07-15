@@ -2,15 +2,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import requests
+
 from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
 from ..util.progress_reporting_reader import ProgressReportingReader
 from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
     ZenodoFileResponse,
+    ZenodoPermission,
     create_zenodo_record_draft,
     create_zenodo_record_version,
     delete_zenodo_draft_file,
+    get_zenodo_access_grants,
     get_zenodo_record,
+    get_zenodo_record_details,
     get_zenodo_record_file,
     get_zenodo_me,
     list_zenodo_user_records,
@@ -108,6 +113,78 @@ class ZenodoRequests:
             base_url=self.url,
             headers=self.headers,
         )
+
+    def get_zenodo_record_permission(
+        self,
+        record_id: int | str,
+    ) -> ZenodoPermission:
+        """Return the authenticated user's effective permission for a record."""
+        # Get the record details (either from user records or public record details)
+        try:
+            record = self.get_zenodo_record(record_id)
+        except ValueError:
+            record = get_zenodo_record_details(
+                record_id,
+                base_url=self.url,
+                headers=self.headers,
+            )
+
+        # Get user id
+        profile = self.get_zenodo_me()
+        user_id = str(profile["id"])
+
+        # If user is owner, return "manage"
+        if any(
+            str(owner.get("id")) == user_id
+            for owner in record.get("owners", [])
+        ):
+            return "manage"
+
+        # If user is not owner, check access grants
+        access_grants_url = record.get("links", {}).get("access_grants")
+        if not access_grants_url:
+            return "view"
+
+        try:
+            grants = get_zenodo_access_grants(
+                access_grants_url,
+                base_url=self.url,
+                headers=self.headers,
+            )
+        except requests.RequestException as error:
+            if getattr(error.response, "status_code", None) == 403:
+                return "view"
+            raise
+
+        permissions: list[ZenodoPermission] = []
+        for grant in grants.get("hits", {}).get("hits", []):
+            subject = grant.get("subject", {})
+            permission = grant.get("permission")
+            if (
+                subject.get("type") == "user"
+                and str(subject.get("id")) == user_id
+                and permission in {"manage", "edit", "preview", "view"}
+            ):
+                permissions.append(permission)
+
+        # select the highest permission the user has, defaulting to "view" if none found
+        permission_order: tuple[ZenodoPermission, ...] = (
+            "manage",
+            "edit",
+            "preview",
+            "view",
+        )
+        perm = next(
+            (
+                permission
+                for permission in permission_order
+                if permission in permissions
+            ),
+            "view",
+        )
+        if perm not in permission_order:
+            raise ValueError(f"Unexpected permission value: {perm}")
+        return perm
 
     def create_zenodo_record_version(
         self,

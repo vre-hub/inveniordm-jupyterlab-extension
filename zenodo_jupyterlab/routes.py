@@ -1,3 +1,4 @@
+import asyncio
 import json
 from pathlib import Path
 from typing import Callable
@@ -253,6 +254,40 @@ class ZenodoUserRecordHandler(APIHandler):
             return
 
         self.finish(json.dumps(record))
+
+
+class ZenodoRecordPermissionHandler(APIHandler):
+    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+        self.get_zenodo_requests = get_zenodo_requests
+
+    @tornado.web.authenticated
+    async def get(self, record_id: str):
+        try:
+            zenodo_requests = self.get_zenodo_requests(self)
+            permission = await asyncio.to_thread(
+                zenodo_requests.get_zenodo_record_permission,
+                record_id,
+            ) # run this in a thread until we have a proper async implementation of the api calls
+        except ValueError as error:
+            self.set_status(
+                401
+                if str(error) == "Missing Zenodo request authentication headers"
+                else 404
+            )
+            self.finish(json.dumps({"message": str(error)}))
+            return
+        except (KeyError, TypeError) as error:
+            self.set_status(502)
+            self.finish(
+                json.dumps({"message": f"Invalid Zenodo response: {error}"})
+            )
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps(permission))
 
 
 class ZenodoRecordVersionsHandler(APIHandler):
@@ -880,6 +915,16 @@ def setup_route_handlers(web_app):
                 "versions",
             ),
             ZenodoRecordVersionsHandler,
+            {"get_zenodo_requests": get_zenodo_requests},
+        ),
+        (
+            url_path_join(
+                zenodo_base_url,
+                "records",
+                r"([^/]+)",
+                "permission",
+            ),
+            ZenodoRecordPermissionHandler,
             {"get_zenodo_requests": get_zenodo_requests},
         ),
         (

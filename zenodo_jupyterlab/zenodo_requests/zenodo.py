@@ -4,10 +4,13 @@ TODO consider using httpx instead of requests, for async support.
 """
 
 from collections.abc import Iterable
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 from urllib.parse import quote, urljoin, urlparse, urlunparse
 
 import requests
+
+
+ZenodoPermission = Literal["manage", "edit", "preview", "view"]
 
 
 class ZenodoFileResponse(Protocol):
@@ -131,6 +134,22 @@ def get_zenodo_me(
         "email": data["email"],
         "id": data["id"],
     }
+
+
+def get_zenodo_access_grants(
+    access_grants_url: str,
+    *,
+    base_url: str,
+    headers: dict[str, str],
+) -> dict[str, Any]:
+    """Fetch the access grants linked from a Zenodo record response."""
+    response = requests.get(
+        _rebase_zenodo_url(access_grants_url, base_url=base_url),
+        headers=_headers(headers),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 def search_zenodo_records(
@@ -285,6 +304,25 @@ def get_zenodo_record(
     if record is None:
         raise ValueError(f"Record not found: {record_id}")
     return record
+
+
+def get_zenodo_record_details(
+    record_id: int | str,
+    *,
+    base_url: str,
+    headers: dict[str, str] | None,
+) -> dict[str, Any]:
+    """Fetch a record directly from the records API."""
+    response = requests.get(
+        (
+            f"{_normalize_base_url(base_url)}/api/records/"
+            f"{quote(str(record_id), safe='')}"
+        ),
+        headers=_headers(headers),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 def get_zenodo_record_at_url(

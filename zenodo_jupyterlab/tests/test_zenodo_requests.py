@@ -1,4 +1,5 @@
 import pytest
+import requests as requests_library
 
 from zenodo_jupyterlab.zenodo_requests import zenodo as zenodo_module
 from zenodo_jupyterlab.zenodo_requests import zenodo_requests as zenodo_requests_module
@@ -83,6 +84,137 @@ def test_create_record_version_uses_authenticated_request(monkeypatch):
             },
         )
     ]
+
+
+def test_record_owner_has_manage_permission_without_fetching_grants(monkeypatch):
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+    monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
+    monkeypatch.setattr(
+        requests,
+        "get_zenodo_record",
+        lambda record_id: {
+            "id": record_id,
+            "owners": [{"id": "58370"}],
+            "links": {"access_grants": "/api/records/123/access/grants"},
+        },
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "get_zenodo_access_grants",
+        lambda *args, **kwargs: pytest.fail("owner grants should not be fetched"),
+    )
+
+    assert requests.get_zenodo_record_permission("123") == "manage"
+
+
+def test_record_permission_uses_current_users_access_grant(monkeypatch):
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+    monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
+    monkeypatch.setattr(
+        requests,
+        "get_zenodo_record",
+        lambda record_id: {
+            "id": record_id,
+            "owners": [{"id": "another-user"}],
+            "links": {"access_grants": "/api/records/123/access/grants"},
+        },
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "get_zenodo_access_grants",
+        lambda *args, **kwargs: {
+            "hits": {
+                "hits": [
+                    {
+                        "permission": "manage",
+                        "subject": {"id": "another-user", "type": "user"},
+                    },
+                    {
+                        "permission": "edit",
+                        "subject": {"id": "58370", "type": "user"},
+                    },
+                ]
+            }
+        },
+    )
+
+    assert requests.get_zenodo_record_permission("123") == "edit"
+
+
+def test_record_without_access_grant_has_view_permission(monkeypatch):
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+    monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
+    monkeypatch.setattr(
+        requests,
+        "get_zenodo_record",
+        lambda record_id: {"id": record_id, "owners": [], "links": {}},
+    )
+
+    assert requests.get_zenodo_record_permission("123") == "view"
+
+
+def test_forbidden_access_grants_has_view_permission(monkeypatch):
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+    monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
+    monkeypatch.setattr(
+        requests,
+        "get_zenodo_record",
+        lambda record_id: {
+            "id": record_id,
+            "owners": [{"id": "another-user"}],
+            "links": {"access_grants": "/api/records/123/access/grants"},
+        },
+    )
+    response = requests_library.Response()
+    response.status_code = 403
+    error = requests_library.HTTPError(response=response)
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "get_zenodo_access_grants",
+        lambda *args, **kwargs: (_ for _ in ()).throw(error),
+    )
+
+    assert requests.get_zenodo_record_permission("123") == "view"
+
+
+def test_public_record_permission_falls_back_to_records_api(monkeypatch):
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+    monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
+    monkeypatch.setattr(
+        requests,
+        "get_zenodo_record",
+        lambda record_id: (_ for _ in ()).throw(
+            ValueError(f"Record not found: {record_id}")
+        ),
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "get_zenodo_record_details",
+        lambda *args, **kwargs: {"owners": [], "links": {}},
+    )
+
+    assert requests.get_zenodo_record_permission("public-123") == "view"
+
+
+def test_get_zenodo_access_grants_follows_record_link(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        zenodo_module.requests,
+        "get",
+        lambda *args, **kwargs: calls.append((args, kwargs))
+        or Response({"hits": {"hits": []}}),
+    )
+
+    result = zenodo_module.get_zenodo_access_grants(
+        "https://zenodo.org/api/records/123/access/grants",
+        base_url="https://sandbox.zenodo.org",
+        headers={"Authorization": "x"},
+    )
+
+    assert result == {"hits": {"hits": []}}
+    assert calls[0][0] == (
+        "https://sandbox.zenodo.org/api/records/123/access/grants",
+    )
 
 
 def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):

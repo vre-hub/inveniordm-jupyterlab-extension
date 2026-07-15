@@ -365,3 +365,40 @@ export async function getZenodoFileImportCell(
     }
   );
 }
+
+export type Permission = 'manage' | 'edit' | 'preview' | 'view';
+
+export async function getRecordPermissions(
+  id: string,
+  serverSettings: ServerConnection.ISettings
+): Promise<Permission> {
+  return await requestAPI<Permission>(
+    `records/${encodeURIComponent(id)}/permission`,
+    serverSettings
+  );
+}
+
+
+export function useRecordPermissions(id: string): Permission | null {
+  const serverSettings = useServerSettings();
+  const [userPermissions, setUserPermissions] = React.useState<Permission | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const fetchUserPermissions = async () => {
+      const permissions = await getRecordPermissions(id, serverSettings);
+      if (isMounted) {
+        setUserPermissions(permissions);
+      }
+    };
+
+    void fetchUserPermissions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, serverSettings]);
+
+  return userPermissions;
+}

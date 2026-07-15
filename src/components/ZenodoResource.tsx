@@ -4,6 +4,7 @@ import { ZenodoFileInfo } from './ZenodoFileInfo';
 import { EditRecordButton } from './EditRecordButton';
 import { RecordUpload } from './RecordUpload';
 import { CreateNewVersionButton } from './CreateNewVersionButton';
+import { useRecordPermissions } from '../api_calls';
 
 // TODO check if these fields exist/ if they are always present
 export type ZenodoFile = {
@@ -43,6 +44,7 @@ export const ZenodoResource: React.FC<{
   resource: ZenodoResourceData;
 }> = ({ resource }) => {
   const editable = resource.status === 'draft';
+  const userPermissions = useRecordPermissions(resource.id);
 
   return (
     <section>
@@ -69,6 +71,7 @@ export const ZenodoResource: React.FC<{
         />
         </>
       }
+      <p>Access Rights: {userPermissions}</p>
     </section>
   );
 };
