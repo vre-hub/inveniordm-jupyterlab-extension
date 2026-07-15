@@ -3,6 +3,7 @@ import React from 'react';
 import { ZenodoFileInfo } from './ZenodoFileInfo';
 import { EditRecordButton } from './EditRecordButton';
 
+// TODO check if these fields exist/ if they are always present
 export type ZenodoFile = {
   key: string;
   size?: number;
@@ -12,6 +13,7 @@ export type ZenodoFile = {
   };
 };
 
+// TODO check if these fields exist/ if they are always present
 export type ZenodoResourceData = {
   id: string;
   status: string;
