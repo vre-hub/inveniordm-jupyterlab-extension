@@ -43,8 +43,9 @@ const getFiles = (files: ZenodoResourceData['files']): ZenodoFile[] => {
 export const ZenodoResource: React.FC<{
   resource: ZenodoResourceData;
 }> = ({ resource }) => {
-  const editable = resource.status === 'draft';
+  const isDraft = resource.status === 'draft';
   const userPermissions = useRecordPermissions(resource.id);
+  const hasEditingRights = userPermissions == 'edit' || userPermissions == 'manage'
 
   return (
     <section>
@@ -54,14 +55,14 @@ export const ZenodoResource: React.FC<{
         <div>DOI: {resource.pids.doi.identifier}</div>
       ) : null}
       <div>Status: {resource.status}</div>
-      {!editable && <CreateNewVersionButton id={resource.id} />}
+      {!isDraft && hasEditingRights && <CreateNewVersionButton id={resource.id} />}
       <div>
         {getFiles(resource.files).map(file => (
-          <ZenodoFileInfo file={file} key={file.key} recordId={resource.id} editable={editable} />
+          <ZenodoFileInfo file={file} key={file.key} recordId={resource.id} editable={isDraft} />
         ))}
       </div>
       {
-      editable && <>
+      isDraft && <>
         <EditRecordButton id={resource.id} />
         <RecordUpload
           recordId={resource.id}
