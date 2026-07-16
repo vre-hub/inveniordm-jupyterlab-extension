@@ -108,11 +108,21 @@ class ZenodoRequests:
         self,
         record_id: int | str,
     ) -> dict[str, Any]:
-        return get_zenodo_user_record(
+        user_record = get_zenodo_user_record(
             record_id,
             base_url=self.url,
             headers=self.headers,
         )
+
+        # for user records that are drafts, the files are not included here
+        # so we need to fetch them separately
+        as_array = [user_record]
+        include_zenodo_files(
+            as_array,
+            base_url=self.url,
+            headers=self.headers,
+        )
+        return as_array[0]
 
     def get_zenodo_record_permission(
         self,
