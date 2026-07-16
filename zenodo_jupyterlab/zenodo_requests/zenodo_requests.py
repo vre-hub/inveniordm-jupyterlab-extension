@@ -14,7 +14,7 @@ from .zenodo import (
     create_zenodo_record_version,
     delete_zenodo_draft_file,
     get_zenodo_access_grants,
-    get_zenodo_record,
+    get_zenodo_user_record,
     get_zenodo_record_details,
     get_zenodo_record_file,
     get_zenodo_me,
@@ -104,11 +104,11 @@ class ZenodoRequests:
 
         return records
 
-    def get_zenodo_record(
+    def get_zenodo_user_record(
         self,
         record_id: int | str,
     ) -> dict[str, Any]:
-        return get_zenodo_record(
+        return get_zenodo_user_record(
             record_id,
             base_url=self.url,
             headers=self.headers,
@@ -121,7 +121,7 @@ class ZenodoRequests:
         """Return the authenticated user's effective permission for a record."""
         # Get the record details (either from user records or public record details)
         try:
-            record = self.get_zenodo_record(record_id)
+            record = self.get_zenodo_user_record(record_id)
         except ValueError:
             record = get_zenodo_record_details(
                 record_id,
@@ -210,7 +210,7 @@ class ZenodoRequests:
         Published records are immutable, so changing their files creates
         an unpublished latest-version draft.
         """
-        record = self.get_zenodo_record(record_id)
+        record = self.get_zenodo_user_record(record_id)
         if not record.get("is_published"):
             print(
                 f"Record {record_id} is not published, "

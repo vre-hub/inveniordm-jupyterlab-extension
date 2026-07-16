@@ -280,7 +280,7 @@ def list_zenodo_user_records(
     return response.json().get("hits", {}).get("hits", [])
 
 
-def get_zenodo_record(
+def get_zenodo_user_record(
     record_id: int | str,
     *,
     base_url: str,

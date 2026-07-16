@@ -243,7 +243,7 @@ class ZenodoUserRecordHandler(APIHandler):
     @tornado.web.authenticated
     def get(self, record_id: str):
         try:
-            record = self.get_zenodo_requests(self).get_zenodo_record(record_id)
+            record = self.get_zenodo_requests(self).get_zenodo_user_record(record_id)
         except ValueError as error:
             self.set_status(404)
             self.finish(json.dumps({"message": str(error)}))

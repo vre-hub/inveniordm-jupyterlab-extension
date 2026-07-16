@@ -236,7 +236,7 @@ def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):
         ),
     )
 
-    result = zenodo_module.get_zenodo_record(
+    result = zenodo_module.get_zenodo_user_record(
         "draft-1",
         base_url="https://zenodo.org",
         headers={"Authorization": "x"},
