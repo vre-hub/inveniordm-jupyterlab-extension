@@ -318,9 +318,15 @@ class ZenodoRecordVersionsHandler(APIHandler):
             self.finish(json.dumps({"message": str(error)}))
             return
 
+        draft_id = draft.get("id")
+        event_data = {}
+        if draft_id is not None:
+            event_data["type"] = "version_created"
+            event_data["new_version_id"] = draft.get("id")
         self.event_bus.publish(
             get_user_id(self),
             _record_changed_topic(record_id),
+            event_data
         )
         self.finish(json.dumps({"draft": draft}))
 

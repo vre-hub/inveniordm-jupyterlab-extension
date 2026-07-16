@@ -38,7 +38,7 @@ export const ZenodoUserRecords: React.FC = () => {
       {Array.isArray(records)
         ? records.map(record => (
             <React.Fragment key={record.id}>
-              <ZenodoUserRecord recordId={record.id} initialRecordValue={record} />
+              <ZenodoUserRecord initialRecordId={record.id} initialRecordValue={record} />
             </React.Fragment>
           ))
         : records?.error}
@@ -50,16 +50,18 @@ export const ZenodoUserRecords: React.FC = () => {
  * Display a single Zenodo record for the user.
  * Pass an initialRecordValue to avoid an additional API call if the record data is already available.
  */
-function ZenodoUserRecord({ recordId, initialRecordValue }: { recordId: string; initialRecordValue?: ZenodoResourceData }): JSX.Element {
+function ZenodoUserRecord({ initialRecordId, initialRecordValue }: { initialRecordId: string; initialRecordValue?: ZenodoResourceData }): JSX.Element {
+  const [recordId, setRecordId] = React.useState<string>(initialRecordId);
+  
   const serverSettings = useServerSettings();
   const [record, setRecord] = React.useState<
     ZenodoResourceData | { error: string } | null
   >(initialRecordValue ?? null);
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const loadRecord = React.useCallback(async (): Promise<void> => {
+  const loadRecord = React.useCallback(async (id: string = recordId): Promise<void> => {
     try {
-      const record = await getZenodoUserRecord(serverSettings, recordId);
+      const record = await getZenodoUserRecord(serverSettings, id);
       setRecord(record);
     } catch (reason) {
       setRecord({ error: String(reason) });
@@ -77,8 +79,21 @@ function ZenodoUserRecord({ recordId, initialRecordValue }: { recordId: string; 
   }, [loadRecord]);
 
   // Listen for record changes via SSE and reload the record data when it changes.
-  useEventListener(`record.changed.${encodeURIComponent(recordId)}`, () => {
-    void loadRecord();
+  useEventListener(`record.changed.${encodeURIComponent(recordId)}`, (event) => {
+    // If there is a new version, we need to update the recordId to the new version
+    const eventData = event.data as { type?: string; new_version_id?: string } | undefined;
+    if (eventData && eventData.type === 'version_created' && eventData.new_version_id) {
+      console.log(`New version created for record ${recordId}: ${eventData.new_version_id}`);
+      setRecordId(eventData.new_version_id);
+      setTimeout(() => {
+        void loadRecord(eventData.new_version_id);
+      }, 200); // record is not immediately available
+      return;
+    }
+    // Otherwise, just reload the current record
+    else{
+      void loadRecord();
+    }
   });
 
   return (
