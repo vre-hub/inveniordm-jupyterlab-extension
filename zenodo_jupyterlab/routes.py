@@ -78,6 +78,10 @@ def _download_status_changed_topic(record_id: int | str, file_key: str) -> str:
     )
 
 
+def _record_changed_topic(record_id: int | str) -> str:
+    return f"record.changed.{quote(str(record_id), safe='')}"
+
+
 class HelloRouteHandler(APIHandler):
     # The following decorator should be present on all verb methods (head, get, post,
     # patch, put, delete, options) to ensure only authorized user can request the
@@ -291,8 +295,13 @@ class ZenodoRecordPermissionHandler(APIHandler):
 
 
 class ZenodoRecordVersionsHandler(APIHandler):
-    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+    def initialize(
+        self,
+        get_zenodo_requests: GetZenodoRequests,
+        event_bus: EventBus,
+    ):
         self.get_zenodo_requests = get_zenodo_requests
+        self.event_bus = event_bus
 
     @tornado.web.authenticated
     def post(self, record_id: str):
@@ -309,6 +318,10 @@ class ZenodoRecordVersionsHandler(APIHandler):
             self.finish(json.dumps({"message": str(error)}))
             return
 
+        self.event_bus.publish(
+            get_user_id(self),
+            _record_changed_topic(record_id),
+        )
         self.finish(json.dumps({"draft": draft}))
 
 
@@ -357,6 +370,15 @@ class ZenodoMinimalRecordDraftHandler(APIHandler):
                 f"job.progress.{job_id}",
                 progress,
             )
+            if progress.get("status") == "done":
+                result = progress.get("result")
+                draft = result.get("draft") if isinstance(result, dict) else None
+                record_id = draft.get("id") if isinstance(draft, dict) else None
+                if record_id is not None:
+                    self.event_bus.publish(
+                        user_id,
+                        _record_changed_topic(record_id),
+                    )
 
         def upload(context: JobContext) -> dict[str, object]:
             def on_upload_progress(
@@ -449,6 +471,11 @@ class ZenodoRecordFilesHandler(APIHandler):
                 f"job.progress.{job_id}",
                 progress,
             )
+            if progress.get("status") == "done":
+                self.event_bus.publish(
+                    user_id,
+                    _record_changed_topic(record_id),
+                )
 
         def upload(context: JobContext) -> dict[str, object]:
             def on_upload_progress(
@@ -509,6 +536,10 @@ class ZenodoRecordFilesHandler(APIHandler):
             self.finish(json.dumps({"message": str(error)}))
             return
 
+        self.event_bus.publish(
+            get_user_id(self),
+            _record_changed_topic(record_id),
+        )
         self.finish(
             json.dumps({"draft": draft, "deleted_key": file_key})
         )
@@ -915,7 +946,10 @@ def setup_route_handlers(web_app):
                 "versions",
             ),
             ZenodoRecordVersionsHandler,
-            {"get_zenodo_requests": get_zenodo_requests},
+            {
+                "get_zenodo_requests": get_zenodo_requests,
+                "event_bus": event_bus,
+            },
         ),
         (
             url_path_join(

@@ -4,6 +4,7 @@ import { getZenodoUserRecord, listZenodoUserRecords } from '../api_calls';
 import { useServerSettings } from '../store';
 import { ZenodoResource } from './ZenodoResource';
 import { ZenodoResourceData } from '../api_calls';
+import { useEventListener } from '../sse';
 
 export const ZenodoUserRecords: React.FC = () => {
   const serverSettings = useServerSettings();
@@ -57,26 +58,28 @@ function ZenodoUserRecord({ recordId, initialRecordValue }: { recordId: string; 
   const [isLoading, setIsLoading] = React.useState(false);
 
   const loadRecord = React.useCallback(async (): Promise<void> => {
-    setIsLoading(true);
-
     try {
       const record = await getZenodoUserRecord(serverSettings, recordId);
       setRecord(record);
     } catch (reason) {
       setRecord({ error: String(reason) });
     } finally {
-      setIsLoading(false);
     }
   }, [serverSettings, recordId]);
 
+  // If no initial record value is provided, load the record data from the API.
   React.useEffect(() => {
     if (!record) {
+      setIsLoading(true);
       void loadRecord();
-    }
-    else {
-      console.log(`ZenodoUserRecord: Using initial record value for record ${recordId}`);
+      setIsLoading(false);
     }
   }, [loadRecord]);
+
+  // Listen for record changes via SSE and reload the record data when it changes.
+  useEventListener(`record.changed.${encodeURIComponent(recordId)}`, () => {
+    void loadRecord();
+  });
 
   return (
     <div>
