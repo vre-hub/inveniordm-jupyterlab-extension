@@ -4,37 +4,7 @@ import { ZenodoFileInfo } from './ZenodoFileInfo';
 import { OpenRecordButton } from './OpenRecordButton';
 import { RecordUpload } from './RecordUpload';
 import { CreateNewVersionButton } from './CreateNewVersionButton';
-import { useRecordPermissions } from '../api_calls';
-
-// TODO check if these fields exist/ if they are always present
-export type ZenodoFile = {
-  key: string;
-  size?: number;
-  links?: {
-    content?: string;
-    download?: string;
-  };
-};
-
-type ResourceStatus = 'draft' | 'published'
-
-// TODO check if these fields exist/ if they are always present
-export type ZenodoResourceData = {
-  id: string;
-  status: ResourceStatus;
-  metadata?: {
-    title?: string;
-  };
-  pids?: {
-    doi?: {
-      identifier?: string;
-    };
-  };
-  files?: ZenodoFile[] | { entries?: ZenodoFile[] };
-  links: {
-    self_html: string;
-  };
-};
+import { useRecordPermissions, ZenodoFile, ZenodoResourceData } from '../api_calls';
 
 const getFiles = (files: ZenodoResourceData['files']): ZenodoFile[] => {
   if (Array.isArray(files)) {

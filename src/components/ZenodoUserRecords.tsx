@@ -1,8 +1,9 @@
 import React from 'react';
 
-import { listZenodoUserRecords } from '../api_calls';
+import { getZenodoUserRecord, listZenodoUserRecords } from '../api_calls';
 import { useServerSettings } from '../store';
-import { ZenodoResource, ZenodoResourceData } from './ZenodoResource';
+import { ZenodoResource } from './ZenodoResource';
+import { ZenodoResourceData } from '../api_calls';
 
 export const ZenodoUserRecords: React.FC = () => {
   const serverSettings = useServerSettings();
@@ -36,10 +37,55 @@ export const ZenodoUserRecords: React.FC = () => {
       {Array.isArray(records)
         ? records.map(record => (
             <React.Fragment key={record.id}>
-              <ZenodoResource resource={record} />
+              <ZenodoUserRecord recordId={record.id} initialRecordValue={record} />
             </React.Fragment>
           ))
         : records?.error}
     </div>
   );
 };
+
+/**
+ * Display a single Zenodo record for the user.
+ * Pass an initialRecordValue to avoid an additional API call if the record data is already available.
+ */
+function ZenodoUserRecord({ recordId, initialRecordValue }: { recordId: string; initialRecordValue?: ZenodoResourceData }): JSX.Element {
+  const serverSettings = useServerSettings();
+  const [record, setRecord] = React.useState<
+    ZenodoResourceData | { error: string } | null
+  >(initialRecordValue ?? null);
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  const loadRecord = React.useCallback(async (): Promise<void> => {
+    setIsLoading(true);
+
+    try {
+      const record = await getZenodoUserRecord(serverSettings, recordId);
+      setRecord(record);
+    } catch (reason) {
+      setRecord({ error: String(reason) });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [serverSettings, recordId]);
+
+  React.useEffect(() => {
+    if (!record) {
+      void loadRecord();
+    }
+    else {
+      console.log(`ZenodoUserRecord: Using initial record value for record ${recordId}`);
+    }
+  }, [loadRecord]);
+
+  return (
+    <div>
+      {isLoading && <p>Loading...</p>}
+      {record && !('error' in record) ? (
+        <ZenodoResource resource={record} />
+      ) : (
+        record?.error
+      )}
+    </div>
+  );
+}

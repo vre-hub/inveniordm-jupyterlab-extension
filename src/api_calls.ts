@@ -141,8 +141,8 @@ export type MinimalRecordDraftResponse = {
 export async function getZenodoUserRecord(
   serverSettings: ServerConnection.ISettings,
   recordId: string
-): Promise<MinimalRecordDraftResponse> {
-  return await requestAPI<MinimalRecordDraftResponse>(
+): Promise<ZenodoResourceData> {
+  return await requestAPI<ZenodoResourceData>(
     `user-records/${encodeURIComponent(recordId)}`,
     serverSettings
   );
@@ -401,4 +401,33 @@ export function useRecordPermissions(id: string): Permission | null {
   }, [id, serverSettings]);
 
   return userPermissions;
-}
+}// TODO check if these fields exist/ if they are always present
+
+export type ZenodoFile = {
+  key: string;
+  size?: number;
+  links?: {
+    content?: string;
+    download?: string;
+  };
+};
+type ResourceStatus = 'draft' | 'published';
+// TODO check if these fields exist/ if they are always present
+
+export type ZenodoResourceData = {
+  id: string;
+  status: ResourceStatus;
+  metadata?: {
+    title?: string;
+  };
+  pids?: {
+    doi?: {
+      identifier?: string;
+    };
+  };
+  files?: ZenodoFile[] | { entries?: ZenodoFile[]; };
+  links: {
+    self_html: string;
+  };
+};
+

@@ -9,7 +9,7 @@ import {
 import { useInsertZenodoCell, useServerSettings } from '../store';
 import { JobProgress } from './JobProgress';
 import { ZenodoFileDownloadStatus } from './ZenodoFileDownloadStatus';
-import type { ZenodoFile } from './ZenodoResource';
+import type { ZenodoFile } from '../api_calls';
 
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;

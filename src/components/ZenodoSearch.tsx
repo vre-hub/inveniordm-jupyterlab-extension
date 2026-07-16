@@ -2,7 +2,8 @@ import React from 'react';
 
 import { searchZenodoRecords } from '../api_calls';
 import { useServerSettings } from '../store';
-import { ZenodoResource, ZenodoResourceData } from './ZenodoResource';
+import { ZenodoResource } from './ZenodoResource';
+import { ZenodoResourceData } from '../api_calls';
 
 type ZenodoSearchResults = {
   hits?: {
