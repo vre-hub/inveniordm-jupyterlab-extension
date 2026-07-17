@@ -268,6 +268,94 @@ def test_list_zenodo_user_records_uses_user_records(monkeypatch):
     assert calls[0][1]["params"] == {"page": 2, "size": 25}
 
 
+def test_list_zenodo_record_versions_uses_versions_endpoint(monkeypatch):
+    calls = []
+    response_data = {
+        "hits": {
+            "hits": [
+                {"id": "record-1", "versions": {"index": 1}},
+                {"id": "record-2", "versions": {"index": 2}},
+            ]
+        }
+    }
+    monkeypatch.setattr(
+        zenodo_module.requests,
+        "get",
+        lambda *args, **kwargs: calls.append((args, kwargs))
+        or Response(response_data),
+    )
+
+    result = zenodo_module.list_zenodo_record_versions(
+        "record/1",
+        base_url="https://zenodo.org",
+        headers={"Authorization": "x"},
+    )
+
+    assert result == response_data
+    assert calls[0][0] == (
+        "https://zenodo.org/api/records/record%2F1/versions",
+    )
+    assert calls[0][1]["headers"] == {
+        "Accept": "application/json",
+        "Authorization": "x",
+    }
+
+
+def test_zenodo_requests_extracts_record_versions(monkeypatch):
+    calls = []
+    versions = [
+        {
+            "id": 518963,
+            "conceptrecid": "515274",
+            "status": "published",
+            "metadata": {"relations": {"version": [{"index": 1}]}},
+        },
+        {
+            "id": 515275,
+            "conceptrecid": "515274",
+            "status": "published",
+            "metadata": {"relations": {"version": [{"index": 0}]}},
+        },
+    ]
+    draft = {
+        "id": 567677,
+        "conceptrecid": "515274",
+        "status": "draft",
+        "metadata": {"relations": {"version": [{"index": 2}]}},
+    }
+    unrelated_draft = {
+        "id": "other-draft",
+        "conceptrecid": "other-parent",
+        "status": "draft",
+        "metadata": {"relations": {"version": [{"index": 10}]}},
+    }
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_record_versions",
+        lambda *args, **kwargs: {"hits": {"hits": versions}},
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_user_records",
+        lambda *args, **kwargs: calls.append((args, kwargs))
+        or [*versions, draft, unrelated_draft],
+    )
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+
+    assert requests.list_zenodo_record_versions("518963") == [*versions, draft]
+    assert calls == [
+        (
+            (),
+            {
+                "base_url": "https://zenodo.org",
+                "headers": {"Authorization": "x"},
+                "size": 100,
+                "allversions": True,
+            },
+        )
+    ]
+
+
 def test_create_zenodo_record_draft_uses_records_api(monkeypatch):
     calls = []
     monkeypatch.setattr(

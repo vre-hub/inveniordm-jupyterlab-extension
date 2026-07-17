@@ -148,6 +148,28 @@ export async function getZenodoUserRecord(
   );
 }
 
+export type ZenodoRecordVersion = {
+  id: string | number;
+  status?: 'draft' | 'published';
+  metadata?: {
+    relations?: {
+      version?: Array<{
+        index?: number;
+      }>;
+    };
+  };
+};
+
+export async function listZenodoRecordVersions(
+  serverSettings: ServerConnection.ISettings,
+  recordId: string
+): Promise<ZenodoRecordVersion[]> {
+  return await requestAPI<ZenodoRecordVersion[]>(
+    `user-records/${encodeURIComponent(recordId)}/versions`,
+    serverSettings
+  );
+}
+
 export type CreateZenodoRecordVersionResponse = {
   draft: MinimalRecordDraftResponse;
 };
@@ -378,10 +400,10 @@ export async function getRecordPermissions(
   );
 }
 
-
 export function useRecordPermissions(id: string): Permission | null {
   const serverSettings = useServerSettings();
-  const [userPermissions, setUserPermissions] = React.useState<Permission | null>(null);
+  const [userPermissions, setUserPermissions] =
+    React.useState<Permission | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -401,7 +423,7 @@ export function useRecordPermissions(id: string): Permission | null {
   }, [id, serverSettings]);
 
   return userPermissions;
-}// TODO check if these fields exist/ if they are always present
+} // TODO check if these fields exist/ if they are always present
 
 export type ZenodoFile = {
   key: string;
@@ -425,9 +447,8 @@ export type ZenodoResourceData = {
       identifier?: string;
     };
   };
-  files?: ZenodoFile[] | { entries?: ZenodoFile[]; };
+  files?: ZenodoFile[] | { entries?: ZenodoFile[] };
   links: {
     self_html: string;
   };
 };
-

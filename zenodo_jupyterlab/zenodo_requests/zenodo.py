@@ -266,18 +266,45 @@ def list_zenodo_user_records(
     headers: dict[str, str] | None,
     page: int = 1,
     size: int = 10,
+    query: str | None = None,
+    allversions: bool | None = None,
 ) -> list[dict[str, Any]]:
     """
     List records owned by the authenticated user.
     """
+    params: dict[str, Any] = {"page": page, "size": size}
+    if query is not None:
+        params["q"] = query
+    if allversions is not None:
+        params["allversions"] = allversions
+
     response = requests.get(
         f"{_normalize_base_url(base_url)}/api/user/records",
-        params={"page": page, "size": size},
+        params=params,
         headers=_headers(headers),
         timeout=10,
     )
     response.raise_for_status()
     return response.json().get("hits", {}).get("hits", [])
+
+
+def list_zenodo_record_versions(
+    record_id: int | str,
+    *,
+    base_url: str,
+    headers: dict[str, str] | None,
+) -> dict[str, Any]:
+    """List all published versions belonging to a record."""
+    response = requests.get(
+        (
+            f"{_normalize_base_url(base_url)}/api/records/"
+            f"{quote(str(record_id), safe='')}/versions"
+        ),
+        headers=_headers(headers),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 def get_zenodo_user_record(
@@ -291,7 +318,7 @@ def get_zenodo_user_record(
     """
     response = requests.get(
         f"{_normalize_base_url(base_url)}/api/user/records",
-        params={"q": f"id:{record_id}", "size": 10},
+        params={"q": f"id:{record_id}", "size": 10, "allversions": True},
         headers=_headers(headers),
         timeout=10,
     )

@@ -304,6 +304,19 @@ class ZenodoRecordVersionsHandler(APIHandler):
         self.event_bus = event_bus
 
     @tornado.web.authenticated
+    def get(self, record_id: str):
+        try:
+            versions = self.get_zenodo_requests(
+                self
+            ).list_zenodo_record_versions(record_id)
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps(versions))
+
+    @tornado.web.authenticated
     def post(self, record_id: str):
         try:
             draft = self.get_zenodo_requests(

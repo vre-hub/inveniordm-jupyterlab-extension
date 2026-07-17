@@ -18,6 +18,7 @@ from .zenodo import (
     get_zenodo_record_details,
     get_zenodo_record_file,
     get_zenodo_me,
+    list_zenodo_record_versions,
     list_zenodo_user_records,
     open_zenodo_file,
     search_zenodo_records,
@@ -103,6 +104,69 @@ class ZenodoRequests:
             )
 
         return records
+
+    def list_zenodo_record_versions(
+        self,
+        record_id: int | str,
+    ) -> list[dict[str, Any]]:
+        response = list_zenodo_record_versions(
+            record_id,
+            base_url=self.url,
+            headers=self.headers,
+        )
+        versions = response.get("hits", {}).get("hits", [])
+
+        # Try to find a draft version of the record and include it in the list of versions if it exists
+        # (Because drafts are not included in the response of the /api/records/{record_id}/versions endpoint)
+
+        parent_id = next(
+            (
+                version.get("conceptrecid")
+                for version in versions
+                if version.get("conceptrecid") is not None
+            ),
+            None,
+        )
+        if parent_id is None:
+            raise ValueError(
+                f"Could not find parent conceptrecid for record {record_id}"
+            )
+
+        family_records = list_zenodo_user_records(
+            base_url=self.url,
+            headers=self.headers,
+            size=100, # TODO handle if this is too small
+            allversions=True,
+        )
+        drafts = [
+            record
+            for record in family_records
+            if str(record.get("conceptrecid")) == str(parent_id)
+            and record.get("status") == "draft"
+        ]
+        if not drafts:
+            return versions
+
+        newest_draft = max(
+            drafts,
+            key=lambda record: (
+                (
+                    record.get("metadata", {})
+                    .get("relations", {})
+                    .get("version")
+                    or [{}]
+                )[0].get("index", -1)
+            ),
+        )
+        draft_id = str(newest_draft.get("id"))
+        return [
+            *[
+                version
+                for version in versions
+                if str(version.get("id")) != draft_id
+            ],
+            newest_draft,
+        ]
 
     def get_zenodo_user_record(
         self,

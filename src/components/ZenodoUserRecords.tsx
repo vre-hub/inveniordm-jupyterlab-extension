@@ -5,6 +5,7 @@ import { useServerSettings } from '../store';
 import { ZenodoResource } from './ZenodoResource';
 import { ZenodoResourceData } from '../api_calls';
 import { useEventListener } from '../sse';
+import { VersionDropdown } from './VersionDropdown';
 
 export const ZenodoUserRecords: React.FC = () => {
   const serverSettings = useServerSettings();
@@ -52,7 +53,7 @@ export const ZenodoUserRecords: React.FC = () => {
  */
 function ZenodoUserRecord({ initialRecordId, initialRecordValue }: { initialRecordId: string; initialRecordValue?: ZenodoResourceData }): JSX.Element {
   const [recordId, setRecordId] = React.useState<string>(initialRecordId);
-  
+
   const serverSettings = useServerSettings();
   const [record, setRecord] = React.useState<
     ZenodoResourceData | { error: string } | null
@@ -60,13 +61,13 @@ function ZenodoUserRecord({ initialRecordId, initialRecordValue }: { initialReco
   const [isLoading, setIsLoading] = React.useState(false);
 
   const loadRecord = React.useCallback(async (id: string = recordId): Promise<void> => {
-    try {
-      const record = await getZenodoUserRecord(serverSettings, id);
-      setRecord(record);
-    } catch (reason) {
-      setRecord({ error: String(reason) });
+      try {
+        const record = await getZenodoUserRecord(serverSettings, id);
+        setRecord(record);
+      } catch (reason) {
+        setRecord({ error: String(reason) });
     } finally {
-    }
+      }
   }, [serverSettings, recordId]);
 
   // If no initial record value is provided, load the record data from the API.
@@ -99,6 +100,13 @@ function ZenodoUserRecord({ initialRecordId, initialRecordValue }: { initialReco
   return (
     <div>
       {isLoading && <p>Loading...</p>}
+      <VersionDropdown
+        recordId={recordId}
+        onChange={id => {
+          setRecordId(id);
+          void loadRecord(id);
+        }}
+      />
       {record && !('error' in record) ? (
         <ZenodoResource resource={record} />
       ) : (
