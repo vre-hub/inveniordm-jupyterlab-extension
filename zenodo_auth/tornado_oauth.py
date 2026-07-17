@@ -102,10 +102,7 @@ def finish_zenodo_oauth_callback(
         )
         return
 
-    if (
-        state_cookie_name is not None
-        and handler.get_cookie(state_cookie_name) != state
-    ):
+    if state_cookie_name is not None and handler.get_cookie(state_cookie_name) != state:
         write_json(
             handler,
             {"message": "OAuth state cookie mismatch"},

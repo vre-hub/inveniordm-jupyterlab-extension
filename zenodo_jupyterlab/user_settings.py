@@ -3,11 +3,11 @@ from abc import ABC
 from jupyter_core.paths import jupyter_data_dir
 import json
 
-class ZenodoUserSettings(ABC):
 
+class ZenodoUserSettings(ABC):
     def __init__(self, jupyterlab_root_dir: Path):
         self.jupyterlab_root_dir = jupyterlab_root_dir
-    
+
     def get_default_downloads_directory(self) -> Path:
         """
         Get the default directory where Zenodo downloads are stored.
@@ -59,10 +59,12 @@ class ZenodoUserSettings(ABC):
         """
         ...
 
+
 class ZenodoUserSettingsFromFile(ZenodoUserSettings):
     """
     Store Zenodo user settings in a file.
     """
+
     def __init__(self, jupyterlab_root_dir: Path):
         super().__init__(jupyterlab_root_dir)
         self.settings_file = Path(jupyter_data_dir()) / "zenodo_user_settings.json"
@@ -73,7 +75,7 @@ class ZenodoUserSettingsFromFile(ZenodoUserSettings):
             with open(self.settings_file, "r") as f:
                 return json.load(f)
         return {}
-    
+
     def _save_settings(self):
         with open(self.settings_file, "w") as f:
             json.dump(self.settings, f)
@@ -83,7 +85,7 @@ class ZenodoUserSettingsFromFile(ZenodoUserSettings):
         if downloads_dir is None or downloads_dir.strip() == "":
             return None
         return Path(downloads_dir)
-    
+
     def _set_downloads_directory(self, path: str):
         self.settings["downloads_dir"] = path
         self._save_settings()

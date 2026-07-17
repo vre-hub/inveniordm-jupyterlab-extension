@@ -69,8 +69,7 @@ class ProxyZenodoRequestsFactory(ZenodoRequestsFactory):
 
         if production_cookie is not None:
             print(
-                "Creating ZenodoRequests for "
-                f"sandbox=False, cookie={production_cookie}"
+                f"Creating ZenodoRequests for sandbox=False, cookie={production_cookie}"
             )
             return self._create_requests_for_server(False, production_cookie)
 

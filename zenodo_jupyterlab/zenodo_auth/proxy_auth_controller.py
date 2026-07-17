@@ -21,7 +21,9 @@ class ProxyZenodoAuthController:
     def callback(self, handler: APIHandler) -> None:
         # This should never be called, because the callback is handled by the proxy server.
         handler.set_status(400)
-        handler.finish(json.dumps({"message": "Callback not handled by this controller"}))
+        handler.finish(
+            json.dumps({"message": "Callback not handled by this controller"})
+        )
 
     def _redirect_to_proxy_auth(self, handler: APIHandler, action: str) -> None:
         sandbox_override = get_sandbox_override(handler)

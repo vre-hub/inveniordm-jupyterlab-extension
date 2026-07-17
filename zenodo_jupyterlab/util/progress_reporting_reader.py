@@ -1,12 +1,13 @@
-
 from typing import Any, BinaryIO, Callable
 from .job_types import CancelCheck, JobCancelled
+
 
 class ProgressReportingReader:
     """
     A wrapper around a file-like object that reports progress on reads and checks for cancellation.
     Used for uploading files to Zenodo via JobManager.
     """
+
     def __init__(
         self,
         file: BinaryIO,

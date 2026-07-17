@@ -68,12 +68,10 @@ class LocalZenodoAuthController:
             handler,
             oauth_config=oauth_config,
             pop_oauth_state=self._pop_return_to,
-            on_success=lambda callback_handler, callback: (
-                self._complete_oauth_login(
-                    callback_handler,
-                    callback,
-                    sandbox=sandbox,
-                )
+            on_success=lambda callback_handler, callback: self._complete_oauth_login(
+                callback_handler,
+                callback,
+                sandbox=sandbox,
             ),
         )
 

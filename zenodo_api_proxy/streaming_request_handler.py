@@ -73,9 +73,7 @@ class StreamingRequestBodyHandler(BaseProxyHandler, ABC):
             return
 
         self._streaming_task = asyncio.create_task(request)
-        self._streaming_task.add_done_callback(
-            lambda task: self._abort_request_body()
-        )
+        self._streaming_task.add_done_callback(lambda task: self._abort_request_body())
 
     @property
     def request_body(self) -> Iterable[bytes] | None:

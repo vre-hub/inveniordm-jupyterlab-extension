@@ -16,10 +16,9 @@ class ZenodoDownloads:
     """
     Resolves Zenodo file download locations and writes downloaded files to disk.
     """
+
     def __init__(self, downloads_dir: Path):
-        self.location_manager = ZenodoDownloadLocationManager(
-            downloads_dir
-        )
+        self.location_manager = ZenodoDownloadLocationManager(downloads_dir)
 
     def get_download_location(
         self,
@@ -89,10 +88,9 @@ class ZenodoDownloads:
             record_id=record_id,
             file_key=file_key,
         )
-        file_url = (
-            file_metadata.get("links", {}).get("download")
-            or file_metadata.get("links", {}).get("content")
-        )
+        file_url = file_metadata.get("links", {}).get("download") or file_metadata.get(
+            "links", {}
+        ).get("content")
         if not file_url:
             raise ValueError("Missing file download metadata")
         destination = self.location_manager.download_location_from_metadata(

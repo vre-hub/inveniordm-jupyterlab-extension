@@ -17,26 +17,24 @@ class ZenodoFileResponse(Protocol):
     """
     Response object for a Zenodo file download
     """
+
     @property
-    def content_length(self) -> int | None:
-        ...
+    def content_length(self) -> int | None: ...
 
-    def iter_bytes(self, chunk_size: int) -> Iterable[bytes]:
-        ...
+    def iter_bytes(self, chunk_size: int) -> Iterable[bytes]: ...
 
-    def close(self) -> None:
-        ...
+    def close(self) -> None: ...
 
 
 class BinaryReader(Protocol):
-    def read(self, size: int = -1, /) -> bytes:
-        ...
+    def read(self, size: int = -1, /) -> bytes: ...
 
 
 class _RequestsZenodoFileResponse:
     """
     Response object for a Zenodo file download using the requests library.
     """
+
     def __init__(self, response: requests.Response):
         self.response = response
 
@@ -109,7 +107,7 @@ def is_zenodo_request_authenticated(
         if response.status_code == 401:
             return False
         response.raise_for_status()
-        return False # never reached
+        return False  # never reached
     except requests.RequestException:
         return False
 

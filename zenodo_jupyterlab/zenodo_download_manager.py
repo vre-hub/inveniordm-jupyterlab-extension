@@ -10,6 +10,7 @@ class ZenodoDownloadManager:
     Manages Zenodo file downloads:
     Allows starting and managing downloads for record files.
     """
+
     def __init__(
         self,
         downloads_dir: Path,

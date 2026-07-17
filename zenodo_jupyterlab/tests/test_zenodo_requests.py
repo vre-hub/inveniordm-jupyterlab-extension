@@ -201,8 +201,9 @@ def test_get_zenodo_access_grants_follows_record_link(monkeypatch):
     monkeypatch.setattr(
         zenodo_module.requests,
         "get",
-        lambda *args, **kwargs: calls.append((args, kwargs))
-        or Response({"hits": {"hits": []}}),
+        lambda *args, **kwargs: (
+            calls.append((args, kwargs)) or Response({"hits": {"hits": []}})
+        ),
     )
 
     result = zenodo_module.get_zenodo_access_grants(
@@ -212,9 +213,7 @@ def test_get_zenodo_access_grants_follows_record_link(monkeypatch):
     )
 
     assert result == {"hits": {"hits": []}}
-    assert calls[0][0] == (
-        "https://sandbox.zenodo.org/api/records/123/access/grants",
-    )
+    assert calls[0][0] == ("https://sandbox.zenodo.org/api/records/123/access/grants",)
 
 
 def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):
@@ -223,16 +222,18 @@ def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):
     monkeypatch.setattr(
         zenodo_module.requests,
         "get",
-        lambda *args, **kwargs: calls.append((args, kwargs))
-        or Response(
-            {
-                "hits": {
-                    "hits": [
-                        {"id": "another-record", "is_published": True},
-                        draft,
-                    ]
+        lambda *args, **kwargs: (
+            calls.append((args, kwargs))
+            or Response(
+                {
+                    "hits": {
+                        "hits": [
+                            {"id": "another-record", "is_published": True},
+                            draft,
+                        ]
+                    }
                 }
-            }
+            )
         ),
     )
 
@@ -252,8 +253,10 @@ def test_list_zenodo_user_records_uses_user_records(monkeypatch):
     monkeypatch.setattr(
         zenodo_module.requests,
         "get",
-        lambda *args, **kwargs: calls.append((args, kwargs))
-        or Response({"hits": {"hits": [{"id": "record-1"}]}}),
+        lambda *args, **kwargs: (
+            calls.append((args, kwargs))
+            or Response({"hits": {"hits": [{"id": "record-1"}]}})
+        ),
     )
 
     result = zenodo_module.list_zenodo_user_records(
@@ -281,8 +284,7 @@ def test_list_zenodo_record_versions_uses_versions_endpoint(monkeypatch):
     monkeypatch.setattr(
         zenodo_module.requests,
         "get",
-        lambda *args, **kwargs: calls.append((args, kwargs))
-        or Response(response_data),
+        lambda *args, **kwargs: calls.append((args, kwargs)) or Response(response_data),
     )
 
     result = zenodo_module.list_zenodo_record_versions(
@@ -292,9 +294,7 @@ def test_list_zenodo_record_versions_uses_versions_endpoint(monkeypatch):
     )
 
     assert result == response_data
-    assert calls[0][0] == (
-        "https://zenodo.org/api/records/record%2F1/versions",
-    )
+    assert calls[0][0] == ("https://zenodo.org/api/records/record%2F1/versions",)
     assert calls[0][1]["headers"] == {
         "Accept": "application/json",
         "Authorization": "x",
@@ -337,8 +337,9 @@ def test_zenodo_requests_extracts_record_versions(monkeypatch):
     monkeypatch.setattr(
         zenodo_requests_module,
         "list_zenodo_user_records",
-        lambda *args, **kwargs: calls.append((args, kwargs))
-        or [*versions, draft, unrelated_draft],
+        lambda *args, **kwargs: (
+            calls.append((args, kwargs)) or [*versions, draft, unrelated_draft]
+        ),
     )
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
 
@@ -361,8 +362,9 @@ def test_create_zenodo_record_draft_uses_records_api(monkeypatch):
     monkeypatch.setattr(
         zenodo_module.requests,
         "post",
-        lambda *args, **kwargs: calls.append((args, kwargs))
-        or Response({"id": "draft-1"}, status_code=201),
+        lambda *args, **kwargs: (
+            calls.append((args, kwargs)) or Response({"id": "draft-1"}, status_code=201)
+        ),
     )
 
     result = zenodo_module.create_zenodo_record_draft(
@@ -432,8 +434,9 @@ def test_upload_zenodo_draft_file_initializes_uploads_and_commits(monkeypatch):
     monkeypatch.setattr(
         zenodo_module.requests,
         "post",
-        lambda *args, **kwargs: post_calls.append((args, kwargs))
-        or next(post_responses),
+        lambda *args, **kwargs: (
+            post_calls.append((args, kwargs)) or next(post_responses)
+        ),
     )
     put_calls = []
     monkeypatch.setattr(
@@ -451,9 +454,7 @@ def test_upload_zenodo_draft_file_initializes_uploads_and_commits(monkeypatch):
     )
 
     assert result["status"] == "completed"
-    assert post_calls[0][0] == (
-        "https://zenodo.org/api/records/draft-1/draft/files",
-    )
+    assert post_calls[0][0] == ("https://zenodo.org/api/records/draft-1/draft/files",)
     assert post_calls[0][1]["json"] == [{"key": "results 2026.csv"}]
     assert put_calls[0][0] == (
         "https://zenodo.org/api/records/draft-1/draft/files/results%202026.csv/content",
@@ -472,9 +473,7 @@ def test_cancelled_upload_deletes_initialized_file(monkeypatch, tmp_path):
     monkeypatch.setattr(
         zenodo_requests_module,
         "upload_zenodo_draft_file",
-        lambda *args, **kwargs: (_ for _ in ()).throw(
-            JobCancelled("Upload canceled")
-        ),
+        lambda *args, **kwargs: (_ for _ in ()).throw(JobCancelled("Upload canceled")),
     )
     monkeypatch.setattr(
         zenodo_requests_module,
@@ -527,9 +526,7 @@ def test_open_zenodo_file_uses_streaming_response(monkeypatch):
 
 
 @pytest.mark.parametrize("draft_status", [403, 404])
-def test_get_record_file_falls_back_to_published_file(
-    monkeypatch, draft_status
-):
+def test_get_record_file_falls_back_to_published_file(monkeypatch, draft_status):
     calls = []
     responses = iter(
         [
@@ -540,8 +537,7 @@ def test_get_record_file_falls_back_to_published_file(
     monkeypatch.setattr(
         zenodo_module.requests,
         "get",
-        lambda *args, **kwargs: calls.append((args, kwargs))
-        or next(responses),
+        lambda *args, **kwargs: calls.append((args, kwargs)) or next(responses),
     )
 
     result = zenodo_module.get_zenodo_record_file(

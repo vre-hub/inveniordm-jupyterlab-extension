@@ -9,22 +9,22 @@ class ZenodoFileSource(Protocol):
     Implemented by ZenodoRequests.
     Contains functionality for downloading files and reading file metadata from Zenodo.
     """
-    def open_zenodo_file(self, *, file_url: str) -> ZenodoFileResponse:
-        ...
+
+    def open_zenodo_file(self, *, file_url: str) -> ZenodoFileResponse: ...
 
     def get_zenodo_record_file(
         self,
         *,
         record_id: int | str,
         file_key: str,
-    ) -> dict[str, Any]:
-        ...
+    ) -> dict[str, Any]: ...
 
 
 class ZenodoDownloadLocationManager:
     """
     Resolves Zenodo file download locations on disk.
     """
+
     def __init__(self, downloads_dir: Path):
         self.downloads_dir = downloads_dir
 
@@ -66,9 +66,7 @@ class ZenodoDownloadLocationManager:
         for candidate in record_dir.iterdir():
             if not candidate.is_file() or candidate.suffix == ".part":
                 continue
-            if candidate.name == filestem or candidate.name.startswith(
-                f"{filestem}."
-            ):
+            if candidate.name == filestem or candidate.name.startswith(f"{filestem}."):
                 return candidate
 
         return None

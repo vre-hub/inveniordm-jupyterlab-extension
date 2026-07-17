@@ -4,17 +4,21 @@ from pathlib import Path
 from typing import Callable
 from urllib.parse import quote
 
-from jupyter_server.base.handlers import APIHandler
-from jupyter_core.paths import jupyter_data_dir
-from jupyter_server.utils import url_path_join
-import tornado
 import requests
+import tornado
+from jupyter_core.paths import jupyter_data_dir
+from jupyter_server.base.handlers import APIHandler
+from jupyter_server.utils import url_path_join
 
-from zenodo_jupyterlab.user_settings import ZenodoUserSettingsFromFile, ZenodoUserSettings
+from zenodo_jupyterlab.user_settings import (
+    ZenodoUserSettings,
+    ZenodoUserSettingsFromFile,
+)
 from zenodo_jupyterlab.util.job_manager import JobContext, JobManager
 from zenodo_jupyterlab.util.job_types import JobProgress
 
 from .cell_actions import make_zenodo_import_cell_action
+from .util.sse import EventBus, stream_user_events
 from .zenodo_auth.auth_controller import ZenodoAuthController
 from .zenodo_download_manager import ZenodoDownloadManager
 from .zenodo_requests.zenodo_requests import ZenodoRequests
@@ -22,8 +26,6 @@ from .zenodo_requests.zenodo_requests_factory import ZenodoRequestsFactory
 from .zenodo_requests.zenodo_requests_factory_create import (
     create_zenodo_requests_factory,
 )
-
-from .util.sse import EventBus, stream_user_events
 
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 GetZenodoDownloadManager = Callable[[APIHandler], ZenodoDownloadManager]
@@ -66,6 +68,7 @@ def get_user_id(handler: APIHandler) -> str:
     """
     return handler.current_user.username
 
+
 def _default_downloads_dir() -> Path:
     return Path(jupyter_data_dir()) / "zenodo_jupyterlab" / "downloads"
 
@@ -88,13 +91,18 @@ class HelloRouteHandler(APIHandler):
     # Jupyter server
     @tornado.web.authenticated
     def get(self):
-        self.finish(json.dumps({
-            "data": (
-                "Hello, world!"
-                " This is the '/zenodo-jupyterlab/hello' endpoint."
-                " Try visiting me in your browser!"
-            ),
-        }))
+        self.finish(
+            json.dumps(
+                {
+                    "data": (
+                        "Hello, world!"
+                        " This is the '/zenodo-jupyterlab/hello' endpoint."
+                        " Try visiting me in your browser!"
+                    ),
+                }
+            )
+        )
+
 
 class ZenodoAccessTokenHandler(APIHandler):
     def initialize(
@@ -271,7 +279,7 @@ class ZenodoRecordPermissionHandler(APIHandler):
             permission = await asyncio.to_thread(
                 zenodo_requests.get_zenodo_record_permission,
                 record_id,
-            ) # run this in a thread until we have a proper async implementation of the api calls
+            )  # run this in a thread until we have a proper async implementation of the api calls
         except ValueError as error:
             self.set_status(
                 401
@@ -282,9 +290,7 @@ class ZenodoRecordPermissionHandler(APIHandler):
             return
         except (KeyError, TypeError) as error:
             self.set_status(502)
-            self.finish(
-                json.dumps({"message": f"Invalid Zenodo response: {error}"})
-            )
+            self.finish(json.dumps({"message": f"Invalid Zenodo response: {error}"}))
             return
         except requests.RequestException as error:
             self.set_status(getattr(error.response, "status_code", 502))
@@ -307,11 +313,8 @@ class ZenodoRecordVersionsHandler(APIHandler):
     async def get(self, record_id: str):
         try:
             versions = await asyncio.to_thread(
-                self.get_zenodo_requests(
-                    self
-                ).list_zenodo_record_versions,
-                record_id
-            ) # run this in a thread until we have a proper async implementation of the api calls
+                self.get_zenodo_requests(self).list_zenodo_record_versions, record_id
+            )  # run this in a thread until we have a proper async implementation of the api calls
         except requests.RequestException as error:
             self.set_status(getattr(error.response, "status_code", 502))
             self.finish(json.dumps({"message": str(error)}))
@@ -322,9 +325,9 @@ class ZenodoRecordVersionsHandler(APIHandler):
     @tornado.web.authenticated
     def post(self, record_id: str):
         try:
-            draft = self.get_zenodo_requests(
-                self
-            ).create_zenodo_record_version(record_id)
+            draft = self.get_zenodo_requests(self).create_zenodo_record_version(
+                record_id
+            )
         except ValueError as error:
             self.set_status(400)
             self.finish(json.dumps({"message": str(error)}))
@@ -340,9 +343,7 @@ class ZenodoRecordVersionsHandler(APIHandler):
             event_data["type"] = "version_created"
             event_data["new_version_id"] = draft.get("id")
         self.event_bus.publish(
-            get_user_id(self),
-            _record_changed_topic(record_id),
-            event_data
+            get_user_id(self), _record_changed_topic(record_id), event_data
         )
         self.finish(json.dumps({"draft": draft}))
 
@@ -562,9 +563,7 @@ class ZenodoRecordFilesHandler(APIHandler):
             get_user_id(self),
             _record_changed_topic(record_id),
         )
-        self.finish(
-            json.dumps({"draft": draft, "deleted_key": file_key})
-        )
+        self.finish(json.dumps({"draft": draft, "deleted_key": file_key}))
 
 
 class JobsHandler(APIHandler):
@@ -572,6 +571,7 @@ class JobsHandler(APIHandler):
     Allows clients to list all jobs, optionally filtered by job type and status.
     Can be used to display e.g. download progress after page reload.
     """
+
     # TODO add SSE to notify clients of new jobs so that client does not have to keep track of the jobs it starts itself
     def initialize(
         self,
@@ -617,9 +617,7 @@ class JobsHandler(APIHandler):
             except KeyError as error:
                 self.set_status(502)
                 self.finish(
-                    json.dumps(
-                        {"message": f"Missing field in Zenodo profile: {error}"}
-                    )
+                    json.dumps({"message": f"Missing field in Zenodo profile: {error}"})
                 )
                 return
             except requests.RequestException as error:
@@ -686,9 +684,7 @@ class ZenodoFileDownloadHandler(APIHandler):
         file_key = data.get("file_key")
         if record_id is None or not file_key:
             self.set_status(400)
-            self.finish(
-                json.dumps({"message": "Missing record_id or file_key"})
-            )
+            self.finish(json.dumps({"message": "Missing record_id or file_key"}))
             return
 
         zenodo_requests = self.get_zenodo_requests(self)
@@ -724,9 +720,7 @@ class ZenodoFileDownloadHandler(APIHandler):
         file_key = data.get("file_key")
         if record_id is None or not file_key:
             self.set_status(400)
-            self.finish(
-                json.dumps({"message": "Missing record_id or file_key"})
-            )
+            self.finish(json.dumps({"message": "Missing record_id or file_key"}))
             return
 
         try:
@@ -769,9 +763,7 @@ class ZenodoFileDownloadStatusHandler(APIHandler):
         file_key = data.get("file_key")
         if record_id is None or not file_key:
             self.set_status(400)
-            self.finish(
-                json.dumps({"message": "Missing record_id or file_key"})
-            )
+            self.finish(json.dumps({"message": "Missing record_id or file_key"}))
             return
 
         try:
@@ -808,9 +800,7 @@ class ZenodoFileImportCellHandler(APIHandler):
         file_key = data.get("file_key")
         if record_id is None or not file_key:
             self.set_status(400)
-            self.finish(
-                json.dumps({"message": "Missing record_id or file_key"})
-            )
+            self.finish(json.dumps({"message": "Missing record_id or file_key"}))
             return
 
         try:
@@ -845,7 +835,6 @@ class ZenodoFileImportCellHandler(APIHandler):
 
 
 class ZenodoDownloadLocationSettingHandler(APIHandler):
-
     def initialize(self, get_user_settings: GetUserSettings):
         self.get_user_settings = get_user_settings
 
@@ -876,7 +865,15 @@ class ZenodoDownloadLocationSettingHandler(APIHandler):
             self.finish(json.dumps({"message": str(error)}))
             return
 
-        self.finish(json.dumps({"downloads_dir": str(self.get_user_settings(self).get_downloads_directory())}))
+        self.finish(
+            json.dumps(
+                {
+                    "downloads_dir": str(
+                        self.get_user_settings(self).get_downloads_directory()
+                    )
+                }
+            )
+        )
 
     @tornado.web.authenticated
     def delete(self):
@@ -884,7 +881,16 @@ class ZenodoDownloadLocationSettingHandler(APIHandler):
         Unset the configured downloads directory.
         """
         self.get_user_settings(self).unset_downloads_directory()
-        self.finish(json.dumps({"downloads_dir": str(self.get_user_settings(self).get_downloads_directory())}))
+        self.finish(
+            json.dumps(
+                {
+                    "downloads_dir": str(
+                        self.get_user_settings(self).get_downloads_directory()
+                    )
+                }
+            )
+        )
+
 
 def setup_route_handlers(web_app):
     host_pattern = ".*$"

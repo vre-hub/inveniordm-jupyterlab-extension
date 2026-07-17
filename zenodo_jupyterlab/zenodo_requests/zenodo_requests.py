@@ -38,6 +38,7 @@ class ZenodoRequests:
     Wrapper around Zenodo API requests for a specific user/token,
     using caller-provided headers for authentication.
     """
+
     def __init__(
         self,
         url: str,
@@ -135,7 +136,7 @@ class ZenodoRequests:
         family_records = list_zenodo_user_records(
             base_url=self.url,
             headers=self.headers,
-            size=100, # TODO handle if this is too small
+            size=100,  # TODO handle if this is too small
             allversions=True,
         )
         drafts = [
@@ -150,21 +151,12 @@ class ZenodoRequests:
         newest_draft = max(
             drafts,
             key=lambda record: (
-                (
-                    record.get("metadata", {})
-                    .get("relations", {})
-                    .get("version")
-                    or [{}]
-                )[0].get("index", -1)
-            ),
+                record.get("metadata", {}).get("relations", {}).get("version") or [{}]
+            )[0].get("index", -1),
         )
         draft_id = str(newest_draft.get("id"))
         return [
-            *[
-                version
-                for version in versions
-                if str(version.get("id")) != draft_id
-            ],
+            *[version for version in versions if str(version.get("id")) != draft_id],
             newest_draft,
         ]
 
@@ -208,10 +200,7 @@ class ZenodoRequests:
         user_id = str(profile["id"])
 
         # If user is owner, return "manage"
-        if any(
-            str(owner.get("id")) == user_id
-            for owner in record.get("owners", [])
-        ):
+        if any(str(owner.get("id")) == user_id for owner in record.get("owners", [])):
             return "manage"
 
         # If user is not owner, check access grants
@@ -286,10 +275,7 @@ class ZenodoRequests:
         """
         record = self.get_zenodo_user_record(record_id)
         if not record.get("is_published"):
-            print(
-                f"Record {record_id} is not published, "
-                "so its files can be changed"
-            )
+            print(f"Record {record_id} is not published, so its files can be changed")
             return record
 
         print(
@@ -380,6 +366,7 @@ class ZenodoRequests:
             if should_cancel is not None and should_cancel():
                 raise JobCancelled("Upload canceled")
             with path.open("rb") as file:
+
                 def on_bytes_read(
                     chunk_size: int,
                     *,
