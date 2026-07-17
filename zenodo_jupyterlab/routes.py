@@ -304,11 +304,14 @@ class ZenodoRecordVersionsHandler(APIHandler):
         self.event_bus = event_bus
 
     @tornado.web.authenticated
-    def get(self, record_id: str):
+    async def get(self, record_id: str):
         try:
-            versions = self.get_zenodo_requests(
-                self
-            ).list_zenodo_record_versions(record_id)
+            versions = await asyncio.to_thread(
+                self.get_zenodo_requests(
+                    self
+                ).list_zenodo_record_versions,
+                record_id
+            ) # run this in a thread until we have a proper async implementation of the api calls
         except requests.RequestException as error:
             self.set_status(getattr(error.response, "status_code", 502))
             self.finish(json.dumps({"message": str(error)}))
