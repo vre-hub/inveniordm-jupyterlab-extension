@@ -1,6 +1,10 @@
 import React from 'react';
 
-import { getZenodoMe, ZenodoMeResponse, useAccessTokenEventListener } from '../api_calls';
+import {
+  getZenodoMe,
+  ZenodoMeResponse,
+  useAccessTokenEventListener
+} from '../api_calls';
 import { useServerSettings } from '../store';
 
 export const ZenodoUserProfile: React.FC = () => {

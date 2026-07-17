@@ -11,7 +11,9 @@ type AuthButtonProps = {
   sandbox: boolean;
 };
 
-const useOpenAuth = (sandbox: boolean): ((action: 'login' | 'logout') => void) => {
+const useOpenAuth = (
+  sandbox: boolean
+): ((action: 'login' | 'logout') => void) => {
   const serverSettings = useServerSettings();
 
   return (action: 'login' | 'logout'): void => {
@@ -29,7 +31,7 @@ export const LoginButton: React.FC<AuthButtonProps> = ({ sandbox }) => {
 
   return (
     <button onClick={() => openAuth('login')} type="button">
-      Log in {sandbox ? "(sandbox)" : ''}
+      Log in {sandbox ? '(sandbox)' : ''}
     </button>
   );
 };
@@ -39,7 +41,7 @@ export const LogoutButton: React.FC<AuthButtonProps> = ({ sandbox }) => {
 
   return (
     <button onClick={() => openAuth('logout')} type="button">
-      Log out {sandbox ? "(sandbox)" : ''}
+      Log out {sandbox ? '(sandbox)' : ''}
     </button>
   );
 };

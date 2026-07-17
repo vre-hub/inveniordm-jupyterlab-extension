@@ -29,7 +29,9 @@ export const ZenodoFileInfo: React.FC<{
       <ZenodoFileDetails filename={fileKey} size={file.size} />
       <ZenodoFileDownload recordId={recordId} fileKey={fileKey} />
       <ZenodoFileImportCellButton recordId={recordId} fileKey={fileKey} />
-      {editable && <ZenodoFileDeleteButton recordId={recordId} fileKey={fileKey} />}
+      {editable && (
+        <ZenodoFileDeleteButton recordId={recordId} fileKey={fileKey} />
+      )}
     </div>
   );
 };

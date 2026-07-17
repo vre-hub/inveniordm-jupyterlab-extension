@@ -8,13 +8,13 @@ Use this for the developer application registration on the Zenodo Instance.
 
 ### Zenodo Sandbox OAuth Application Form for local development
 
-| Field | Value |
-| --- | --- |
-| Name | `Zenodo JupyterLab Proxy Local Dev` |
-| Description | `Local development OAuth application for testing the Zenodo JupyterLab API proxy against Zenodo Sandbox.` |
-| Website URL | `http://127.0.0.1:8001` |
-| Redirect URIs | `http://127.0.0.1:8001/auth/callback` |
-| Client type | `Confidential` |
+| Field         | Value                                                                                                     |
+| ------------- | --------------------------------------------------------------------------------------------------------- |
+| Name          | `Zenodo JupyterLab Proxy Local Dev`                                                                       |
+| Description   | `Local development OAuth application for testing the Zenodo JupyterLab API proxy against Zenodo Sandbox.` |
+| Website URL   | `http://127.0.0.1:8001`                                                                                   |
+| Redirect URIs | `http://127.0.0.1:8001/auth/callback`                                                                     |
+| Client type   | `Confidential`                                                                                            |
 
 ### Running the Proxy
 

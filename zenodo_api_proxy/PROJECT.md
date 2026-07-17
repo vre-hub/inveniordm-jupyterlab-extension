@@ -96,8 +96,8 @@ The Zenodo access token exists only inside the proxy.
 
 It is never stored:
 
-* in the JupyterLab frontend,
-* in the Jupyter server,
-* in browser-accessible storage.
+- in the JupyterLab frontend,
+- in the Jupyter server,
+- in browser-accessible storage.
 
 The browser stores only an opaque session cookie, while all authenticated communication with Zenodo is performed by the proxy.

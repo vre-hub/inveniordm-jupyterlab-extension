@@ -6,7 +6,6 @@ interface IZenodoUiState {
   sandboxOverride: boolean | undefined;
 }
 
-
 const useZenodoUiStore = create<IZenodoUiState>()(
   persist(
     () => ({

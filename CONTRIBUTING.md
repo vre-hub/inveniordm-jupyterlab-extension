@@ -50,7 +50,7 @@ jupyter lab build --minimize=False
 ### Different users on the JupyterLab instance
 
 - Use different browser profiles to simulate different users using the instance. Each profile should get a different username
-    - TODO check if this actually behaves similarly enough to e.g. production jupyterhubs  
+  - TODO check if this actually behaves similarly enough to e.g. production jupyterhubs
 
 ## Development uninstall
 

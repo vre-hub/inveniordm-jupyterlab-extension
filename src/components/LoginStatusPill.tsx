@@ -13,7 +13,7 @@ function formatAccessStatus(status: AccessTokenResponse): LoginStatus {
 }
 
 export const LoginStatusPill: React.FC = () => {
-  const accessStatus = useAccessTokenStatus()
+  const accessStatus = useAccessTokenStatus();
 
   if (!accessStatus) {
     return <span>Loading...</span>;
@@ -26,7 +26,6 @@ export const LoginStatusPill: React.FC = () => {
     <span
       style={{ border: '1px solid #aaa', borderRadius: 12, padding: '2px 8px' }}
     >
-
       {status} {isSandbox && '(Sandbox)'}
     </span>
   );

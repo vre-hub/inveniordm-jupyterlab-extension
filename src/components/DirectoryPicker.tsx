@@ -1,15 +1,15 @@
-import React from "react";
-import { usePickDownloadDirectory } from "../store";
+import React from 'react';
+import { usePickDownloadDirectory } from '../store';
 
 /**
  * A button that opens the jupyterlab file picker to select a directory.
  */
 export function PickDirectoryButton({
-    onDirectorySelected,
-    buttonText
+  onDirectorySelected,
+  buttonText
 }: {
-    onDirectorySelected: (directory: string) => void
-    buttonText: string
+  onDirectorySelected: (directory: string) => void;
+  buttonText: string;
 }): JSX.Element {
   const pickDownloadDirectory = usePickDownloadDirectory();
 
