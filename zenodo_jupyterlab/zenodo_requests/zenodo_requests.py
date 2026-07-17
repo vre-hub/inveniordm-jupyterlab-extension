@@ -133,12 +133,21 @@ class ZenodoRequests:
                 f"Could not find parent conceptrecid for record {record_id}"
             )
 
-        family_records = list_zenodo_user_records(
-            base_url=self.url,
-            headers=self.headers,
-            size=100,  # TODO handle if this is too small
-            allversions=True,
-        )
+        try:
+            family_records = list_zenodo_user_records(
+                base_url=self.url,
+                headers=self.headers,
+                size=25,  # TODO handle if this is too small, instead check if request with ?q=id:parent?id and taking the first result works
+                allversions=True,
+            )
+        except requests.HTTPError as error:
+            status_code = getattr(error.response, "status_code", None)
+            if status_code not in (401, 403):
+                raise
+            # User records are only needed to supplement the public versions
+            # with an editable draft. Callers without that permission can still
+            # see the versions returned by the public records endpoint.
+            return versions
         drafts = [
             record
             for record in family_records
@@ -211,6 +220,11 @@ class ZenodoRequests:
                 base_url=self.url,
                 headers=self.headers,
             )
+        except requests.RequestException as error:
+            if getattr(error.response, "status_code", None) in (401, 403):
+                return "view"
+            else:
+                raise
 
         # Get user id
         profile = self.get_zenodo_me()

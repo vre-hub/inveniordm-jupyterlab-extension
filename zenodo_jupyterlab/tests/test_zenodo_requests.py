@@ -383,6 +383,60 @@ def test_zenodo_requests_extracts_record_versions(monkeypatch):
     ]
 
 
+@pytest.mark.parametrize("status_code", [401, 403])
+def test_record_versions_ignore_user_records_permission_error(
+    monkeypatch, status_code
+):
+    versions = [
+        {
+            "id": 518963,
+            "conceptrecid": "515274",
+            "status": "published",
+        }
+    ]
+    response = requests_library.Response()
+    response.status_code = status_code
+    error = requests_library.HTTPError(response=response)
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_record_versions",
+        lambda *args, **kwargs: {"hits": {"hits": versions}},
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_user_records",
+        lambda *args, **kwargs: (_ for _ in ()).throw(error),
+    )
+
+    requests = ZenodoRequests("https://zenodo.org")
+
+    assert requests.list_zenodo_record_versions("518963") == versions
+
+
+def test_record_versions_propagate_other_user_records_errors(monkeypatch):
+    versions = [{"id": 518963, "conceptrecid": "515274"}]
+    response = requests_library.Response()
+    response.status_code = 500
+    error = requests_library.HTTPError(response=response)
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_record_versions",
+        lambda *args, **kwargs: {"hits": {"hits": versions}},
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_user_records",
+        lambda *args, **kwargs: (_ for _ in ()).throw(error),
+    )
+
+    requests = ZenodoRequests("https://zenodo.org")
+
+    with pytest.raises(requests_library.HTTPError) as raised:
+        requests.list_zenodo_record_versions("518963")
+
+    assert raised.value is error
+
+
 def test_create_zenodo_record_draft_uses_records_api(monkeypatch):
     calls = []
     monkeypatch.setattr(
