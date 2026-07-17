@@ -180,7 +180,10 @@ class ZenodoRecordHandler(APIHandler):
     @tornado.web.authenticated
     def get(self, record_id: str):
         try:
-            record = self.get_zenodo_requests(self).get_zenodo_record(record_id)
+            record = self.get_zenodo_requests(self).get_zenodo_record(
+                record_id,
+                include_files=True,
+            )
         except requests.RequestException as error:
             self.set_status(getattr(error.response, "status_code", 502))
             self.finish(json.dumps({"message": str(error)}))

@@ -26,15 +26,16 @@ def test_draft_is_its_own_file_edit_target(monkeypatch):
         "is_published": False,
         "links": {"files": "/api/records/draft-1/draft/files"},
     }
+    requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
+    calls = []
     monkeypatch.setattr(
-        zenodo_requests_module,
-        "get_zenodo_record",
-        lambda *args, **kwargs: draft,
+        requests,
+        "get_zenodo_user_record",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or draft,
     )
 
-    requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
-
     assert requests._get_editable_record_draft("draft-1") is draft
+    assert calls == [(("draft-1",), {"include_files": False})]
 
 
 def test_published_record_creates_new_version(monkeypatch):
@@ -46,18 +47,20 @@ def test_published_record_creates_new_version(monkeypatch):
     }
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_record",
-        lambda *args, **kwargs: published,
-    )
-    monkeypatch.setattr(
-        zenodo_requests_module,
         "create_zenodo_record_version",
         lambda *args, **kwargs: draft,
     )
 
     requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
+    calls = []
+    monkeypatch.setattr(
+        requests,
+        "get_zenodo_user_record",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or published,
+    )
 
     assert requests._get_editable_record_draft("record-1") is draft
+    assert calls == [(("record-1",), {"include_files": False})]
 
 
 def test_create_record_version_uses_authenticated_request(monkeypatch):
@@ -88,15 +91,19 @@ def test_create_record_version_uses_authenticated_request(monkeypatch):
 
 def test_record_owner_has_manage_permission_without_fetching_grants(monkeypatch):
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+    calls = []
     monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
     monkeypatch.setattr(
         requests,
-        "get_zenodo_record",
-        lambda record_id: {
-            "id": record_id,
-            "owners": [{"id": "58370"}],
-            "links": {"access_grants": "/api/records/123/access/grants"},
-        },
+        "get_zenodo_user_record",
+        lambda record_id, **kwargs: (
+            calls.append((record_id, kwargs))
+            or {
+                "id": record_id,
+                "owners": [{"id": "58370"}],
+                "links": {"access_grants": "/api/records/123/access/grants"},
+            }
+        ),
     )
     monkeypatch.setattr(
         zenodo_requests_module,
@@ -105,6 +112,7 @@ def test_record_owner_has_manage_permission_without_fetching_grants(monkeypatch)
     )
 
     assert requests.get_zenodo_record_permission("123") == "manage"
+    assert calls == [("123", {"include_files": False})]
 
 
 def test_record_permission_uses_current_users_access_grant(monkeypatch):
@@ -112,8 +120,8 @@ def test_record_permission_uses_current_users_access_grant(monkeypatch):
     monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
     monkeypatch.setattr(
         requests,
-        "get_zenodo_record",
-        lambda record_id: {
+        "get_zenodo_user_record",
+        lambda record_id, **kwargs: {
             "id": record_id,
             "owners": [{"id": "another-user"}],
             "links": {"access_grants": "/api/records/123/access/grants"},
@@ -146,8 +154,8 @@ def test_record_without_access_grant_has_view_permission(monkeypatch):
     monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
     monkeypatch.setattr(
         requests,
-        "get_zenodo_record",
-        lambda record_id: {"id": record_id, "owners": [], "links": {}},
+        "get_zenodo_user_record",
+        lambda record_id, **kwargs: {"id": record_id, "owners": [], "links": {}},
     )
 
     assert requests.get_zenodo_record_permission("123") == "view"
@@ -158,8 +166,8 @@ def test_forbidden_access_grants_has_view_permission(monkeypatch):
     monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
     monkeypatch.setattr(
         requests,
-        "get_zenodo_record",
-        lambda record_id: {
+        "get_zenodo_user_record",
+        lambda record_id, **kwargs: {
             "id": record_id,
             "owners": [{"id": "another-user"}],
             "links": {"access_grants": "/api/records/123/access/grants"},
@@ -179,28 +187,34 @@ def test_forbidden_access_grants_has_view_permission(monkeypatch):
 
 def test_public_record_permission_falls_back_to_records_api(monkeypatch):
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+    calls = []
     monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
     monkeypatch.setattr(
         requests,
-        "get_zenodo_record",
-        lambda record_id: (_ for _ in ()).throw(
+        "get_zenodo_user_record",
+        lambda record_id, **kwargs: (_ for _ in ()).throw(
             ValueError(f"Record not found: {record_id}")
         ),
     )
     monkeypatch.setattr(
-        zenodo_requests_module,
-        "get_zenodo_record_details",
-        lambda *args, **kwargs: {"owners": [], "links": {}},
+        requests,
+        "get_zenodo_record",
+        lambda *args, **kwargs: (
+            calls.append((args, kwargs)) or {"owners": [], "links": {}}
+        ),
     )
 
     assert requests.get_zenodo_record_permission("public-123") == "view"
+    assert calls == [(("public-123",), {"include_files": False})]
 
 
-def test_get_zenodo_record_includes_files(monkeypatch):
+@pytest.mark.parametrize("include_files", [True, False])
+def test_get_zenodo_record_optionally_includes_files(monkeypatch, include_files):
     record = {
         "id": "public-123",
         "links": {"files": "https://zenodo.org/api/records/public-123/files"},
     }
+    include_files_calls = []
     monkeypatch.setattr(
         zenodo_requests_module,
         "get_zenodo_record_details",
@@ -209,17 +223,42 @@ def test_get_zenodo_record_includes_files(monkeypatch):
     monkeypatch.setattr(
         zenodo_requests_module,
         "include_zenodo_files",
-        lambda items, **kwargs: items[0].update(
-            {"files": [{"key": "example.ipynb"}]}
-        ),
+        lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
     )
 
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
 
-    assert requests.get_zenodo_record("public-123") == {
-        **record,
-        "files": [{"key": "example.ipynb"}],
+    assert (
+        requests.get_zenodo_record("public-123", include_files=include_files) is record
+    )
+    assert bool(include_files_calls) is include_files
+
+
+@pytest.mark.parametrize("include_files", [True, False])
+def test_get_zenodo_user_record_optionally_includes_files(monkeypatch, include_files):
+    record = {
+        "id": "draft-123",
+        "links": {"files": "https://zenodo.org/api/records/draft-123/draft/files"},
     }
+    include_files_calls = []
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "get_zenodo_user_record",
+        lambda *args, **kwargs: record,
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "include_zenodo_files",
+        lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
+    )
+
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+
+    assert (
+        requests.get_zenodo_user_record("draft-123", include_files=include_files)
+        is record
+    )
+    assert bool(include_files_calls) is include_files
 
 
 def test_get_zenodo_access_grants_follows_record_link(monkeypatch):
@@ -271,7 +310,11 @@ def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):
 
     assert result is draft
     assert calls[0][0] == ("https://zenodo.org/api/user/records",)
-    assert calls[0][1]["params"] == {"q": "id:draft-1", "size": 10}
+    assert calls[0][1]["params"] == {
+        "q": "id:draft-1",
+        "size": 10,
+        "allversions": True,
+    }
 
 
 def test_list_zenodo_user_records_uses_user_records(monkeypatch):
@@ -376,7 +419,7 @@ def test_zenodo_requests_extracts_record_versions(monkeypatch):
             {
                 "base_url": "https://zenodo.org",
                 "headers": {"Authorization": "x"},
-                "size": 100,
+                "size": 25,
                 "allversions": True,
             },
         )
@@ -384,9 +427,7 @@ def test_zenodo_requests_extracts_record_versions(monkeypatch):
 
 
 @pytest.mark.parametrize("status_code", [401, 403])
-def test_record_versions_ignore_user_records_permission_error(
-    monkeypatch, status_code
-):
+def test_record_versions_ignore_user_records_permission_error(monkeypatch, status_code):
     versions = [
         {
             "id": 518963,

@@ -172,38 +172,44 @@ class ZenodoRequests:
     def get_zenodo_user_record(
         self,
         record_id: int | str,
+        *,
+        include_files: bool = True,
     ) -> dict[str, Any]:
+        """Return a user record, optionally expanding its linked files."""
         user_record = get_zenodo_user_record(
             record_id,
             base_url=self.url,
             headers=self.headers,
         )
 
-        # for user records that are drafts, the files are not included here
-        # so we need to fetch them separately
-        as_array = [user_record]
-        include_zenodo_files(
-            as_array,
-            base_url=self.url,
-            headers=self.headers,
-        )
-        return as_array[0]
+        if include_files:
+            # For user records that are drafts, the files are not included here,
+            # so fetch them separately when the caller needs them.
+            include_zenodo_files(
+                [user_record],
+                base_url=self.url,
+                headers=self.headers,
+            )
+        return user_record
 
     def get_zenodo_record(
         self,
         record_id: int | str,
+        *,
+        include_files: bool = True,
     ) -> dict[str, Any]:
-        """Return a public Zenodo record, including its files."""
+        """Return a public Zenodo record, optionally expanding its linked files."""
         record = get_zenodo_record_details(
             record_id,
             base_url=self.url,
             headers=self.headers,
         )
-        include_zenodo_files(
-            [record],
-            base_url=self.url,
-            headers=self.headers,
-        )
+        if include_files:
+            include_zenodo_files(
+                [record],
+                base_url=self.url,
+                headers=self.headers,
+            )
         return record
 
     def get_zenodo_record_permission(
@@ -213,13 +219,9 @@ class ZenodoRequests:
         """Return the authenticated user's effective permission for a record."""
         # Get the record details (either from user records or public record details)
         try:
-            record = self.get_zenodo_user_record(record_id)
+            record = self.get_zenodo_user_record(record_id, include_files=False)
         except ValueError:
-            record = get_zenodo_record_details(
-                record_id,
-                base_url=self.url,
-                headers=self.headers,
-            )
+            record = self.get_zenodo_record(record_id, include_files=False)
         except requests.RequestException as error:
             if getattr(error.response, "status_code", None) in (401, 403):
                 return "view"
@@ -304,7 +306,7 @@ class ZenodoRequests:
         Published records are immutable, so changing their files creates
         an unpublished latest-version draft.
         """
-        record = self.get_zenodo_user_record(record_id)
+        record = self.get_zenodo_user_record(record_id, include_files=False)
         if not record.get("is_published"):
             print(f"Record {record_id} is not published, so its files can be changed")
             return record

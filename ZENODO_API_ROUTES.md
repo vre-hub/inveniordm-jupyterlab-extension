@@ -130,16 +130,18 @@ details.
 The first request resolves the record in the authenticated user's view, which
 is what exposes draft state and owned records. The second request is especially
 important for drafts because their file list is not included in the user-record
-search result.
+search result. The underlying request helper accepts `include_files=false` for
+callers that only need record metadata; this route keeps the default value of
+`true` because its frontend response includes files.
 
 ### `GET /records/:id/permission`
 
 The route determines the current user's effective `view`, `preview`, `edit`, or
 `manage` permission as follows:
 
-1. Try to retrieve the ID from user records. In the current implementation this
-   means `GET /api/user/records?...` followed by `GET links.files` when a files
-   link exists.
+1. Try to retrieve the ID from user records with
+   `GET /api/user/records?...`. File expansion is disabled because permissions
+   only require record metadata.
 2. If no exact user-record hit is found, retrieve general details with
    `GET /api/records/:id`.
 3. If the user-record request instead fails with `401` or `403`, meaning that the user is not logged in, return `view`
@@ -165,12 +167,6 @@ access-grant call:
   `owners` field is needed to infer `manage` rights.
 - `/api/me` is needed to determine which owner or grant subject represents the
   current token. The server does not cache the zenodo user id right now.
-
-One request in step 1 is incidental rather than required for permission logic:
-`get_zenodo_user_record` expands `links.files`, although permissions use only
-the record details. A user-record-details helper that does not expand files
-could remove that files request without removing any of the necessary record,
-owner, profile, or access-grant checks above.
 
 ### `GET /user-records/:id/versions`
 
@@ -201,7 +197,8 @@ different account.
 
 The background job then:
 
-1. Resolves the record through `/api/user/records` and expands `links.files`.
+1. Resolves the record through `/api/user/records` without expanding its files.
+   Only `is_published` is needed to choose the edit target.
 2. If the record is already a draft, uses it as the edit target.
 3. If it is published, creates a new version and imports its existing files
    using the same two calls described for the versions `POST` route.
@@ -211,11 +208,6 @@ The background job then:
 User records are required to determine whether the supplied ID is an owned
 draft or a published record. A published record cannot be modified in place,
 which is why a new-version draft is created automatically.
-
-As in the permission flow, expanding the original record's files is an effect
-of using the general `get_zenodo_user_record` helper. Only `is_published` and the
-draft's `links.files` are needed to choose the edit target, so the initial file
-expansion is not essential to that decision.
 
 ### `DELETE /user-records/:id/files`
 
