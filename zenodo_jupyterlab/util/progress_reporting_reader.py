@@ -1,4 +1,5 @@
 from typing import Any, BinaryIO, Callable
+
 from .job_types import CancelCheck, JobCancelled
 
 

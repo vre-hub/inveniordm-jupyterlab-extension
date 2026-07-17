@@ -9,7 +9,6 @@ from urllib.parse import quote, urljoin, urlparse, urlunparse
 
 import requests
 
-
 ZenodoPermission = Literal["manage", "edit", "preview", "view"]
 
 

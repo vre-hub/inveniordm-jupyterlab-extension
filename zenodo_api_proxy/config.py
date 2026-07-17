@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
-
+from dataclasses import dataclass
 
 DEFAULT_ZENODO_BASE_URL = "https://sandbox.zenodo.org"
 DEFAULT_PROXY_HOST = "127.0.0.1"

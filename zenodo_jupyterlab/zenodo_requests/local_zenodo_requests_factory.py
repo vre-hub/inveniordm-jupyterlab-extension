@@ -1,6 +1,7 @@
 from jupyter_server.base.handlers import APIHandler
 
 from zenodo_auth.token_store import BoundedTokenStore, FileTokenStore, StoredToken
+
 from ..zenodo_auth.auth_controller import ZenodoAuthController
 from ..zenodo_auth.local_auth_controller import LocalZenodoAuthController
 from .zenodo_requests import ZenodoRequests

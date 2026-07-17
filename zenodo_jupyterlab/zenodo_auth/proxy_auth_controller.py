@@ -1,5 +1,5 @@
-from collections.abc import Callable
 import json
+from collections.abc import Callable
 from urllib.parse import urlencode
 
 from jupyter_server.base.handlers import APIHandler

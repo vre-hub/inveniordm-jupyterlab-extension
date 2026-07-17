@@ -1,10 +1,10 @@
 import pytest
 import requests as requests_library
 
+from zenodo_jupyterlab.util.job_types import JobCancelled
 from zenodo_jupyterlab.zenodo_requests import zenodo as zenodo_module
 from zenodo_jupyterlab.zenodo_requests import zenodo_requests as zenodo_requests_module
 from zenodo_jupyterlab.zenodo_requests.zenodo_requests import ZenodoRequests
-from zenodo_jupyterlab.util.job_types import JobCancelled
 
 
 class Response:

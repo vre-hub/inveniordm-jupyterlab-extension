@@ -1,7 +1,8 @@
-from pathlib import Path
-from abc import ABC
-from jupyter_core.paths import jupyter_data_dir
 import json
+from abc import ABC
+from pathlib import Path
+
+from jupyter_core.paths import jupyter_data_dir
 
 
 class ZenodoUserSettings(ABC):

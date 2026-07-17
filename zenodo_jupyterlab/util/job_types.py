@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Callable
 
-
 CancelCheck = Callable[[], bool]
 UploadProgressCallback = Callable[[int, int, str | None], None]
 DownloadProgressCallback = Callable[[int, int | None], None]

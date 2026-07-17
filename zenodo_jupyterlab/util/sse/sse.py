@@ -2,8 +2,8 @@ import asyncio
 import json
 from collections.abc import Iterable
 
-from jupyter_server.base.handlers import APIHandler
 import tornado.iostream
+from jupyter_server.base.handlers import APIHandler
 
 from .event_bus import DomainEvent, EventBus
 

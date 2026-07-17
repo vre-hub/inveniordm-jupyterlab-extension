@@ -6,7 +6,6 @@ import requests
 
 from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
 from ..util.progress_reporting_reader import ProgressReportingReader
-from .zenodo_helpers import include_zenodo_files
 from .zenodo import (
     ZenodoFileResponse,
     ZenodoPermission,
@@ -14,16 +13,17 @@ from .zenodo import (
     create_zenodo_record_version,
     delete_zenodo_draft_file,
     get_zenodo_access_grants,
-    get_zenodo_user_record,
+    get_zenodo_me,
     get_zenodo_record_details,
     get_zenodo_record_file,
-    get_zenodo_me,
+    get_zenodo_user_record,
     list_zenodo_record_versions,
     list_zenodo_user_records,
     open_zenodo_file,
     search_zenodo_records,
     upload_zenodo_draft_file,
 )
+from .zenodo_helpers import include_zenodo_files
 
 
 @dataclass

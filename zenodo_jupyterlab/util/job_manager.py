@@ -8,7 +8,6 @@ import tornado.ioloop
 
 from .job_types import JobCancelled, JobProgress
 
-
 ProgressListener = Callable[[str, dict[str, object]], None]
 JobCallable = Callable[["JobContext"], Mapping[str, object]]
 
