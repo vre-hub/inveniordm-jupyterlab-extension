@@ -180,6 +180,23 @@ class ZenodoRequests:
         )
         return as_array[0]
 
+    def get_zenodo_record(
+        self,
+        record_id: int | str,
+    ) -> dict[str, Any]:
+        """Return a public Zenodo record, including its files."""
+        record = get_zenodo_record_details(
+            record_id,
+            base_url=self.url,
+            headers=self.headers,
+        )
+        include_zenodo_files(
+            [record],
+            base_url=self.url,
+            headers=self.headers,
+        )
+        return record
+
     def get_zenodo_record_permission(
         self,
         record_id: int | str,

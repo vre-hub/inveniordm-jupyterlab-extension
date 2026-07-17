@@ -196,6 +196,32 @@ def test_public_record_permission_falls_back_to_records_api(monkeypatch):
     assert requests.get_zenodo_record_permission("public-123") == "view"
 
 
+def test_get_zenodo_record_includes_files(monkeypatch):
+    record = {
+        "id": "public-123",
+        "links": {"files": "https://zenodo.org/api/records/public-123/files"},
+    }
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "get_zenodo_record_details",
+        lambda *args, **kwargs: record,
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "include_zenodo_files",
+        lambda items, **kwargs: items[0].update(
+            {"files": [{"key": "example.ipynb"}]}
+        ),
+    )
+
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+
+    assert requests.get_zenodo_record("public-123") == {
+        **record,
+        "files": [{"key": "example.ipynb"}],
+    }
+
+
 def test_get_zenodo_access_grants_follows_record_link(monkeypatch):
     calls = []
     monkeypatch.setattr(

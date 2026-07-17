@@ -1,9 +1,12 @@
 import React from 'react';
 
-import { searchZenodoRecords } from '../api_calls';
+import {
+  getZenodoRecord,
+  searchZenodoRecords,
+  ZenodoResourceData
+} from '../api_calls';
 import { useServerSettings } from '../store';
-import { ZenodoResource } from './ZenodoResource';
-import { ZenodoResourceData } from '../api_calls';
+import { ZenodoRecord } from './ZenodoRecord';
 
 type ZenodoSearchResults = {
   hits?: {
@@ -58,7 +61,14 @@ export const ZenodoSearch: React.FC = () => {
       </form>
       {error}
       {hits.map(result => (
-        <ZenodoResource resource={result} key={result.id} />
+        <ZenodoRecord
+          key={result.id}
+          initialRecordId={result.id}
+          initialRecordValue={result}
+          fetchRecord={async (id: string): Promise<ZenodoResourceData> => {
+            return await getZenodoRecord(serverSettings, id);
+          }}
+        />
       ))}
     </div>
   );

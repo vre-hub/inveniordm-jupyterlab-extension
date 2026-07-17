@@ -116,6 +116,16 @@ export async function searchZenodoRecords(
   return await requestAPI(`records?${params.toString()}`, serverSettings);
 }
 
+export async function getZenodoRecord(
+  serverSettings: ServerConnection.ISettings,
+  recordId: string
+): Promise<ZenodoResourceData> {
+  return await requestAPI<ZenodoResourceData>(
+    `records/${encodeURIComponent(recordId)}`,
+    serverSettings
+  );
+}
+
 export async function listZenodoUserRecords(
   serverSettings: ServerConnection.ISettings
 ): Promise<unknown> {
