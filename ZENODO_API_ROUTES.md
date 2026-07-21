@@ -51,6 +51,8 @@ falls back to the published file endpoint only on `403` or `404`. This lets one
 code path handle both draft and published records without knowing the state in
 advance.
 
+TODO maybe cache/ propagate if file is from draft or published record
+
 ## Route summary
 
 | Extension route                                       | Zenodo traffic                                                                                            |
@@ -162,11 +164,13 @@ access-grant call:
 
 - `access_grants` is a link returned in the record details. The extension
   follows that link instead of hard-coding an assumed endpoint.
+  - TODO maybe hardcode link to access grants route so we do not need to read record details for that? but we need to do that anyway to find out if we are the owner
 - The access-grants response can be empty when only the owner has access. It
   therefore cannot say whether the current user is the owner; the record's
   `owners` field is needed to infer `manage` rights.
 - `/api/me` is needed to determine which owner or grant subject represents the
   current token. The server does not cache the zenodo user id right now.
+  - TODO maybe cache user id serverside?
 
 ### `GET /user-records/:id/versions`
 
@@ -324,6 +328,8 @@ local file and constructs the Jupyter code-cell action locally.
 Both consumers need file metadata, but they could share one response. The
 duplicate lookup is an implementation detail, not a requirement of the Zenodo
 API or of draft/published discrimination.
+
+TODO fix this, but this is not what is causing the rate limits at all
 
 ### Routes with no Zenodo traffic
 
