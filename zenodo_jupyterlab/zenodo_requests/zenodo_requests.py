@@ -303,19 +303,17 @@ class ZenodoRequests:
         """
         Return the editable draft used to change a record's files.
 
-        Published records are immutable, so changing their files creates
-        an unpublished latest-version draft.
+        Published records are immutable and must be explicitly versioned
+        before their files can be changed.
         """
         record = self.get_zenodo_user_record(record_id, include_files=False)
-        if not record.get("is_published"):
-            print(f"Record {record_id} is not published, so its files can be changed")
-            return record
+        if record.get("is_published"):
+            raise ValueError(
+                f"Record {record_id} is published and cannot be edited as a draft"
+            )
 
-        print(
-            f"Record {record_id} is published, so we will create "
-            "a new version draft to change files"
-        )
-        return self.create_zenodo_record_version(record_id)
+        print(f"Record {record_id} is not published, so its files can be changed")
+        return record
 
     def delete_file_from_record(
         self,

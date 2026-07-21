@@ -39,14 +39,14 @@ The extension uses `is_published` to choose a file-editing target:
 - If `is_published` is false, the record is already a draft and is edited in
   place.
 - If `is_published` is true, the published record is immutable. The extension
-  creates a new-version draft, imports the published version's files into it,
-  and performs the requested file change on that draft.
+  rejects the file-editing request. A new-version draft must be created
+  explicitly before its files can be changed.
 
 Zenodo's published versions endpoint does not include an unpublished next
 version. Consequently, the versions route combines the general versions API
 with the user's record list to add an accessible draft.
 
-For a single file lookup, the extension tries the draft file endpoint first and
+For a single file lookup (e.g. for downloading files and constructing the local file location from the file metadata), the extension tries the draft file endpoint first and
 falls back to the published file endpoint only on `403` or `404`. This lets one
 code path handle both draft and published records without knowing the state in
 advance.
@@ -70,8 +70,8 @@ advance.
 | `GET /user-records/:id/versions`                      | General versions request plus a user-record listing used to find a draft                                  |
 | `POST /user-records/:id/versions`                     | Create a new-version draft, then import the previous files                                                |
 | `POST /user-records/minimal-draft`                    | Create a draft, then initialize, upload, and commit every file                                            |
-| `POST /user-records/:id/files`                        | `/api/me`, resolve/create an editable draft, then upload every file                                       |
-| `DELETE /user-records/:id/files`                      | Resolve/create an editable draft, then delete the named draft file                                        |
+| `POST /user-records/:id/files`                        | `/api/me`, require an editable draft, then upload every file                                              |
+| `DELETE /user-records/:id/files`                      | Require an editable draft, then delete the named draft file                                               |
 | `GET /jobs`                                           | Usually none; an upload-job query calls `/api/me` to scope jobs to the Zenodo account                     |
 | `GET /jobs/:id`                                       | None                                                                                                      |
 | `POST /jobs/:id/cancel`                               | None directly; cancellation cleanup can delete an initialized draft file                                  |
@@ -200,24 +200,24 @@ The background job then:
 1. Resolves the record through `/api/user/records` without expanding its files.
    Only `is_published` is needed to choose the edit target.
 2. If the record is already a draft, uses it as the edit target.
-3. If it is published, creates a new version and imports its existing files
-   using the same two calls described for the versions `POST` route.
-4. For each new file, performs initialize, content upload, and commit against
-   the editable draft, as described for the minimal-draft route.
+3. If it is published, rejects the edit; callers must first create a draft
+   explicitly with `POST /user-records/:id/versions`.
+4. For each new file on a draft, performs initialize, content upload, and
+   commit against the editable draft, as described for the minimal-draft route.
 
 User records are required to determine whether the supplied ID is an owned
-draft or a published record. A published record cannot be modified in place,
-which is why a new-version draft is created automatically.
+draft or a published record. A published record cannot be modified in place
+and file-editing routes do not create a new version automatically.
 
 ### `DELETE /user-records/:id/files`
 
 1. Resolve the editable draft in the same way as the upload route: fetch the
-   user record, use it directly if it is a draft, or create/import a new-version
-   draft if it is published.
+   user record, use it directly if it is a draft, or reject the request if it
+   is published.
 2. Read `links.files` from that draft and send `DELETE links.files/:file-key`.
 
-The lookup and possible version creation are required because only a draft's
-file collection is mutable. The final request removes the named draft file.
+The lookup is required because only a draft's file collection is mutable. The
+final request removes the named draft file.
 
 ## Details of other Routes
 

@@ -38,19 +38,8 @@ def test_draft_is_its_own_file_edit_target(monkeypatch):
     assert calls == [(("draft-1",), {"include_files": False})]
 
 
-def test_published_record_creates_new_version(monkeypatch):
+def test_published_record_is_not_an_editable_draft(monkeypatch):
     published = {"id": "record-1", "is_published": True}
-    draft = {
-        "id": "draft-2",
-        "is_published": False,
-        "links": {"files": "/api/records/draft-2/draft/files"},
-    }
-    monkeypatch.setattr(
-        zenodo_requests_module,
-        "create_zenodo_record_version",
-        lambda *args, **kwargs: draft,
-    )
-
     requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
     calls = []
     monkeypatch.setattr(
@@ -58,8 +47,17 @@ def test_published_record_creates_new_version(monkeypatch):
         "get_zenodo_user_record",
         lambda *args, **kwargs: calls.append((args, kwargs)) or published,
     )
+    monkeypatch.setattr(
+        requests,
+        "create_zenodo_record_version",
+        lambda *args, **kwargs: pytest.fail("must not create a record version"),
+    )
 
-    assert requests._get_editable_record_draft("record-1") is draft
+    with pytest.raises(
+        ValueError,
+        match="Record record-1 is published and cannot be edited as a draft",
+    ):
+        requests._get_editable_record_draft("record-1")
     assert calls == [(("record-1",), {"include_files": False})]
 
 
