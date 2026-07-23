@@ -197,22 +197,13 @@ class ZenodoRequests:
     def get_zenodo_record(
         self,
         record_id: int | str,
-        *,
-        include_files: bool = True,
     ) -> dict[str, Any]:
-        """Return a public Zenodo record, optionally expanding its linked files."""
-        record = get_zenodo_record_details(
+        """Return a public Zenodo record, including its embedded files."""
+        return get_zenodo_record_details(
             record_id,
             base_url=self.url,
             headers=self.headers,
         )
-        if include_files:
-            include_zenodo_files(
-                [record],
-                base_url=self.url,
-                headers=self.headers,
-            )
-        return record
 
     def get_zenodo_record_permission(
         self,
@@ -223,7 +214,7 @@ class ZenodoRequests:
         try:
             record = self.get_zenodo_user_record(record_id, include_files=False)
         except ValueError:
-            record = self.get_zenodo_record(record_id, include_files=False)
+            record = self.get_zenodo_record(record_id)
         except requests.RequestException as error:
             if getattr(error.response, "status_code", None) in (401, 403):
                 return "view"

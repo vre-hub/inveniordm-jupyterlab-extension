@@ -63,7 +63,7 @@ TODO maybe cache/ propagate if file is from draft or published record
 | `GET /auth/callback`                                  | `POST /oauth/token`                                                                                       |
 | `GET /auth/logout`                                    | None; removes the locally stored token                                                                    |
 | `GET /records`                                        | `GET /api/records`, optionally followed by one linked files request per hit                               |
-| `GET /records/:id`                                    | `GET /api/records/:id`, followed by its linked files request if present                                   |
+| `GET /records/:id`                                    | `GET /api/records/:id`                                                                                    |
 | `GET /me`                                             | `GET /api/me`                                                                                             |
 | `GET /events`                                         | None; local server-sent event stream                                                                      |
 | `GET /user-records`                                   | `GET /api/user/records`, optionally followed by one linked files request per hit                          |
@@ -105,12 +105,12 @@ avoids constructing a file-collection URL from assumptions about the record.
 
 ### `GET /records/:id`
 
-1. Send `GET /api/records/:id` for general record details.
-2. If the response has `links.files`, send `GET` to that URL and add the result
-   as `files`.
+Send `GET /api/records/:id` for general record details. Published record
+details already contain the file collection, so no linked files request is
+needed.
 
 This route deliberately does not inspect `/api/user/records`; it represents the
-general-record view. The second request expands the canonical file collection.
+general-record view.
 
 ### `GET /user-records`
 

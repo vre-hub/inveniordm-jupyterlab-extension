@@ -231,16 +231,14 @@ def test_public_record_permission_falls_back_to_records_api(monkeypatch):
     )
 
     assert requests.get_zenodo_record_permission("public-123") == "view"
-    assert calls == [(("public-123",), {"include_files": False})]
+    assert calls == [(("public-123",), {})]
 
 
-@pytest.mark.parametrize("include_files", [True, False])
-def test_get_zenodo_record_optionally_includes_files(monkeypatch, include_files):
+def test_get_zenodo_record_uses_embedded_files(monkeypatch):
     record = {
         "id": "public-123",
-        "links": {"files": "https://zenodo.org/api/records/public-123/files"},
+        "files": [{"key": "results.csv"}],
     }
-    include_files_calls = []
     monkeypatch.setattr(
         zenodo_requests_module,
         "get_zenodo_record_details",
@@ -249,15 +247,14 @@ def test_get_zenodo_record_optionally_includes_files(monkeypatch, include_files)
     monkeypatch.setattr(
         zenodo_requests_module,
         "include_zenodo_files",
-        lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
+        lambda *args, **kwargs: pytest.fail(
+            "published record details already include files"
+        ),
     )
 
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
 
-    assert (
-        requests.get_zenodo_record("public-123", include_files=include_files) is record
-    )
-    assert bool(include_files_calls) is include_files
+    assert requests.get_zenodo_record("public-123") is record
 
 
 @pytest.mark.parametrize("include_files", [True, False])
