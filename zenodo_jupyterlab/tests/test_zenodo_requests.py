@@ -120,12 +120,14 @@ def test_record_owner_has_manage_permission_without_fetching_grants(monkeypatch)
         requests,
         "get_zenodo_user_record",
         lambda record_id, **kwargs: (
-            calls.append((record_id, kwargs))
-            or {
-                "id": record_id,
-                "owners": [{"id": "58370"}],
-                "links": {"access_grants": "/api/records/123/access/grants"},
-            }
+                calls.append((record_id, kwargs))
+                or {
+                    "id": record_id,
+                    "parent": {
+                        "access": {"owned_by": {"user": "58370"}},
+                    },
+                    "links": {"access_grants": "/api/records/123/access/grants"},
+                }
         ),
     )
     monkeypatch.setattr(
@@ -149,7 +151,9 @@ def test_record_permission_uses_current_users_access_grant(monkeypatch):
         "get_zenodo_user_record",
         lambda record_id, **kwargs: {
             "id": record_id,
-            "owners": [{"id": "another-user"}],
+            "parent": {
+                "access": {"owned_by": {"user": "another-user"}},
+            },
             "links": {"access_grants": "/api/records/123/access/grants"},
         },
     )
@@ -181,7 +185,7 @@ def test_record_without_access_grant_has_view_permission(monkeypatch):
     monkeypatch.setattr(
         requests,
         "get_zenodo_user_record",
-        lambda record_id, **kwargs: {"id": record_id, "owners": [], "links": {}},
+        lambda record_id, **kwargs: {"id": record_id, "parent": {}, "links": {}},
     )
 
     assert requests.get_zenodo_record_permission("123") == "view"
@@ -195,7 +199,9 @@ def test_forbidden_access_grants_has_view_permission(monkeypatch):
         "get_zenodo_user_record",
         lambda record_id, **kwargs: {
             "id": record_id,
-            "owners": [{"id": "another-user"}],
+            "parent": {
+                "access": {"owned_by": {"user": "another-user"}},
+            },
             "links": {"access_grants": "/api/records/123/access/grants"},
         },
     )
@@ -226,7 +232,7 @@ def test_public_record_permission_falls_back_to_records_api(monkeypatch):
         requests,
         "get_zenodo_record",
         lambda *args, **kwargs: (
-            calls.append((args, kwargs)) or {"owners": [], "links": {}}
+            calls.append((args, kwargs)) or {"parent": {}, "links": {}}
         ),
     )
 
@@ -338,6 +344,10 @@ def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):
         "size": 10,
         "allversions": True,
     }
+    assert calls[0][1]["headers"] == {
+        "Accept": "application/vnd.inveniordm.v1+json",
+        "Authorization": "x",
+    }
 
 
 def test_list_zenodo_user_records_uses_user_records(monkeypatch):
@@ -361,6 +371,10 @@ def test_list_zenodo_user_records_uses_user_records(monkeypatch):
     assert result == [{"id": "record-1"}]
     assert calls[0][0] == ("https://zenodo.org/api/user/records",)
     assert calls[0][1]["params"] == {"page": 2, "size": 25}
+    assert calls[0][1]["headers"] == {
+        "Accept": "application/vnd.inveniordm.v1+json",
+        "Authorization": "x",
+    }
 
 
 def test_list_zenodo_record_versions_uses_versions_endpoint(monkeypatch):
@@ -410,16 +424,16 @@ def test_zenodo_requests_extracts_record_versions(monkeypatch):
         },
     ]
     draft = {
-        "id": 567677,
-        "conceptrecid": "515274",
-        "status": "draft",
-        "metadata": {"relations": {"version": [{"index": 2}]}},
+        "id": "567677",
+        "parent": {"id": "515274"},
+        "status": "new_version_draft",
+        "versions": {"index": 3},
     }
     unrelated_draft = {
         "id": "other-draft",
-        "conceptrecid": "other-parent",
-        "status": "draft",
-        "metadata": {"relations": {"version": [{"index": 10}]}},
+        "parent": {"id": "other-parent"},
+        "status": "new_version_draft",
+        "versions": {"index": 10},
     }
     monkeypatch.setattr(
         zenodo_requests_module,

@@ -287,7 +287,7 @@ def list_zenodo_user_records(
     response = requests.get(
         f"{_normalize_base_url(base_url)}/api/user/records",
         params=params,
-        headers=_headers(headers),
+        headers=_headers(headers, accept_invenio=True),
         timeout=10,
     )
     response.raise_for_status()
@@ -325,7 +325,7 @@ def get_zenodo_user_record(
     response = requests.get(
         f"{_normalize_base_url(base_url)}/api/user/records",
         params={"q": f"id:{record_id}", "size": 10, "allversions": True},
-        headers=_headers(headers),
+        headers=_headers(headers, accept_invenio=True),
         timeout=10,
     )
     response.raise_for_status()

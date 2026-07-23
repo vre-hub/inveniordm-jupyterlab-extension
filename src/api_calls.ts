@@ -159,15 +159,8 @@ export async function getZenodoUserRecord(
 }
 
 export type ZenodoRecordVersion = {
-  id: string | number;
-  status?: 'draft' | 'published';
-  metadata?: {
-    relations?: {
-      version?: Array<{
-        index?: number;
-      }>;
-    };
-  };
+  id: string;
+  status: ResourceStatus;
   versions: {
     index: number;
   };
@@ -446,7 +439,7 @@ export type ZenodoFile = {
     download?: string;
   };
 };
-type ResourceStatus = 'draft' | 'published';
+type ResourceStatus = 'new_version_draft' | 'draft' | 'published';
 // TODO check if these fields exist/ if they are always present
 
 export type ZenodoResourceData = {

@@ -20,7 +20,8 @@ const getFiles = (files: ZenodoResourceData['files']): ZenodoFile[] => {
 export const ZenodoResource: React.FC<{
   resource: ZenodoResourceData;
 }> = ({ resource }) => {
-  const isDraft = resource.status === 'draft';
+  const isDraft =
+    resource.status === 'draft' || resource.status === 'new_version_draft';
   const userPermissions = useRecordPermissions(resource.id);
   const hasEditingRights =
     userPermissions == 'edit' || userPermissions == 'manage';

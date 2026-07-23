@@ -151,17 +151,15 @@ class ZenodoRequests:
         drafts = [
             record
             for record in family_records
-            if str(record.get("conceptrecid")) == str(parent_id)
-            and record.get("status") == "draft"
+            if str(record.get("parent", {}).get("id")) == str(parent_id)
+            and record.get("status") in {"draft", "new_version_draft"}
         ]
         if not drafts:
             return versions
 
         newest_draft = max(
             drafts,
-            key=lambda record: (
-                record.get("metadata", {}).get("relations", {}).get("version") or [{}]
-            )[0].get("index", -1),
+            key=lambda record: record.get("versions", {}).get("index", -1),
         )
         draft_id = str(newest_draft.get("id"))
         return [
@@ -223,7 +221,10 @@ class ZenodoRequests:
         user_id = self.zenodo_user_id
 
         # If user is owner, return "manage"
-        if any(str(owner.get("id")) == user_id for owner in record.get("owners", [])):
+        owner_id = (
+            record.get("parent", {}).get("access", {}).get("owned_by", {}).get("user")
+        )
+        if str(owner_id) == user_id:
             return "manage"
 
         # If user is not owner, check access grants
