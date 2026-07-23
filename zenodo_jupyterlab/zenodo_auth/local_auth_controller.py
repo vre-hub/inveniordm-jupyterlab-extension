@@ -86,6 +86,7 @@ class LocalZenodoAuthController:
             callback.access_token,
             True,
             sandbox=sandbox,
+            zenodo_user_id=callback.zenodo_user_id,
         )
         handler.redirect(callback.return_to)
 

@@ -924,9 +924,8 @@ def setup_route_handlers(web_app):
     def create_job_metadata(
         zenodo_requests: ZenodoRequests,
     ) -> dict[str, object]:
-        profile = zenodo_requests.get_zenodo_me()
         return {
-            "zenodo_user_id": str(profile["id"]),
+            "zenodo_user_id": zenodo_requests.zenodo_user_id,
             "sandbox": zenodo_requests_factory.is_sandbox(zenodo_requests),
         }
 

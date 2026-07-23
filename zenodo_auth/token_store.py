@@ -15,6 +15,7 @@ class StoredToken:
     access_token: str
     access_token_valid: bool
     sandbox: bool = False
+    zenodo_user_id: str | None = None
 
 
 class MultiTokenStore(ABC):
@@ -29,6 +30,7 @@ class MultiTokenStore(ABC):
         access_token: str,
         access_token_valid: bool,
         sandbox: bool = False,
+        zenodo_user_id: str | None = None,
     ) -> None:
         pass
 
@@ -50,12 +52,14 @@ class BoundedTokenStore:
         access_token: str,
         access_token_valid: bool,
         sandbox: bool = False,
+        zenodo_user_id: str | None = None,
     ) -> None:
         self.multi_store.set_token(
             self.token_id,
             access_token,
             access_token_valid,
             sandbox,
+            zenodo_user_id,
         )
 
     def remove_token(self) -> None:
@@ -87,6 +91,7 @@ class FileTokenStore(MultiTokenStore):
             access_token=token_data["access_token"],
             access_token_valid=bool(token_data.get("access_token_valid", True)),
             sandbox=bool(token_data.get("sandbox", False)),
+            zenodo_user_id=token_data.get("zenodo_user_id"),
         )
 
     def set_token(
@@ -95,10 +100,16 @@ class FileTokenStore(MultiTokenStore):
         access_token: str,
         access_token_valid: bool,
         sandbox: bool = False,
+        zenodo_user_id: str | None = None,
     ) -> None:
         data = self._read_tokens()
         data[token_id] = asdict(
-            StoredToken(access_token, access_token_valid, sandbox),
+            StoredToken(
+                access_token,
+                access_token_valid,
+                sandbox,
+                zenodo_user_id,
+            ),
         )
         self._write_tokens(data)
 

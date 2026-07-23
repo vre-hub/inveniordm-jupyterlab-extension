@@ -1,9 +1,13 @@
 import pytest
 import requests as requests_library
 
+from zenodo_auth.token_store import BoundedTokenStore, FileTokenStore
 from zenodo_jupyterlab.util.job_types import JobCancelled
 from zenodo_jupyterlab.zenodo_requests import zenodo as zenodo_module
 from zenodo_jupyterlab.zenodo_requests import zenodo_requests as zenodo_requests_module
+from zenodo_jupyterlab.zenodo_requests.local_zenodo_requests_factory import (
+    LocalZenodoRequestsFactory,
+)
 from zenodo_jupyterlab.zenodo_requests.zenodo_requests import ZenodoRequests
 
 
@@ -18,6 +22,24 @@ class Response:
     def raise_for_status(self):
         if self.status_code >= 400:
             raise AssertionError(f"Unexpected HTTP status {self.status_code}")
+
+
+def test_local_factory_passes_stored_zenodo_user_id(tmp_path):
+    factory = LocalZenodoRequestsFactory()
+    factory.token_store = BoundedTokenStore(FileTokenStore(tmp_path / "tokens.json"))
+    factory.token_store.set_token(
+        "token",
+        True,
+        zenodo_user_id="123",
+    )
+
+    class Handler:
+        def get_query_argument(self, name, default=None):
+            return default
+
+    requests = factory.create_zenodo_requests(Handler())
+
+    assert requests.zenodo_user_id == "123"
 
 
 def test_draft_is_its_own_file_edit_target(monkeypatch):
@@ -88,9 +110,12 @@ def test_create_record_version_uses_authenticated_request(monkeypatch):
 
 
 def test_record_owner_has_manage_permission_without_fetching_grants(monkeypatch):
-    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+    requests = ZenodoRequests(
+        "https://zenodo.org",
+        {"Authorization": "x"},
+        zenodo_user_id="58370",
+    )
     calls = []
-    monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
     monkeypatch.setattr(
         requests,
         "get_zenodo_user_record",
@@ -114,8 +139,11 @@ def test_record_owner_has_manage_permission_without_fetching_grants(monkeypatch)
 
 
 def test_record_permission_uses_current_users_access_grant(monkeypatch):
-    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
-    monkeypatch.setattr(requests, "get_zenodo_me", lambda: {"id": 58370})
+    requests = ZenodoRequests(
+        "https://zenodo.org",
+        {"Authorization": "x"},
+        zenodo_user_id="58370",
+    )
     monkeypatch.setattr(
         requests,
         "get_zenodo_user_record",

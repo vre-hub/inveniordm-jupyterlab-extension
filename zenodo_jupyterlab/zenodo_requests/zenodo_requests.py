@@ -43,9 +43,11 @@ class ZenodoRequests:
         self,
         url: str,
         headers: dict[str, str] | None = None,
+        zenodo_user_id: str | None = None,
     ):
         self.url = url.rstrip("/")
         self.headers = headers or {}
+        self.zenodo_user_id = zenodo_user_id
 
     def get_zenodo_me(self) -> dict[str, Any]:
         if not self.headers:
@@ -229,8 +231,7 @@ class ZenodoRequests:
                 raise
 
         # Get user id
-        profile = self.get_zenodo_me()
-        user_id = str(profile["id"])
+        user_id = self.zenodo_user_id
 
         # If user is owner, return "manage"
         if any(str(owner.get("id")) == user_id for owner in record.get("owners", [])):

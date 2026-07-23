@@ -10,7 +10,7 @@ def test_file_token_store_persists_multiple_tokens(tmp_path):
     path = tmp_path / "tokens.json"
     store = FileTokenStore(path)
 
-    store.set_token("alice", "alice-token", True)
+    store.set_token("alice", "alice-token", True, zenodo_user_id="123")
     store.set_token("bob", "bob-token", False, sandbox=True)
 
     alice_token = store.get_token("alice")
@@ -18,6 +18,7 @@ def test_file_token_store_persists_multiple_tokens(tmp_path):
     assert alice_token.access_token == "alice-token"
     assert alice_token.access_token_valid is True
     assert alice_token.sandbox is False
+    assert alice_token.zenodo_user_id == "123"
 
     bob_token = store.get_token("bob")
     assert bob_token is not None
@@ -31,11 +32,13 @@ def test_file_token_store_persists_multiple_tokens(tmp_path):
                 "access_token": "alice-token",
                 "access_token_valid": True,
                 "sandbox": False,
+                "zenodo_user_id": "123",
             },
             "bob": {
                 "access_token": "bob-token",
                 "access_token_valid": False,
                 "sandbox": True,
+                "zenodo_user_id": None,
             },
         },
     }
@@ -74,13 +77,14 @@ def test_bounded_token_store_uses_single_bound_token(tmp_path):
     multi_store = FileTokenStore(path)
     store = BoundedTokenStore(multi_store, "local-user")
 
-    store.set_token("token", True, sandbox=True)
+    store.set_token("token", True, sandbox=True, zenodo_user_id="456")
 
     token = store.get_token()
     assert token is not None
     assert token.access_token == "token"
     assert token.access_token_valid is True
     assert token.sandbox is True
+    assert token.zenodo_user_id == "456"
     assert multi_store.get_token("local-user") == token
 
 
@@ -102,3 +106,4 @@ def test_file_token_store_reads_legacy_single_token_file(tmp_path):
     assert token.access_token == "legacy-token"
     assert token.access_token_valid is False
     assert token.sandbox is True
+    assert token.zenodo_user_id is None

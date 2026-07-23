@@ -32,12 +32,16 @@ class LocalZenodoRequestsFactory(ZenodoRequestsFactory):
             return ZenodoRequests(
                 url=self._server_url(sandbox_override),
                 headers=headers,
+                zenodo_user_id=(
+                    token.zenodo_user_id if token is not None and headers else None
+                ),
             )
 
         if token is not None:
             return ZenodoRequests(
                 url=self._server_url(token.sandbox),
                 headers=self._headers_for_token(token, token.sandbox),
+                zenodo_user_id=token.zenodo_user_id,
             )
 
         return ZenodoRequests(url=self.production_url)

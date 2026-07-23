@@ -1,6 +1,8 @@
 import os
+from functools import lru_cache
 from http.cookies import SimpleCookie
 
+import requests
 from jupyter_server.base.handlers import APIHandler
 
 from ..zenodo_auth.auth_controller import ZenodoAuthController
@@ -99,7 +101,33 @@ class ProxyZenodoRequestsFactory(ZenodoRequestsFactory):
                 self._proxy_session_cookie_name(sandbox),
                 proxy_session.value,
             ),
+            zenodo_user_id=self._get_zenodo_user_id(
+                sandbox,
+                proxy_session.value,
+            ),
         )
+
+    @lru_cache(maxsize=128)
+    def _get_zenodo_user_id(
+        self,
+        sandbox: bool,
+        proxy_session: str,
+    ) -> str | None:
+        response = requests.get(
+            f"{self._proxy_url(sandbox)}/auth/status",
+            headers=_cookie_header(
+                self._proxy_session_cookie_name(sandbox),
+                proxy_session,
+            ),
+            timeout=5,
+        )
+        response.raise_for_status()
+        status = response.json()
+        if not status.get("authenticated"):
+            return None
+
+        zenodo_user_id = status.get("zenodo_user_id")
+        return str(zenodo_user_id) if zenodo_user_id is not None else None
 
     def _server_url(self, sandbox: bool) -> str:
         return self.sandbox_url if sandbox else self.production_url
