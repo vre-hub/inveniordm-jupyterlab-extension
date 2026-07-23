@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from .util.job_types import (
     CancelCheck,
@@ -20,17 +21,15 @@ class ZenodoDownloads:
     def __init__(self, downloads_dir: Path):
         self.location_manager = ZenodoDownloadLocationManager(downloads_dir)
 
-    def get_download_location(
+    def get_download_location_from_metadata(
         self,
-        zenodo_requests: ZenodoFileSource,
+        file_metadata: dict[str, Any],
         *,
         record_id: int | str,
-        file_key: str,
     ) -> Path:
-        return self.location_manager.get_download_location(
-            zenodo_requests,
+        return self.location_manager.download_location_from_metadata(
+            file_metadata,
             record_id=record_id,
-            file_key=file_key,
         )
 
     def get_download_status(

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from .util.job_manager import JobContext, JobManager, ProgressListener
 from .util.job_types import JobProgress
@@ -85,15 +86,13 @@ class ZenodoDownloadManager:
             file_key=file_key,
         )
 
-    def get_download_location(
+    def get_download_location_from_metadata(
         self,
-        zenodo_requests: ZenodoFileSource,
+        file_metadata: dict[str, Any],
         *,
         record_id: int | str,
-        file_key: str,
     ) -> Path:
-        return self.zenodo_downloads.get_download_location(
-            zenodo_requests,
+        return self.zenodo_downloads.get_download_location_from_metadata(
+            file_metadata,
             record_id=record_id,
-            file_key=file_key,
         )

@@ -320,16 +320,10 @@ does not download any content.
 
 ### `POST /files/import-cell`
 
-The current implementation performs the draft-first, published-fallback file
-metadata lookup twice: first while calculating the expected local download
-path, and again to obtain metadata for the generated cell. It then checks the
-local file and constructs the Jupyter code-cell action locally.
-
-Both consumers need file metadata, but they could share one response. The
-duplicate lookup is an implementation detail, not a requirement of the Zenodo
-API or of draft/published discrimination.
-
-TODO fix this, but this is not what is causing the rate limits at all
+This performs one draft-first, published-fallback file metadata lookup. The
+same metadata response is used both to calculate the expected local download
+path and to construct the generated cell. The route then checks that the local
+file exists and constructs the Jupyter code-cell action locally.
 
 ### Routes with no Zenodo traffic
 

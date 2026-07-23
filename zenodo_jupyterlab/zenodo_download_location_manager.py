@@ -28,22 +28,6 @@ class ZenodoDownloadLocationManager:
     def __init__(self, downloads_dir: Path):
         self.downloads_dir = downloads_dir
 
-    def get_download_location(
-        self,
-        zenodo_requests: ZenodoFileSource,
-        *,
-        record_id: int | str,
-        file_key: str,
-    ) -> Path:
-        file_metadata = zenodo_requests.get_zenodo_record_file(
-            record_id=record_id,
-            file_key=file_key,
-        )
-        return self.download_location_from_metadata(
-            file_metadata,
-            record_id=record_id,
-        )
-
     def find_downloaded_file(
         self,
         *,
