@@ -24,6 +24,8 @@ export const ZenodoResource: React.FC<{
   const userPermissions = useRecordPermissions(resource.id);
   const hasEditingRights =
     userPermissions == 'edit' || userPermissions == 'manage';
+  const editable = isDraft && hasEditingRights;
+  const canCreateNewVersion = !isDraft && hasEditingRights;
 
   return (
     <section>
@@ -33,24 +35,22 @@ export const ZenodoResource: React.FC<{
         <div>DOI: {resource.pids.doi.identifier}</div>
       ) : null}
       <div>Status: {resource.status}</div>
-      {!isDraft && hasEditingRights && (
-        <CreateNewVersionButton id={resource.id} />
-      )}
+      {canCreateNewVersion && <CreateNewVersionButton id={resource.id} />}
       <div>
         {getFiles(resource.files).map(file => (
           <ZenodoFileInfo
             file={file}
             key={file.key}
             recordId={resource.id}
-            editable={isDraft}
+            editable={editable}
           />
         ))}
       </div>
       <OpenRecordButton
         resource={resource}
-        text={isDraft && hasEditingRights ? 'Edit Record' : 'Open Record'}
+        text={editable ? 'Edit Record' : 'Open Record'}
       />
-      {isDraft && (
+      {editable && (
         <>
           <RecordUpload
             recordId={resource.id}
