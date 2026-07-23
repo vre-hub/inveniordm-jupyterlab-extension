@@ -168,6 +168,9 @@ export type ZenodoRecordVersion = {
       }>;
     };
   };
+  versions: {
+    index: number;
+  };
 };
 
 export async function listZenodoRecordVersions(

@@ -49,11 +49,20 @@ class _RequestsZenodoFileResponse:
         self.response.close()
 
 
-def _headers(headers: dict[str, str] | None = None) -> dict[str, str]:
+def _headers(
+    headers: dict[str, str] | None = None,
+    *,
+    accept_invenio: bool = False,
+) -> dict[str, str]:
     """
     Return headers for a Zenodo API request, with defaults applied.
     """
-    return {"Accept": "application/json", **(headers or {})}
+    accept = (
+        "application/vnd.inveniordm.v1+json"
+        if accept_invenio
+        else "application/json"
+    )
+    return {"Accept": accept, **(headers or {})}
 
 
 def _normalize_base_url(base_url: str) -> str:
@@ -297,7 +306,7 @@ def list_zenodo_record_versions(
             f"{_normalize_base_url(base_url)}/api/records/"
             f"{quote(str(record_id), safe='')}/versions"
         ),
-        headers=_headers(headers),
+        headers=_headers(headers, accept_invenio=True),
         timeout=10,
     )
     response.raise_for_status()

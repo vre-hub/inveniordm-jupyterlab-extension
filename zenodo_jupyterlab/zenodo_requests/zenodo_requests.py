@@ -124,16 +124,14 @@ class ZenodoRequests:
 
         parent_id = next(
             (
-                version.get("conceptrecid")
+                version.get("parent", {}).get("id")
                 for version in versions
-                if version.get("conceptrecid") is not None
+                if version.get("parent", {}).get("id") is not None
             ),
             None,
         )
         if parent_id is None:
-            raise ValueError(
-                f"Could not find parent conceptrecid for record {record_id}"
-            )
+            raise ValueError(f"Could not find parent ID for record {record_id}")
 
         try:
             family_records = list_zenodo_user_records(

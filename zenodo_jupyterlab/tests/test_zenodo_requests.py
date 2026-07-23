@@ -388,7 +388,7 @@ def test_list_zenodo_record_versions_uses_versions_endpoint(monkeypatch):
     assert result == response_data
     assert calls[0][0] == ("https://zenodo.org/api/records/record%2F1/versions",)
     assert calls[0][1]["headers"] == {
-        "Accept": "application/json",
+        "Accept": "application/vnd.inveniordm.v1+json",
         "Authorization": "x",
     }
 
@@ -397,16 +397,16 @@ def test_zenodo_requests_extracts_record_versions(monkeypatch):
     calls = []
     versions = [
         {
-            "id": 518963,
-            "conceptrecid": "515274",
+            "id": "518963",
+            "parent": {"id": "515274"},
             "status": "published",
-            "metadata": {"relations": {"version": [{"index": 1}]}},
+            "versions": {"index": 2},
         },
         {
-            "id": 515275,
-            "conceptrecid": "515274",
+            "id": "515275",
+            "parent": {"id": "515274"},
             "status": "published",
-            "metadata": {"relations": {"version": [{"index": 0}]}},
+            "versions": {"index": 1},
         },
     ]
     draft = {
@@ -453,8 +453,8 @@ def test_zenodo_requests_extracts_record_versions(monkeypatch):
 def test_record_versions_ignore_user_records_permission_error(monkeypatch, status_code):
     versions = [
         {
-            "id": 518963,
-            "conceptrecid": "515274",
+            "id": "518963",
+            "parent": {"id": "515274"},
             "status": "published",
         }
     ]
@@ -478,7 +478,7 @@ def test_record_versions_ignore_user_records_permission_error(monkeypatch, statu
 
 
 def test_record_versions_propagate_other_user_records_errors(monkeypatch):
-    versions = [{"id": 518963, "conceptrecid": "515274"}]
+    versions = [{"id": "518963", "parent": {"id": "515274"}}]
     response = requests_library.Response()
     response.status_code = 500
     error = requests_library.HTTPError(response=response)
