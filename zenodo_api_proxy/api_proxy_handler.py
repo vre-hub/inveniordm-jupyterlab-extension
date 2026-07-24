@@ -16,7 +16,7 @@ class ApiProxyHandler(StreamingRequestBodyHandler):
 
     def start_streaming_request(
         self,
-        path: str | None = None,
+        path: str,
     ) -> Coroutine[Any, Any, None] | None:
         zenodo_user_id = self.current_zenodo_user_id()
         if zenodo_user_id is None:
@@ -41,12 +41,12 @@ class ApiProxyHandler(StreamingRequestBodyHandler):
 
     async def forward(
         self,
-        path: str | None,
+        path: str,
         access_token: str,
         *,
         request_body: Iterable[bytes] | None,
     ) -> None:
-        target_url = f"{self.config.zenodo_base_url}/api{path or ''}"
+        target_url = f"{self.config.zenodo_base_url}{path}"
         if self.request.query:
             target_url = f"{target_url}?{self.request.query}"
 

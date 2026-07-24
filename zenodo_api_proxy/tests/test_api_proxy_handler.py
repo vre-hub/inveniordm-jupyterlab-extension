@@ -75,6 +75,26 @@ class TestApiProxyHandler(AsyncHTTPTestCase):
         assert b"".join(received) == b"first chunksecond chunk"
         assert result.headers["Content-Length"] == "23"
 
+    def test_preserves_percent_encoded_file_path(self):
+        upstream_urls = []
+
+        def urlopen(request, timeout):
+            upstream_urls.append(request.full_url)
+            return _Response([b"file contents"], "application/pdf")
+
+        with patch("zenodo_api_proxy.api_proxy_handler.urlopen", side_effect=urlopen):
+            result = self.fetch(
+                "/api/records/541036/draft/files/"
+                "FINAL%20REPORT_Results%20%281%29.pdf?download=1",
+                headers=self.auth_headers,
+            )
+
+        assert result.code == 200
+        assert upstream_urls == [
+            "https://zenodo.example/api/records/541036/draft/files/"
+            "FINAL%20REPORT_Results%20%281%29.pdf?download=1"
+        ]
+
     def test_streams_upload_request_body(self):
         received = []
 

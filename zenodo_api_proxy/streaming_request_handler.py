@@ -66,7 +66,10 @@ class StreamingRequestBodyHandler(BaseProxyHandler, ABC):
         )
         self._request_body = _RequestBody() if has_body else None
 
-        path = self.path_args[0] if self.path_args else None
+        # Route arguments are percent-decoded by Tornado. Pass the original
+        # encoded path so proxy handlers can forward it without reconstructing
+        # or double-encoding it.
+        path = self.request.path
         request = self.start_streaming_request(path)
         if request is None:
             self._abort_request_body()
@@ -82,7 +85,7 @@ class StreamingRequestBodyHandler(BaseProxyHandler, ABC):
     @abstractmethod
     def start_streaming_request(
         self,
-        path: str | None,
+        path: str,
     ) -> Coroutine[Any, Any, None] | None:
         """Start consuming the request body and producing the response."""
 
