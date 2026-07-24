@@ -119,6 +119,24 @@ class ZenodoRequests:
         )
         versions = response.get("hits", {}).get("hits", [])
 
+        # The public versions endpoint only contains published records. For an
+        # initial draft there are no published versions from which to derive
+        # the parent ID, so resolve that draft directly.
+        if not versions:
+            try:
+                return [
+                    get_zenodo_user_record(
+                        record_id,
+                        base_url=self.url,
+                        headers=self.headers,
+                    )
+                ]
+            except requests.HTTPError as error:
+                status_code = getattr(error.response, "status_code", None)
+                if status_code not in (401, 403, 404):
+                    raise
+                return []
+
         # Try to find a draft version of the record and include it in the list of versions if it exists
         # (Because drafts are not included in the response of the /api/records/{record_id}/versions endpoint)
 

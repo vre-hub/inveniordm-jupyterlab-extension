@@ -69,7 +69,7 @@ TODO maybe cache/ propagate if file is from draft or published record
 | `GET /user-records`                                   | `GET /api/user/records`, optionally followed by one linked files request per hit                          |
 | `GET /user-records/:id`                               | User-record search, followed by its linked files request if present                                       |
 | `GET /records/:id/permission`                         | User-record lookup, `/api/me`, and sometimes general record details and/or linked access grants           |
-| `GET /user-records/:id/versions`                      | General versions request plus a user-record listing used to find a draft                                  |
+| `GET /user-records/:id/versions`                      | General versions request plus a targeted user-record lookup or listing used to find a draft               |
 | `POST /user-records/:id/versions`                     | Create a new-version draft, then import the previous files                                                |
 | `POST /user-records/minimal-draft`                    | Create a draft, then initialize, upload, and commit every file                                            |
 | `POST /user-records/:id/files`                        | `/api/me`, require an editable draft, then upload every file                                              |
@@ -175,18 +175,25 @@ access-grant call:
 ### `GET /user-records/:id/versions`
 
 1. Send `GET /api/records/:id/versions` and take its published hits.
-2. Obtain their `conceptrecid`, which identifies the version family.
-3. Send `GET /api/user/records?page=1&size=25&allversions=true`.
-4. Keep draft records with the same `conceptrecid`. If more than one matches,
-   select the one with the greatest metadata relation version index.
-5. Append that draft to the published versions, replacing a published hit with
+2. If there are no published hits, search
+   `GET /api/user/records?q=id:<id>&size=10&allversions=true` and return the
+   exact matching user record as the only version. Treat `401`, `403`, or `404`
+   as no accessible record and return an empty list.
+3. Otherwise, obtain the published hits' parent ID, which identifies the
+   version family.
+4. Send `GET /api/user/records?page=1&size=25&allversions=true`.
+5. Keep draft records with the same parent ID. If more than one matches,
+   select the one with the greatest `versions.index`.
+6. Append that draft to the published versions, replacing a published hit with
    the same ID if necessary.
 
 The general versions call is the authoritative list of published versions but
-does not include an unpublished next version. The user-record call supplies
-that editable draft when the current user can see it. A `401` or `403` from the
-user-record call is ignored, so callers without user-record access still get
-the published versions. Other errors are propagated.
+does not include drafts. The targeted user-record lookup handles a first-version
+draft, for which there is no published hit from which to derive the parent ID.
+The user-record listing supplies an editable next-version draft when published
+versions already exist. A `401` or `403` from the user-record listing is
+ignored, so callers without user-record access still get the published
+versions. Other errors are propagated.
 
 The user-record scan is currently limited to 25 records and is not filtered by
 the target concept ID. A draft outside that page will be omitted; the code has

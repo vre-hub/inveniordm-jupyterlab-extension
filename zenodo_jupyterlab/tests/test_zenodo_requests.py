@@ -407,6 +407,88 @@ def test_list_zenodo_record_versions_uses_versions_endpoint(monkeypatch):
     }
 
 
+def test_record_versions_returns_initial_draft(monkeypatch):
+    calls = []
+    draft = {
+        "id": "draft-1",
+        "parent": {"id": "parent-1"},
+        "status": "draft",
+        "versions": {"index": 1},
+    }
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_record_versions",
+        lambda *args, **kwargs: {"hits": {"hits": []}},
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "get_zenodo_user_record",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or draft,
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_user_records",
+        lambda *args, **kwargs: pytest.fail("should not scan user records"),
+    )
+
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+
+    assert requests.list_zenodo_record_versions("draft-1") == [draft]
+    assert calls == [
+        (
+            ("draft-1",),
+            {
+                "base_url": "https://zenodo.org",
+                "headers": {"Authorization": "x"},
+            },
+        )
+    ]
+
+
+@pytest.mark.parametrize("status_code", [401, 403, 404])
+def test_empty_record_versions_ignore_missing_draft(monkeypatch, status_code):
+    response = requests_library.Response()
+    response.status_code = status_code
+    error = requests_library.HTTPError(response=response)
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_record_versions",
+        lambda *args, **kwargs: {"hits": {"hits": []}},
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "get_zenodo_user_record",
+        lambda *args, **kwargs: (_ for _ in ()).throw(error),
+    )
+
+    requests = ZenodoRequests("https://zenodo.org")
+
+    assert requests.list_zenodo_record_versions("draft-1") == []
+
+
+def test_empty_record_versions_propagate_other_draft_errors(monkeypatch):
+    response = requests_library.Response()
+    response.status_code = 500
+    error = requests_library.HTTPError(response=response)
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_record_versions",
+        lambda *args, **kwargs: {"hits": {"hits": []}},
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "get_zenodo_user_record",
+        lambda *args, **kwargs: (_ for _ in ()).throw(error),
+    )
+
+    requests = ZenodoRequests("https://zenodo.org")
+
+    with pytest.raises(requests_library.HTTPError) as raised:
+        requests.list_zenodo_record_versions("draft-1")
+
+    assert raised.value is error
+
+
 def test_zenodo_requests_extracts_record_versions(monkeypatch):
     calls = []
     versions = [
