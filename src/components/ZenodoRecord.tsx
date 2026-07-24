@@ -33,7 +33,6 @@ export function ZenodoRecord({
         setRecord(record);
       } catch (reason) {
         setRecord({ error: String(reason) });
-      } finally {
       }
     },
     [serverSettings, recordId]
@@ -52,20 +51,17 @@ export function ZenodoRecord({
   useEventListener(`record.changed.${encodeURIComponent(recordId)}`, event => {
     // If there is a new version, we need to update the recordId to the new version
     const eventData = event.data as
-      { type?: string; new_version_id?: string } | undefined;
-    if (
-      eventData &&
-      eventData.type === 'version_created' &&
-      eventData.new_version_id
-    ) {
+      | {
+          type?: string;
+          record?: ZenodoResourceData;
+        }
+      | undefined;
+    if (eventData && eventData.type === 'version_created' && eventData.record) {
       console.log(
-        `New version created for record ${recordId}: ${eventData.new_version_id}`
+        `New version created for record ${recordId}: ${eventData.record.id}`
       );
-      setRecordId(eventData.new_version_id);
-      //TODO find a better way to wait for the new version to be available
-      setTimeout(() => {
-        void loadRecord(eventData.new_version_id);
-      }, 400); // record is not immediately available
+      setRecordId(eventData.record.id);
+      setRecord(eventData.record);
       return;
     }
     // Otherwise, just reload the current record

@@ -357,7 +357,7 @@ class ZenodoRecordVersionsHandler(APIHandler):
         event_data = {}
         if draft_id is not None:
             event_data["type"] = "version_created"
-            event_data["new_version_id"] = draft.get("id")
+            event_data["record"] = draft
         self.event_bus.publish(
             get_user_id(self), _record_changed_topic(record_id), event_data
         )

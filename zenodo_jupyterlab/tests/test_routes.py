@@ -2,7 +2,11 @@ import json
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from zenodo_jupyterlab.routes import ZenodoFileImportCellHandler
+from zenodo_jupyterlab.routes import (
+    ZenodoFileImportCellHandler,
+    ZenodoRecordVersionsHandler,
+)
+from zenodo_jupyterlab.util.sse import EventBus
 
 
 async def test_hello(jp_fetch):
@@ -89,3 +93,32 @@ def test_import_cell_reuses_file_metadata_for_download_location(tmp_path):
         "file_key": "example.csv",
         "path": str(destination),
     }
+
+
+def test_create_version_event_contains_new_draft():
+    draft = {
+        "id": "draft-2",
+        "status": "new_version_draft",
+        "files": {"entries": [{"key": "data.csv"}]},
+    }
+    zenodo_requests = Mock()
+    zenodo_requests.create_zenodo_record_version.return_value = draft
+    event_bus = EventBus()
+    events = event_bus.subscribe("alice")
+    responses = []
+    handler = SimpleNamespace(
+        current_user=SimpleNamespace(username="alice"),
+        event_bus=event_bus,
+        get_zenodo_requests=lambda _: zenodo_requests,
+        finish=responses.append,
+    )
+
+    ZenodoRecordVersionsHandler.post.__wrapped__(handler, "record-1")
+
+    event = events.get_nowait()
+    assert event.topic == "record.changed.record-1"
+    assert event.data == {
+        "type": "version_created",
+        "record": draft,
+    }
+    assert json.loads(responses[0]) == {"draft": draft}

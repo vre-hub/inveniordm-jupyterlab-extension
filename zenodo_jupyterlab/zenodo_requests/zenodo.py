@@ -408,6 +408,7 @@ def create_zenodo_record_version(
         timeout=10,
     )
     import_response.raise_for_status()
+    draft["files"] = import_response.json()
     return draft
 
 

@@ -637,7 +637,7 @@ def test_create_version_imports_previous_files(monkeypatch):
         headers={"Authorization": "x"},
     )
 
-    assert result == {"id": "draft-2"}
+    assert result == {"id": "draft-2", "files": {"entries": []}}
     assert calls[0][0] == ("https://zenodo.org/api/records/record-1/versions",)
     assert calls[1][0] == (
         "https://zenodo.org/api/records/draft-2/draft/actions/files-import",
