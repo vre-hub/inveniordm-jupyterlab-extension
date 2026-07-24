@@ -180,7 +180,7 @@ def search_zenodo_records(
     response = requests.get(
         f"{_normalize_base_url(base_url)}/api/records",
         params=params,
-        headers=_headers(headers),
+        headers=_headers(headers, accept_invenio=True),
         timeout=10,
     )
     response.raise_for_status()

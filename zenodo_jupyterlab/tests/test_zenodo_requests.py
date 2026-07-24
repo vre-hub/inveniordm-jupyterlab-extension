@@ -310,6 +310,49 @@ def test_get_zenodo_access_grants_follows_record_link(monkeypatch):
     assert calls[0][0] == ("https://sandbox.zenodo.org/api/records/123/access/grants",)
 
 
+def test_search_zenodo_records_uses_invenio_response_format(monkeypatch):
+    calls = []
+    response_data = {"hits": {"hits": [{"id": "record-1"}]}}
+    monkeypatch.setattr(
+        zenodo_module.requests,
+        "get",
+        lambda *args, **kwargs: (
+            calls.append((args, kwargs)) or Response(response_data)
+        ),
+    )
+
+    result = zenodo_module.search_zenodo_records(
+        "climate",
+        base_url="https://zenodo.org",
+        headers={"Authorization": "x"},
+        page=2,
+        size=25,
+        sort="newest",
+        allversions=True,
+    )
+
+    assert result is response_data
+    assert calls == [
+        (
+            ("https://zenodo.org/api/records",),
+            {
+                "params": {
+                    "q": "climate",
+                    "page": 2,
+                    "size": 25,
+                    "sort": "newest",
+                    "allversions": True,
+                },
+                "headers": {
+                    "Accept": "application/vnd.inveniordm.v1+json",
+                    "Authorization": "x",
+                },
+                "timeout": 10,
+            },
+        )
+    ]
+
+
 def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):
     calls = []
     draft = {"id": "draft-1", "is_published": False}
