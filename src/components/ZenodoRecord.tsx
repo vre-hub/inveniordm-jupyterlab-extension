@@ -62,9 +62,10 @@ export function ZenodoRecord({
         `New version created for record ${recordId}: ${eventData.new_version_id}`
       );
       setRecordId(eventData.new_version_id);
+      //TODO find a better way to wait for the new version to be available
       setTimeout(() => {
         void loadRecord(eventData.new_version_id);
-      }, 200); // record is not immediately available
+      }, 400); // record is not immediately available
       return;
     }
     // Otherwise, just reload the current record
