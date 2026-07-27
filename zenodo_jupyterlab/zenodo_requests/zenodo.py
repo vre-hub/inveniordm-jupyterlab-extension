@@ -358,7 +358,7 @@ def get_zenodo_record_details(
             f"{_normalize_base_url(base_url)}/api/records/"
             f"{quote(str(record_id), safe='')}"
         ),
-        headers=_headers(headers),
+        headers=_headers(headers, accept_invenio=True),
         timeout=10,
     )
     response.raise_for_status()
