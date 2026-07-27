@@ -18,8 +18,13 @@ def include_zenodo_files(
         if not files_url:
             continue
 
-        item["files"] = list_zenodo_record_files(
+        files = list_zenodo_record_files(
             files_url,
             base_url=base_url,
             headers=headers,
         )
+        entries = files.get("entries")
+        # entries is a list, but we want to store it as a dict keyed by the file key for compatibility with the rest of the api
+        if isinstance(entries, list):
+            files["entries"] = {entry["key"]: entry for entry in entries}
+        item["files"] = files

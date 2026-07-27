@@ -11,7 +11,7 @@ export const ZenodoRecordDetails: React.FC<{
   record: ZenodoRecordData;
   editable: boolean;
 }> = ({ record, editable }) => {
-  const files = record.files?.entries ?? [];
+  const files = Object.values(record.files?.entries ?? {});
   return (
     <section>
       <section>
