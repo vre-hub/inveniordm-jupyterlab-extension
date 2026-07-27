@@ -365,24 +365,6 @@ def get_zenodo_record_details(
     return response.json()
 
 
-def get_zenodo_record_at_url(
-    record_url: str,
-    *,
-    base_url: str,
-    headers: dict[str, str] | None,
-) -> dict[str, Any]:
-    """
-    Fetch a record using a link returned by the Zenodo API.
-    """
-    response = requests.get(
-        _rebase_zenodo_url(record_url, base_url=base_url),
-        headers=_headers(headers),
-        timeout=10,
-    )
-    response.raise_for_status()
-    return response.json()
-
-
 def create_zenodo_record_version(
     record_id: int | str,
     *,
