@@ -453,7 +453,7 @@ export type ZenodoResourceData = {
       identifier?: string;
     };
   };
-  files?: ZenodoFile[] | { entries?: ZenodoFile[] };
+  files?: { entries?: ZenodoFile[] };
   links: {
     self_html: string;
   };

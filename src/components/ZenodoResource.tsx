@@ -4,19 +4,7 @@ import { ZenodoFileInfo } from './ZenodoFileInfo';
 import { OpenRecordButton } from './OpenRecordButton';
 import { RecordUpload } from './RecordUpload';
 import { CreateNewVersionButton } from './CreateNewVersionButton';
-import {
-  useRecordPermissions,
-  ZenodoFile,
-  ZenodoResourceData
-} from '../api_calls';
-
-// TODO this normalizes legacy and new file formats, check if we still need this
-const getFiles = (files: ZenodoResourceData['files']): ZenodoFile[] => {
-  if (Array.isArray(files)) {
-    return files;
-  }
-  return files?.entries ?? [];
-};
+import { useRecordPermissions, ZenodoResourceData } from '../api_calls';
 
 export const ZenodoResource: React.FC<{
   resource: ZenodoResourceData;
@@ -28,6 +16,7 @@ export const ZenodoResource: React.FC<{
     userPermissions == 'edit' || userPermissions == 'manage';
   const editable = isDraft && hasEditingRights;
   const canCreateNewVersion = !isDraft && hasEditingRights;
+  const files = resource.files?.entries ?? [];
 
   return (
     <section>
@@ -39,7 +28,7 @@ export const ZenodoResource: React.FC<{
       <div>Status: {resource.status}</div>
       {canCreateNewVersion && <CreateNewVersionButton id={resource.id} />}
       <div>
-        {getFiles(resource.files).map(file => (
+        {files.map(file => (
           <ZenodoFileInfo
             file={file}
             key={file.key}

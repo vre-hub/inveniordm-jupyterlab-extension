@@ -192,7 +192,7 @@ def get_zenodo_files(
     *,
     base_url: str,
     headers: dict[str, str] | None = None,
-) -> list[dict[str, Any]] | dict[str, Any]:
+) -> dict[str, Any]:
     """
     Fetch a record's file collection using its InvenioRDM ``links.files`` URL.
     """
