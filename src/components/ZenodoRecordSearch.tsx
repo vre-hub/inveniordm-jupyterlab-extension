@@ -6,7 +6,7 @@ import {
   ZenodoRecordData
 } from '../api_calls';
 import { useServerSettings } from '../store';
-import { ZenodoVersionedRecord } from './ZenodoRecord';
+import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
 import { ZenodoRecordDetails } from './ZenodoRecordDetails';
 
 type ZenodoRecordSearchResponse = {

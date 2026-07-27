@@ -3,8 +3,8 @@ import React from 'react';
 import { getZenodoUserRecord, listZenodoUserRecords } from '../api_calls';
 import { useServerSettings } from '../store';
 import { ZenodoRecordData } from '../api_calls';
-import { ZenodoVersionedRecord } from './ZenodoRecord';
-import { ZenodoUserRecordDetails } from './ZenodoRecordDetails';
+import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
+import { ZenodoUserRecordDetails } from './ZenodoUserRecordDetails';
 
 export const ZenodoUserRecordList: React.FC = () => {
   const serverSettings = useServerSettings();
