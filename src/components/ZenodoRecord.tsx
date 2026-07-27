@@ -1,7 +1,6 @@
 import React from 'react';
 import { ZenodoRecordData } from '../api_calls';
 import { useEventListener } from '../sse';
-import { useServerSettings } from '../store';
 import { VersionDropdown } from './VersionDropdown';
 import { ZenodoRecordDetails } from './ZenodoRecordDetails';
 
@@ -20,7 +19,6 @@ export function ZenodoRecord({
 }): JSX.Element {
   const [recordId, setRecordId] = React.useState<string>(initialRecordId);
 
-  const serverSettings = useServerSettings();
   const [record, setRecord] = React.useState<
     ZenodoRecordData | { error: string } | null
   >(initialRecordValue ?? null);
@@ -35,7 +33,7 @@ export function ZenodoRecord({
         setRecord({ error: String(reason) });
       }
     },
-    [serverSettings, recordId]
+    [recordId]
   );
 
   // If no initial record value is provided, load the record data from the API.
