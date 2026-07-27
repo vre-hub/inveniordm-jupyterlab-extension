@@ -10,6 +10,7 @@ import {
   ZenodoResourceData
 } from '../api_calls';
 
+// TODO this normalizes legacy and new file formats, check if we still need this
 const getFiles = (files: ZenodoResourceData['files']): ZenodoFile[] => {
   if (Array.isArray(files)) {
     return files;
