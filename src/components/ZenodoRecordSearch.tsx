@@ -3,22 +3,22 @@ import React from 'react';
 import {
   getZenodoRecord,
   searchZenodoRecords,
-  ZenodoResourceData
+  ZenodoRecordData
 } from '../api_calls';
 import { useServerSettings } from '../store';
 import { ZenodoRecord } from './ZenodoRecord';
 
-type ZenodoSearchResults = {
+type ZenodoRecordSearchResponse = {
   hits?: {
-    hits?: ZenodoResourceData[];
+    hits?: ZenodoRecordData[];
   };
 };
 
-export const ZenodoSearch: React.FC = () => {
+export const ZenodoRecordSearch: React.FC = () => {
   const serverSettings = useServerSettings();
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<
-    ZenodoSearchResults | { error: string } | null
+    ZenodoRecordSearchResponse | { error: string } | null
   >(null);
   const [isSearching, setIsSearching] = React.useState(false);
   const error = results && 'error' in results ? results.error : null;
@@ -36,7 +36,7 @@ export const ZenodoSearch: React.FC = () => {
         (await searchZenodoRecords(
           serverSettings,
           query
-        )) as ZenodoSearchResults
+        )) as ZenodoRecordSearchResponse
       );
     } catch (reason) {
       setResults({ error: String(reason) });
@@ -65,7 +65,7 @@ export const ZenodoSearch: React.FC = () => {
           key={result.id}
           initialRecordId={result.id}
           initialRecordValue={result}
-          fetchRecord={async (id: string): Promise<ZenodoResourceData> => {
+          fetchRecord={async (id: string): Promise<ZenodoRecordData> => {
             return await getZenodoRecord(serverSettings, id);
           }}
         />

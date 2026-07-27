@@ -2,13 +2,13 @@ import React from 'react';
 
 import { getZenodoUserRecord, listZenodoUserRecords } from '../api_calls';
 import { useServerSettings } from '../store';
-import { ZenodoResourceData } from '../api_calls';
+import { ZenodoRecordData } from '../api_calls';
 import { ZenodoRecord } from './ZenodoRecord';
 
-export const ZenodoUserRecords: React.FC = () => {
+export const ZenodoUserRecordList: React.FC = () => {
   const serverSettings = useServerSettings();
   const [records, setRecords] = React.useState<
-    ZenodoResourceData[] | { error: string } | null
+    ZenodoRecordData[] | { error: string } | null
   >(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -17,7 +17,7 @@ export const ZenodoUserRecords: React.FC = () => {
 
     try {
       setRecords(
-        (await listZenodoUserRecords(serverSettings)) as ZenodoResourceData[]
+        (await listZenodoUserRecords(serverSettings)) as ZenodoRecordData[]
       );
     } catch (reason) {
       setRecords({ error: String(reason) });
@@ -53,7 +53,7 @@ function ZenodoUserRecord({
   initialRecordValue
 }: {
   initialRecordId: string;
-  initialRecordValue?: ZenodoResourceData;
+  initialRecordValue?: ZenodoRecordData;
 }): JSX.Element {
   const serverSettings = useServerSettings();
   return (
@@ -61,7 +61,7 @@ function ZenodoUserRecord({
       <ZenodoRecord
         initialRecordId={initialRecordId}
         initialRecordValue={initialRecordValue}
-        fetchRecord={async (id: string): Promise<ZenodoResourceData> => {
+        fetchRecord={async (id: string): Promise<ZenodoRecordData> => {
           return await getZenodoUserRecord(serverSettings, id);
         }}
       />

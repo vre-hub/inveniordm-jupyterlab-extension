@@ -1,6 +1,6 @@
 import React from 'react';
 
-type Resource = {
+type ZenodoRecordLink = {
   links: {
     self_html: string;
   };
@@ -10,13 +10,13 @@ type Resource = {
  * A button that opens a Zenodo record in a new tab.
  */
 export function OpenRecordButton({
-  resource,
+  record,
   text
 }: {
-  resource: Resource;
+  record: ZenodoRecordLink;
   text: string;
 }): JSX.Element {
-  const url = resource.links.self_html;
+  const url = record.links.self_html;
   return <OpenLinkButton url={url} text={text} />;
 }
 

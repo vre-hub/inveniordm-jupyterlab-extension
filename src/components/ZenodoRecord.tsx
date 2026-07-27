@@ -1,9 +1,9 @@
 import React from 'react';
-import { ZenodoResourceData } from '../api_calls';
+import { ZenodoRecordData } from '../api_calls';
 import { useEventListener } from '../sse';
 import { useServerSettings } from '../store';
 import { VersionDropdown } from './VersionDropdown';
-import { ZenodoResource } from './ZenodoResource';
+import { ZenodoRecordDetails } from './ZenodoRecordDetails';
 
 /**
  * Display a single Zenodo record for the user.
@@ -15,14 +15,14 @@ export function ZenodoRecord({
   fetchRecord
 }: {
   initialRecordId: string;
-  initialRecordValue?: ZenodoResourceData;
-  fetchRecord: (id: string) => Promise<ZenodoResourceData>;
+  initialRecordValue?: ZenodoRecordData;
+  fetchRecord: (id: string) => Promise<ZenodoRecordData>;
 }): JSX.Element {
   const [recordId, setRecordId] = React.useState<string>(initialRecordId);
 
   const serverSettings = useServerSettings();
   const [record, setRecord] = React.useState<
-    ZenodoResourceData | { error: string } | null
+    ZenodoRecordData | { error: string } | null
   >(initialRecordValue ?? null);
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -53,7 +53,7 @@ export function ZenodoRecord({
     const eventData = event.data as
       | {
           type?: string;
-          record?: ZenodoResourceData;
+          record?: ZenodoRecordData;
         }
       | undefined;
     if (eventData && eventData.type === 'version_created' && eventData.record) {
@@ -81,7 +81,7 @@ export function ZenodoRecord({
         }}
       />
       {record && !('error' in record) ? (
-        <ZenodoResource resource={record} />
+        <ZenodoRecordDetails record={record} />
       ) : (
         record?.error
       )}

@@ -9,7 +9,7 @@ import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 
-export const RecordUpload: React.FC<{
+export const ZenodoRecordFileUpload: React.FC<{
   recordId: string;
   onDone: () => void;
 }> = ({ recordId, onDone }) => {

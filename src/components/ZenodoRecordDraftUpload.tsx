@@ -9,7 +9,7 @@ import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 import { OpenRecordButton } from './OpenRecordButton';
 
-export const Upload: React.FC = () => {
+export const ZenodoRecordDraftUpload: React.FC = () => {
   const serverSettings = useServerSettings();
   const [isCreatingDraft, setIsCreatingDraft] = React.useState(false);
   const [uploadId, setUploadId] = React.useState<string | null>(null);
@@ -95,7 +95,7 @@ export const Upload: React.FC = () => {
       {result && (
         <div>
           <p>Created draft {result.id}.</p>
-          <OpenRecordButton resource={result} text="Edit metadata" />
+          <OpenRecordButton record={result} text="Edit metadata" />
         </div>
       )}
     </div>

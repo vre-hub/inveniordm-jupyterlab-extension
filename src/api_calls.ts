@@ -119,8 +119,8 @@ export async function searchZenodoRecords(
 export async function getZenodoRecord(
   serverSettings: ServerConnection.ISettings,
   recordId: string
-): Promise<ZenodoResourceData> {
-  return await requestAPI<ZenodoResourceData>(
+): Promise<ZenodoRecordData> {
+  return await requestAPI<ZenodoRecordData>(
     `records/${encodeURIComponent(recordId)}`,
     serverSettings
   );
@@ -151,8 +151,8 @@ export type ZenodoRecordDraftResponse = {
 export async function getZenodoUserRecord(
   serverSettings: ServerConnection.ISettings,
   recordId: string
-): Promise<ZenodoResourceData> {
-  return await requestAPI<ZenodoResourceData>(
+): Promise<ZenodoRecordData> {
+  return await requestAPI<ZenodoRecordData>(
     `user/records/${encodeURIComponent(recordId)}`,
     serverSettings
   );
@@ -160,7 +160,7 @@ export async function getZenodoUserRecord(
 
 export type ZenodoRecordVersion = {
   id: string;
-  status: ResourceStatus;
+  status: ZenodoRecordStatus;
   versions: {
     index: number;
   };
@@ -394,23 +394,24 @@ export async function getZenodoFileImportCell(
   );
 }
 
-export type Permission = 'manage' | 'edit' | 'preview' | 'view';
+export type ZenodoRecordPermission = 'manage' | 'edit' | 'preview' | 'view';
 
 export async function getZenodoRecordPermission(
   serverSettings: ServerConnection.ISettings,
   recordId: string
-): Promise<Permission> {
-  return await requestAPI<Permission>(
+): Promise<ZenodoRecordPermission> {
+  return await requestAPI<ZenodoRecordPermission>(
     `records/${encodeURIComponent(recordId)}/permission`,
     serverSettings
   );
 }
 
-export function useZenodoRecordPermission(id: string): Permission | null {
+export function useZenodoRecordPermission(
+  id: string
+): ZenodoRecordPermission | null {
   const serverSettings = useServerSettings();
-  const [userPermission, setUserPermission] = React.useState<Permission | null>(
-    null
-  );
+  const [userPermission, setUserPermission] =
+    React.useState<ZenodoRecordPermission | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -440,12 +441,12 @@ export type ZenodoFile = {
     download?: string;
   };
 };
-type ResourceStatus = 'new_version_draft' | 'draft' | 'published';
+type ZenodoRecordStatus = 'new_version_draft' | 'draft' | 'published';
 // TODO check if these fields exist/ if they are always present
 
-export type ZenodoResourceData = {
+export type ZenodoRecordData = {
   id: string;
-  status: ResourceStatus;
+  status: ZenodoRecordStatus;
   metadata?: {
     title?: string;
   };
