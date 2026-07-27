@@ -379,7 +379,7 @@ def create_zenodo_record_version(
             f"{_normalize_base_url(base_url)}/api/records/"
             f"{quote(str(record_id), safe='')}/versions"
         ),
-        headers=_headers(headers),
+        headers=_headers(headers, accept_invenio=True),
         timeout=10,
     )
     response.raise_for_status()
@@ -412,7 +412,10 @@ def create_zenodo_record_draft(
     response = requests.post(
         f"{_normalize_base_url(base_url)}/api/records",
         json={"files": {"enabled": True}},
-        headers=_headers({"Content-Type": "application/json", **(headers or {})}),
+        headers=_headers(
+            {"Content-Type": "application/json", **(headers or {})},
+            accept_invenio=True,
+        ),
         timeout=10,
     )
     response.raise_for_status()

@@ -677,11 +677,19 @@ def test_record_versions_propagate_other_user_records_errors(monkeypatch):
 
 def test_create_zenodo_record_draft_uses_records_api(monkeypatch):
     calls = []
+    draft = {
+        "id": "draft-1",
+        "is_published": False,
+        "links": {
+            "files": "https://zenodo.org/api/records/draft-1/draft/files",
+            "self_html": "https://zenodo.org/uploads/draft-1",
+        },
+    }
     monkeypatch.setattr(
         zenodo_module.requests,
         "post",
         lambda *args, **kwargs: (
-            calls.append((args, kwargs)) or Response({"id": "draft-1"}, status_code=201)
+            calls.append((args, kwargs)) or Response(draft, status_code=201)
         ),
     )
 
@@ -690,16 +698,29 @@ def test_create_zenodo_record_draft_uses_records_api(monkeypatch):
         headers={"Authorization": "x"},
     )
 
-    assert result == {"id": "draft-1"}
+    assert result is draft
     assert calls[0][0] == ("https://zenodo.org/api/records",)
     assert calls[0][1]["json"] == {"files": {"enabled": True}}
+    assert calls[0][1]["headers"] == {
+        "Accept": "application/vnd.inveniordm.v1+json",
+        "Content-Type": "application/json",
+        "Authorization": "x",
+    }
 
 
 def test_create_version_imports_previous_files(monkeypatch):
     calls = []
+    draft = {
+        "id": "draft-2",
+        "is_published": False,
+        "links": {
+            "files": "https://zenodo.org/api/records/draft-2/draft/files",
+            "self_html": "https://zenodo.org/uploads/draft-2",
+        },
+    }
     responses = iter(
         [
-            Response({"id": "draft-2"}, status_code=201),
+            Response(draft, status_code=201),
             Response({"entries": []}, status_code=201),
         ]
     )
@@ -715,8 +736,13 @@ def test_create_version_imports_previous_files(monkeypatch):
         headers={"Authorization": "x"},
     )
 
-    assert result == {"id": "draft-2", "files": {"entries": []}}
+    assert result is draft
+    assert result["files"] == {"entries": []}
     assert calls[0][0] == ("https://zenodo.org/api/records/record-1/versions",)
+    assert calls[0][1]["headers"] == {
+        "Accept": "application/vnd.inveniordm.v1+json",
+        "Authorization": "x",
+    }
     assert calls[1][0] == (
         "https://zenodo.org/api/records/draft-2/draft/actions/files-import",
     )
