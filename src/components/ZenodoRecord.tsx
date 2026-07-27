@@ -2,20 +2,21 @@ import React from 'react';
 import { ZenodoRecordData } from '../api_calls';
 import { useEventListener } from '../sse';
 import { VersionDropdown } from './VersionDropdown';
-import { ZenodoRecordDetails } from './ZenodoRecordDetails';
 
 /**
  * Display a single Zenodo record for the user.
  * Pass an initialRecordValue to avoid an additional API call if the record data is already available.
  */
-export function ZenodoRecord({
+export function ZenodoVersionedRecord({
   initialRecordId,
   initialRecordValue,
-  fetchRecord
+  fetchRecord,
+  renderRecord
 }: {
   initialRecordId: string;
   initialRecordValue?: ZenodoRecordData;
   fetchRecord: (id: string) => Promise<ZenodoRecordData>;
+  renderRecord: (record: ZenodoRecordData) => JSX.Element;
 }): JSX.Element {
   const [recordId, setRecordId] = React.useState<string>(initialRecordId);
 
@@ -78,11 +79,7 @@ export function ZenodoRecord({
           void loadRecord(id);
         }}
       />
-      {record && !('error' in record) ? (
-        <ZenodoRecordDetails record={record} />
-      ) : (
-        record?.error
-      )}
+      {record && !('error' in record) ? renderRecord(record) : record?.error}
     </div>
   );
 }

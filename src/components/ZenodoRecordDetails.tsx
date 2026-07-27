@@ -6,7 +6,11 @@ import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
 import { CreateNewVersionButton } from './CreateNewVersionButton';
 import { useZenodoRecordPermission, ZenodoRecordData } from '../api_calls';
 
-export const ZenodoRecordDetails: React.FC<{
+/**
+ * Display the details of a Zenodo record for the user.
+ * Request the api to check the user's permission for the record and display the appropriate actions.
+ */
+export const ZenodoUserRecordDetails: React.FC<{
   record: ZenodoRecordData;
 }> = ({ record }) => {
   const isDraft =
@@ -16,31 +20,11 @@ export const ZenodoRecordDetails: React.FC<{
     userPermission === 'edit' || userPermission === 'manage';
   const editable = isDraft && hasEditingRights;
   const canCreateNewVersion = !isDraft && hasEditingRights;
-  const files = record.files?.entries ?? [];
 
   return (
     <section>
-      <h4>{record.metadata?.title ?? record.id}</h4>
-      <div>ID: {record.id}</div>
-      {record.pids?.doi?.identifier ? (
-        <div>DOI: {record.pids.doi.identifier}</div>
-      ) : null}
-      <div>Status: {record.status}</div>
+      <ZenodoRecordDetails record={record} editable={editable} />
       {canCreateNewVersion && <CreateNewVersionButton id={record.id} />}
-      <div>
-        {files.map(file => (
-          <ZenodoFileInfo
-            file={file}
-            key={file.key}
-            recordId={record.id}
-            editable={editable}
-          />
-        ))}
-      </div>
-      <OpenRecordButton
-        record={record}
-        text={editable ? 'Edit Record' : 'Open Record'}
-      />
       {editable && (
         <>
           <ZenodoRecordFileUpload
@@ -52,6 +36,44 @@ export const ZenodoRecordDetails: React.FC<{
         </>
       )}
       <p>Access Rights: {userPermission}</p>
+    </section>
+  );
+};
+
+/**
+ * Display the details of a Zenodo record.
+ */
+export const ZenodoRecordDetails: React.FC<{
+  record: ZenodoRecordData;
+  editable: boolean;
+}> = ({ record, editable }) => {
+  const files = record.files?.entries ?? [];
+  return (
+    <section>
+      <section>
+        <h4>{record.metadata?.title ?? record.id}</h4>
+        <div>ID: {record.id}</div>
+        {record.pids?.doi?.identifier ? (
+          <div>DOI: {record.pids.doi.identifier}</div>
+        ) : null}
+        <div>Status: {record.status}</div>
+        <OpenRecordButton
+          record={record}
+          text={editable ? 'Edit Record' : 'Open Record'}
+        />
+      </section>
+      <section>
+        <div>
+          {files.map(file => (
+            <ZenodoFileInfo
+              file={file}
+              key={file.key}
+              recordId={record.id}
+              editable={editable}
+            />
+          ))}
+        </div>
+      </section>
     </section>
   );
 };

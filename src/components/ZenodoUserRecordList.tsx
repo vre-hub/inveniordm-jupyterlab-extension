@@ -3,7 +3,8 @@ import React from 'react';
 import { getZenodoUserRecord, listZenodoUserRecords } from '../api_calls';
 import { useServerSettings } from '../store';
 import { ZenodoRecordData } from '../api_calls';
-import { ZenodoRecord } from './ZenodoRecord';
+import { ZenodoVersionedRecord } from './ZenodoRecord';
+import { ZenodoUserRecordDetails } from './ZenodoRecordDetails';
 
 export const ZenodoUserRecordList: React.FC = () => {
   const serverSettings = useServerSettings();
@@ -58,12 +59,13 @@ function ZenodoUserRecord({
   const serverSettings = useServerSettings();
   return (
     <div>
-      <ZenodoRecord
+      <ZenodoVersionedRecord
         initialRecordId={initialRecordId}
         initialRecordValue={initialRecordValue}
         fetchRecord={async (id: string): Promise<ZenodoRecordData> => {
           return await getZenodoUserRecord(serverSettings, id);
         }}
+        renderRecord={record => <ZenodoUserRecordDetails record={record} />}
       />
     </div>
   );
