@@ -139,7 +139,7 @@ class ZenodoAuthHandler(APIHandler):
         self.finish(json.dumps({"message": "Unknown auth action"}))
 
 
-class ZenodoRecordsHandler(APIHandler):
+class ZenodoRecordCollectionHandler(APIHandler):
     def initialize(self, get_zenodo_requests: GetZenodoRequests):
         self.get_zenodo_requests = get_zenodo_requests
 
@@ -173,7 +173,7 @@ class ZenodoRecordsHandler(APIHandler):
         self.finish(json.dumps(records))
 
 
-class ZenodoRecordHandler(APIHandler):
+class ZenodoRecordItemHandler(APIHandler):
     def initialize(self, get_zenodo_requests: GetZenodoRequests):
         self.get_zenodo_requests = get_zenodo_requests
 
@@ -235,7 +235,7 @@ class ZenodoEventsHandler(APIHandler):
         )
 
 
-class ZenodoUserRecordsHandler(APIHandler):
+class ZenodoUserRecordCollectionHandler(APIHandler):
     def initialize(self, get_zenodo_requests: GetZenodoRequests):
         self.get_zenodo_requests = get_zenodo_requests
 
@@ -264,7 +264,7 @@ class ZenodoUserRecordsHandler(APIHandler):
         self.finish(json.dumps(records))
 
 
-class ZenodoUserRecordHandler(APIHandler):
+class ZenodoUserRecordItemHandler(APIHandler):
     def initialize(self, get_zenodo_requests: GetZenodoRequests):
         self.get_zenodo_requests = get_zenodo_requests
 
@@ -316,7 +316,7 @@ class ZenodoRecordPermissionHandler(APIHandler):
         self.finish(json.dumps(permission))
 
 
-class ZenodoRecordVersionsHandler(APIHandler):
+class ZenodoRecordVersionCollectionHandler(APIHandler):
     def initialize(
         self,
         get_zenodo_requests: GetZenodoRequests,
@@ -364,7 +364,7 @@ class ZenodoRecordVersionsHandler(APIHandler):
         self.finish(json.dumps({"draft": draft}))
 
 
-class ZenodoMinimalRecordDraftHandler(APIHandler):
+class ZenodoRecordDraftWithFilesHandler(APIHandler):
     def initialize(
         self,
         get_zenodo_requests: GetZenodoRequests,
@@ -431,7 +431,7 @@ class ZenodoMinimalRecordDraftHandler(APIHandler):
                     current_item=current_file,
                 )
 
-            draft = zenodo_requests.create_minimal_record_draft(
+            draft = zenodo_requests.create_zenodo_record_draft_with_files(
                 file_paths=resolved_file_paths,
                 on_upload_progress=on_upload_progress,
                 should_cancel=context.should_cancel,
@@ -447,7 +447,7 @@ class ZenodoMinimalRecordDraftHandler(APIHandler):
         self.finish(json.dumps({"job_id": job_id}))
 
 
-class ZenodoRecordFilesHandler(APIHandler):
+class ZenodoRecordFileCollectionHandler(APIHandler):
     def initialize(
         self,
         get_zenodo_requests: GetZenodoRequests,
@@ -528,7 +528,7 @@ class ZenodoRecordFilesHandler(APIHandler):
                     current_item=current_file,
                 )
 
-            draft = zenodo_requests.upload_files_to_record(
+            draft = zenodo_requests.upload_zenodo_record_files(
                 record_id=record_id,
                 file_paths=resolved_file_paths,
                 on_upload_progress=on_upload_progress,
@@ -562,7 +562,7 @@ class ZenodoRecordFilesHandler(APIHandler):
 
         try:
             zenodo_requests = self.get_zenodo_requests(self)
-            draft = zenodo_requests.delete_file_from_record(
+            draft = zenodo_requests.delete_zenodo_record_file(
                 record_id=record_id,
                 file_key=file_key,
             )
@@ -955,12 +955,12 @@ def setup_route_handlers(web_app):
         ),
         (
             url_path_join(zenodo_base_url, "records"),
-            ZenodoRecordsHandler,
+            ZenodoRecordCollectionHandler,
             {"get_zenodo_requests": get_zenodo_requests},
         ),
         (
             url_path_join(zenodo_base_url, "records", r"([^/]+)"),
-            ZenodoRecordHandler,
+            ZenodoRecordItemHandler,
             {"get_zenodo_requests": get_zenodo_requests},
         ),
         (
@@ -974,13 +974,18 @@ def setup_route_handlers(web_app):
             {"event_bus": event_bus},
         ),
         (
-            url_path_join(zenodo_base_url, "user-records"),
-            ZenodoUserRecordsHandler,
+            url_path_join(zenodo_base_url, "user", "records"),
+            ZenodoUserRecordCollectionHandler,
             {"get_zenodo_requests": get_zenodo_requests},
         ),
         (
-            url_path_join(zenodo_base_url, "user-records", "minimal-draft"),
-            ZenodoMinimalRecordDraftHandler,
+            url_path_join(
+                zenodo_base_url,
+                "user",
+                "records",
+                "draft-with-files",
+            ),
+            ZenodoRecordDraftWithFilesHandler,
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_job_manager": get_job_manager,
@@ -990,11 +995,11 @@ def setup_route_handlers(web_app):
         (
             url_path_join(
                 zenodo_base_url,
-                "user-records",
+                "records",
                 r"([^/]+)",
                 "versions",
             ),
-            ZenodoRecordVersionsHandler,
+            ZenodoRecordVersionCollectionHandler,
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "event_bus": event_bus,
@@ -1011,18 +1016,19 @@ def setup_route_handlers(web_app):
             {"get_zenodo_requests": get_zenodo_requests},
         ),
         (
-            url_path_join(zenodo_base_url, "user-records", r"([^/]+)"),
-            ZenodoUserRecordHandler,
+            url_path_join(zenodo_base_url, "user", "records", r"([^/]+)"),
+            ZenodoUserRecordItemHandler,
             {"get_zenodo_requests": get_zenodo_requests},
         ),
         (
             url_path_join(
                 zenodo_base_url,
-                "user-records",
+                "user",
+                "records",
                 r"([^/]+)",
                 "files",
             ),
-            ZenodoRecordFilesHandler,
+            ZenodoRecordFileCollectionHandler,
             {
                 "get_zenodo_requests": get_zenodo_requests,
                 "get_job_manager": get_job_manager,

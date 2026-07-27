@@ -134,12 +134,12 @@ export async function listZenodoUserRecords(
 
   const queryString = params.toString();
   return await requestAPI(
-    `user-records${queryString ? `?${queryString}` : ''}`,
+    `user/records${queryString ? `?${queryString}` : ''}`,
     serverSettings
   );
 }
 
-export type MinimalRecordDraftResponse = {
+export type ZenodoRecordDraftResponse = {
   id: string;
   links: {
     self_html: string;
@@ -153,7 +153,7 @@ export async function getZenodoUserRecord(
   recordId: string
 ): Promise<ZenodoResourceData> {
   return await requestAPI<ZenodoResourceData>(
-    `user-records/${encodeURIComponent(recordId)}`,
+    `user/records/${encodeURIComponent(recordId)}`,
     serverSettings
   );
 }
@@ -171,13 +171,13 @@ export async function listZenodoRecordVersions(
   recordId: string
 ): Promise<ZenodoRecordVersion[]> {
   return await requestAPI<ZenodoRecordVersion[]>(
-    `user-records/${encodeURIComponent(recordId)}/versions`,
+    `records/${encodeURIComponent(recordId)}/versions`,
     serverSettings
   );
 }
 
 export type CreateZenodoRecordVersionResponse = {
-  draft: MinimalRecordDraftResponse;
+  draft: ZenodoRecordDraftResponse;
 };
 
 export async function createZenodoRecordVersion(
@@ -185,7 +185,7 @@ export async function createZenodoRecordVersion(
   recordId: string
 ): Promise<CreateZenodoRecordVersionResponse> {
   return await requestAPI<CreateZenodoRecordVersionResponse>(
-    `user-records/${encodeURIComponent(recordId)}/versions`,
+    `records/${encodeURIComponent(recordId)}/versions`,
     serverSettings,
     { method: 'POST' }
   );
@@ -199,7 +199,7 @@ export type JobStatus =
   'pending' | 'running' | 'canceling' | 'canceled' | 'done' | 'error';
 
 export type JobResult = {
-  draft?: MinimalRecordDraftResponse;
+  draft?: ZenodoRecordDraftResponse;
   path?: string;
 };
 
@@ -244,12 +244,12 @@ export async function getLatestActiveJobId(
   return response.job_ids[0] ?? null;
 }
 
-export async function createMinimalRecordDraft(
+export async function createZenodoRecordDraftWithFiles(
   serverSettings: ServerConnection.ISettings,
   filePaths: string[]
 ): Promise<StartJobResponse> {
   return await requestAPI<StartJobResponse>(
-    'user-records/minimal-draft',
+    'user/records/draft-with-files',
     serverSettings,
     {
       method: 'POST',
@@ -259,13 +259,13 @@ export async function createMinimalRecordDraft(
   );
 }
 
-export async function uploadFilesToRecord(
+export async function uploadZenodoRecordFiles(
   serverSettings: ServerConnection.ISettings,
   recordId: string,
   filePaths: string[]
 ): Promise<StartJobResponse> {
   return await requestAPI<StartJobResponse>(
-    `user-records/${recordId}/files`,
+    `user/records/${encodeURIComponent(recordId)}/files`,
     serverSettings,
     {
       method: 'POST',
@@ -276,7 +276,7 @@ export async function uploadFilesToRecord(
 }
 
 export type DeleteZenodoRecordFileResponse = {
-  draft: MinimalRecordDraftResponse;
+  draft: ZenodoRecordDraftResponse;
   deleted_key: string;
 };
 
@@ -286,7 +286,7 @@ export async function deleteZenodoRecordFile(
   fileKey: string
 ): Promise<DeleteZenodoRecordFileResponse> {
   return await requestAPI<DeleteZenodoRecordFileResponse>(
-    `user-records/${recordId}/files`,
+    `user/records/${encodeURIComponent(recordId)}/files`,
     serverSettings,
     {
       method: 'DELETE',
@@ -396,39 +396,40 @@ export async function getZenodoFileImportCell(
 
 export type Permission = 'manage' | 'edit' | 'preview' | 'view';
 
-export async function getRecordPermissions(
-  id: string,
-  serverSettings: ServerConnection.ISettings
+export async function getZenodoRecordPermission(
+  serverSettings: ServerConnection.ISettings,
+  recordId: string
 ): Promise<Permission> {
   return await requestAPI<Permission>(
-    `records/${encodeURIComponent(id)}/permission`,
+    `records/${encodeURIComponent(recordId)}/permission`,
     serverSettings
   );
 }
 
-export function useRecordPermissions(id: string): Permission | null {
+export function useZenodoRecordPermission(id: string): Permission | null {
   const serverSettings = useServerSettings();
-  const [userPermissions, setUserPermissions] =
-    React.useState<Permission | null>(null);
+  const [userPermission, setUserPermission] = React.useState<Permission | null>(
+    null
+  );
 
   React.useEffect(() => {
     let isMounted = true;
 
-    const fetchUserPermissions = async () => {
-      const permissions = await getRecordPermissions(id, serverSettings);
+    const fetchUserPermission = async () => {
+      const permission = await getZenodoRecordPermission(serverSettings, id);
       if (isMounted) {
-        setUserPermissions(permissions);
+        setUserPermission(permission);
       }
     };
 
-    void fetchUserPermissions();
+    void fetchUserPermission();
 
     return () => {
       isMounted = false;
     };
   }, [id, serverSettings]);
 
-  return userPermissions;
+  return userPermission;
 } // TODO check if these fields exist/ if they are always present
 
 export type ZenodoFile = {

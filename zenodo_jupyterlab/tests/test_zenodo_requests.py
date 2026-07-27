@@ -120,19 +120,19 @@ def test_record_owner_has_manage_permission_without_fetching_grants(monkeypatch)
         requests,
         "get_zenodo_user_record",
         lambda record_id, **kwargs: (
-                calls.append((record_id, kwargs))
-                or {
-                    "id": record_id,
-                    "parent": {
-                        "access": {"owned_by": {"user": "58370"}},
-                    },
-                    "links": {"access_grants": "/api/records/123/access/grants"},
-                }
+            calls.append((record_id, kwargs))
+            or {
+                "id": record_id,
+                "parent": {
+                    "access": {"owned_by": {"user": "58370"}},
+                },
+                "links": {"access_grants": "/api/records/123/access/grants"},
+            }
         ),
     )
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_access_grants",
+        "list_zenodo_access_grants",
         lambda *args, **kwargs: pytest.fail("owner grants should not be fetched"),
     )
 
@@ -159,7 +159,7 @@ def test_record_permission_uses_current_users_access_grant(monkeypatch):
     )
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_access_grants",
+        "list_zenodo_access_grants",
         lambda *args, **kwargs: {
             "hits": {
                 "hits": [
@@ -210,7 +210,7 @@ def test_forbidden_access_grants_has_view_permission(monkeypatch):
     error = requests_library.HTTPError(response=response)
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_access_grants",
+        "list_zenodo_access_grants",
         lambda *args, **kwargs: (_ for _ in ()).throw(error),
     )
 
@@ -249,7 +249,7 @@ def test_get_zenodo_record_optionally_includes_files(monkeypatch, include_files)
     include_files_calls = []
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_record_details",
+        "get_zenodo_record",
         lambda *args, **kwargs: record,
     )
     monkeypatch.setattr(
@@ -293,7 +293,7 @@ def test_get_zenodo_user_record_optionally_includes_files(monkeypatch, include_f
     assert bool(include_files_calls) is include_files
 
 
-def test_get_zenodo_access_grants_follows_record_link(monkeypatch):
+def test_list_zenodo_access_grants_follows_record_link(monkeypatch):
     calls = []
     monkeypatch.setattr(
         zenodo_module.requests,
@@ -303,7 +303,7 @@ def test_get_zenodo_access_grants_follows_record_link(monkeypatch):
         ),
     )
 
-    result = zenodo_module.get_zenodo_access_grants(
+    result = zenodo_module.list_zenodo_access_grants(
         "https://zenodo.org/api/records/123/access/grants",
         base_url="https://sandbox.zenodo.org",
         headers={"Authorization": "x"},
@@ -319,9 +319,7 @@ def test_search_zenodo_records_uses_invenio_response_format(monkeypatch):
     monkeypatch.setattr(
         zenodo_module.requests,
         "get",
-        lambda *args, **kwargs: (
-            calls.append((args, kwargs)) or Response(response_data)
-        ),
+        lambda *args, **kwargs: calls.append((args, kwargs)) or Response(response_data),
     )
 
     result = zenodo_module.search_zenodo_records(
@@ -356,18 +354,16 @@ def test_search_zenodo_records_uses_invenio_response_format(monkeypatch):
     ]
 
 
-def test_get_zenodo_record_details_uses_invenio_response_format(monkeypatch):
+def test_get_zenodo_record_uses_invenio_response_format(monkeypatch):
     calls = []
     response_data = {"id": "record-1", "files": {"enabled": True}}
     monkeypatch.setattr(
         zenodo_module.requests,
         "get",
-        lambda *args, **kwargs: (
-            calls.append((args, kwargs)) or Response(response_data)
-        ),
+        lambda *args, **kwargs: calls.append((args, kwargs)) or Response(response_data),
     )
 
-    result = zenodo_module.get_zenodo_record_details(
+    result = zenodo_module.get_zenodo_record(
         "record/1",
         base_url="https://zenodo.org",
         headers={"Authorization": "x"},
@@ -831,7 +827,7 @@ def test_cancelled_upload_deletes_initialized_file(monkeypatch, tmp_path):
     )
 
     with pytest.raises(JobCancelled, match="Upload canceled"):
-        requests.upload_files_to_draft(
+        requests.upload_zenodo_draft_files(
             [file_path],
             "/api/records/draft-1/draft/files",
         )

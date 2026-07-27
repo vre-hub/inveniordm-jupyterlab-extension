@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from jupyter_server.base.handlers import APIHandler
 
 from ..zenodo_auth.auth_controller import ZenodoAuthController
-from .zenodo import is_zenodo_request_authenticated
+from .zenodo import check_zenodo_authentication
 from .zenodo_requests import AccessTokenStatus, ZenodoRequests
 
 
@@ -37,7 +37,7 @@ class ZenodoRequestsFactory(ABC):
         return AccessTokenStatus(
             access_token_present=authentication_present,
             access_token_valid=(
-                is_zenodo_request_authenticated(
+                check_zenodo_authentication(
                     base_url=zenodo_requests.url,
                     headers=zenodo_requests.headers,
                 )

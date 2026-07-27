@@ -4,16 +4,16 @@ import { ZenodoFileInfo } from './ZenodoFileInfo';
 import { OpenRecordButton } from './OpenRecordButton';
 import { RecordUpload } from './RecordUpload';
 import { CreateNewVersionButton } from './CreateNewVersionButton';
-import { useRecordPermissions, ZenodoResourceData } from '../api_calls';
+import { useZenodoRecordPermission, ZenodoResourceData } from '../api_calls';
 
 export const ZenodoResource: React.FC<{
   resource: ZenodoResourceData;
 }> = ({ resource }) => {
   const isDraft =
     resource.status === 'draft' || resource.status === 'new_version_draft';
-  const userPermissions = useRecordPermissions(resource.id);
+  const userPermission = useZenodoRecordPermission(resource.id);
   const hasEditingRights =
-    userPermissions == 'edit' || userPermissions == 'manage';
+    userPermission === 'edit' || userPermission === 'manage';
   const editable = isDraft && hasEditingRights;
   const canCreateNewVersion = !isDraft && hasEditingRights;
   const files = resource.files?.entries ?? [];
@@ -51,7 +51,7 @@ export const ZenodoResource: React.FC<{
           />
         </>
       )}
-      <p>Access Rights: {userPermissions}</p>
+      <p>Access Rights: {userPermission}</p>
     </section>
   );
 };

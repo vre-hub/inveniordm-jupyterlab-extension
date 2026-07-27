@@ -12,9 +12,9 @@ from .zenodo import (
     create_zenodo_record_draft,
     create_zenodo_record_version,
     delete_zenodo_draft_file,
-    get_zenodo_access_grants,
+    list_zenodo_access_grants,
     get_zenodo_me,
-    get_zenodo_record_details,
+    get_zenodo_record,
     get_zenodo_record_file,
     get_zenodo_user_record,
     list_zenodo_record_versions,
@@ -215,7 +215,7 @@ class ZenodoRequests:
         include_files: bool = True,
     ) -> dict[str, Any]:
         """Return a public Zenodo record, optionally expanding its linked files."""
-        record = get_zenodo_record_details(
+        record = get_zenodo_record(
             record_id,
             base_url=self.url,
             headers=self.headers,
@@ -260,7 +260,7 @@ class ZenodoRequests:
             return "view"
 
         try:
-            grants = get_zenodo_access_grants(
+            grants = list_zenodo_access_grants(
                 access_grants_url,
                 base_url=self.url,
                 headers=self.headers,
@@ -333,7 +333,7 @@ class ZenodoRequests:
         print(f"Record {record_id} is not published, so its files can be changed")
         return record
 
-    def delete_file_from_record(
+    def delete_zenodo_record_file(
         self,
         *,
         record_id: int | str,
@@ -345,10 +345,10 @@ class ZenodoRequests:
         if not files_url:
             raise ValueError("Record draft does not provide a files link")
 
-        self.delete_draft_file(files_url=files_url, file_key=file_key)
+        self.delete_zenodo_draft_file(files_url=files_url, file_key=file_key)
         return draft
 
-    def upload_files_to_record(
+    def upload_zenodo_record_files(
         self,
         *,
         record_id: int | str,
@@ -362,7 +362,7 @@ class ZenodoRequests:
         if not files_url:
             raise ValueError("Record draft does not provide a files link")
 
-        self.upload_files_to_draft(
+        self.upload_zenodo_draft_files(
             file_paths=file_paths,
             files_url=files_url,
             on_upload_progress=on_upload_progress,
@@ -370,7 +370,7 @@ class ZenodoRequests:
         )
         return draft
 
-    def delete_draft_file(
+    def delete_zenodo_draft_file(
         self,
         *,
         files_url: str,
@@ -389,7 +389,7 @@ class ZenodoRequests:
             file_key=file_key,
         )
 
-    def upload_files_to_draft(
+    def upload_zenodo_draft_files(
         self,
         file_paths: list[Path],
         files_url: str,
@@ -446,13 +446,13 @@ class ZenodoRequests:
                     # Initializing an InvenioRDM upload creates the file entry
                     # before the content is streamed. Remove that empty entry
                     # when streaming is canceled.
-                    self.delete_draft_file(
+                    self.delete_zenodo_draft_file(
                         files_url=files_url,
                         file_key=path.name,
                     )
                     raise
 
-    def create_minimal_record_draft(
+    def create_zenodo_record_draft_with_files(
         self,
         *,
         file_paths: list[Path],
@@ -473,7 +473,7 @@ class ZenodoRequests:
             raise JobCancelled("Upload canceled")
         files_url = draft["links"]["files"]
 
-        self.upload_files_to_draft(
+        self.upload_zenodo_draft_files(
             file_paths=file_paths,
             files_url=files_url,
             on_upload_progress=on_upload_progress,

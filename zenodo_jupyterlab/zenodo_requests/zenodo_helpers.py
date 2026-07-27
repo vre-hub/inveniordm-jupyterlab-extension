@@ -1,6 +1,6 @@
 from typing import Any
 
-from .zenodo import get_zenodo_files
+from .zenodo import list_zenodo_record_files
 
 
 def include_zenodo_files(
@@ -18,7 +18,7 @@ def include_zenodo_files(
         if not files_url:
             continue
 
-        item["files"] = get_zenodo_files(
+        item["files"] = list_zenodo_record_files(
             files_url,
             base_url=base_url,
             headers=headers,

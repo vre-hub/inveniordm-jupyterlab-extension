@@ -2,8 +2,8 @@ import React from 'react';
 
 import {
   getLatestActiveJobId,
-  MinimalRecordDraftResponse,
-  uploadFilesToRecord
+  ZenodoRecordDraftResponse,
+  uploadZenodoRecordFiles
 } from '../api_calls';
 import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
@@ -42,7 +42,7 @@ export const RecordUpload: React.FC<{
     setMessage(null);
 
     try {
-      const upload = await uploadFilesToRecord(
+      const upload = await uploadZenodoRecordFiles(
         serverSettings,
         recordId,
         filePaths
@@ -54,7 +54,7 @@ export const RecordUpload: React.FC<{
   };
 
   const completeUpload = React.useCallback(
-    (_record: MinimalRecordDraftResponse): void => {
+    (_record: ZenodoRecordDraftResponse): void => {
       setUploadId(null);
       setMessage('Files uploaded.');
       onDone();

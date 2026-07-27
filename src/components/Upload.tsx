@@ -1,8 +1,8 @@
 import React from 'react';
 
 import {
-  MinimalRecordDraftResponse,
-  createMinimalRecordDraft
+  ZenodoRecordDraftResponse,
+  createZenodoRecordDraftWithFiles
 } from '../api_calls';
 import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
@@ -13,7 +13,7 @@ export const Upload: React.FC = () => {
   const serverSettings = useServerSettings();
   const [isCreatingDraft, setIsCreatingDraft] = React.useState(false);
   const [uploadId, setUploadId] = React.useState<string | null>(null);
-  const [result, setResult] = React.useState<MinimalRecordDraftResponse | null>(
+  const [result, setResult] = React.useState<ZenodoRecordDraftResponse | null>(
     null
   );
   const [error, setError] = React.useState<string | null>(null);
@@ -31,7 +31,10 @@ export const Upload: React.FC = () => {
     setMessage(null);
 
     try {
-      const upload = await createMinimalRecordDraft(serverSettings, filePaths);
+      const upload = await createZenodoRecordDraftWithFiles(
+        serverSettings,
+        filePaths
+      );
       setUploadId(upload.job_id);
     } catch (reason) {
       setError(String(reason));
@@ -40,7 +43,7 @@ export const Upload: React.FC = () => {
   };
 
   const completeUpload = React.useCallback(
-    (record: MinimalRecordDraftResponse): void => {
+    (record: ZenodoRecordDraftResponse): void => {
       setResult(record);
       setIsCreatingDraft(false);
       setUploadId(null);

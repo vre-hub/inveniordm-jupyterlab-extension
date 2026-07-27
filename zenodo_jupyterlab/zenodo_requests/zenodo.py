@@ -94,7 +94,7 @@ def _is_api_url(url: str) -> bool:
     return urlparse(url).path.startswith("/api/")
 
 
-def is_zenodo_request_authenticated(
+def check_zenodo_authentication(
     *,
     base_url: str,
     headers: dict[str, str],
@@ -140,7 +140,7 @@ def get_zenodo_me(
     }
 
 
-def get_zenodo_access_grants(
+def list_zenodo_access_grants(
     access_grants_url: str,
     *,
     base_url: str,
@@ -187,7 +187,7 @@ def search_zenodo_records(
     return response.json()
 
 
-def get_zenodo_files(
+def list_zenodo_record_files(
     files_url: str,
     *,
     base_url: str,
@@ -346,7 +346,7 @@ def get_zenodo_user_record(
     return record
 
 
-def get_zenodo_record_details(
+def get_zenodo_record(
     record_id: int | str,
     *,
     base_url: str,

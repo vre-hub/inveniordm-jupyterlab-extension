@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 from zenodo_jupyterlab.routes import (
     ZenodoFileImportCellHandler,
-    ZenodoRecordVersionsHandler,
+    ZenodoRecordVersionCollectionHandler,
 )
 from zenodo_jupyterlab.util.sse import EventBus
 
@@ -113,7 +113,7 @@ def test_create_version_event_contains_new_draft():
         finish=responses.append,
     )
 
-    ZenodoRecordVersionsHandler.post.__wrapped__(handler, "record-1")
+    ZenodoRecordVersionCollectionHandler.post.__wrapped__(handler, "record-1")
 
     event = events.get_nowait()
     assert event.topic == "record.changed.record-1"
