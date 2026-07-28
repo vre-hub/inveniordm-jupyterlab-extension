@@ -18,7 +18,6 @@ export function VersionDropdown({
   React.useEffect(() => {
     void listZenodoRecordVersions(serverSettings, recordId, includeDrafts).then(
       (versions: ZenodoRecordVersion[]) => {
-        console.log('Versions for record', recordId, versions);
         setVersions(versions);
       }
     );

@@ -338,7 +338,6 @@ class ZenodoRequests:
                 f"Record {record_id} is published and cannot be edited as a draft"
             )
 
-        print(f"Record {record_id} is not published, so its files can be changed")
         return record
 
     def delete_zenodo_record_file(
