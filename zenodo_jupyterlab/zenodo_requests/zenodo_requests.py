@@ -12,11 +12,11 @@ from .zenodo import (
     create_zenodo_record_draft,
     create_zenodo_record_version,
     delete_zenodo_draft_file,
-    list_zenodo_access_grants,
     get_zenodo_me,
     get_zenodo_record,
     get_zenodo_record_file,
     get_zenodo_user_record,
+    list_zenodo_access_grants,
     list_zenodo_record_versions,
     list_zenodo_user_records,
     open_zenodo_file,
@@ -170,7 +170,7 @@ class ZenodoRequests:
             record
             for record in family_records
             if str(record.get("parent", {}).get("id")) == str(parent_id)
-            and record.get("status") in {"draft", "new_version_draft"}
+            and record.get("is_draft", False) is True
         ]
         if not drafts:
             return versions

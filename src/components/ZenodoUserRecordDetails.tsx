@@ -11,8 +11,7 @@ import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
 export const ZenodoUserRecordDetails: React.FC<{
   record: ZenodoRecordData;
 }> = ({ record }) => {
-  const isDraft =
-    record.status === 'draft' || record.status === 'new_version_draft';
+  const isDraft = record.is_draft;
   const userPermission = useZenodoRecordPermission(record.id);
   const hasEditingRights =
     userPermission === 'edit' || userPermission === 'manage';

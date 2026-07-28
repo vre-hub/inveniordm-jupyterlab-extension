@@ -41,8 +41,7 @@ function VersionDropdownOption({
   version: ZenodoRecordVersion;
 }): JSX.Element {
   const versionNumber = version.versions.index;
-  const isDraft =
-    version.status === 'draft' || version.status === 'new_version_draft';
+  const isDraft = version.is_draft;
   const id = version.id;
   const label =
     `Version ${versionNumber} (${id})` + (isDraft ? ' (Draft)' : '');

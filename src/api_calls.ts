@@ -158,9 +158,11 @@ export async function getZenodoUserRecord(
   );
 }
 
+//TODO check if this is just ZenodoRecordData or if it is different
 export type ZenodoRecordVersion = {
   id: string;
   status: ZenodoRecordStatus;
+  is_draft: boolean;
   versions: {
     index: number;
   };
@@ -446,6 +448,7 @@ type ZenodoRecordStatus = 'new_version_draft' | 'draft' | 'published';
 
 export type ZenodoRecordData = {
   id: string;
+  is_draft: boolean;
   status: ZenodoRecordStatus;
   metadata?: {
     title?: string;
