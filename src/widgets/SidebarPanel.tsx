@@ -24,7 +24,7 @@ const TABS: SidebarTab[] = [
     label: 'Settings',
     Component: DeveloperSettings
   },
-  { id: 'account', label: 'My Account', Component: ZenodoUserRecordList }
+  { id: 'account', label: 'My Records', Component: ZenodoUserRecordList }
 ];
 
 const Panel: React.FC = () => {
