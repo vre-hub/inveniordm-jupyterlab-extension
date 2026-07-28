@@ -322,9 +322,14 @@ class ZenodoRecordVersionCollectionHandler(APIHandler):
 
     @tornado.web.authenticated
     async def get(self, record_id: str):
+        include_drafts = self.get_query_argument(
+            "include_drafts", "true"
+        ).lower() in ("1", "true")
         try:
             versions = await asyncio.to_thread(
-                self.get_zenodo_requests(self).list_zenodo_record_versions, record_id
+                self.get_zenodo_requests(self).list_zenodo_record_versions,
+                record_id,
+                include_drafts=include_drafts,
             )  # run this in a thread until we have a proper async implementation of the api calls
         except requests.RequestException as error:
             self.set_status(getattr(error.response, "status_code", 502))

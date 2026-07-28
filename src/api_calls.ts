@@ -169,10 +169,14 @@ export type ZenodoRecordVersion = {
 
 export async function listZenodoRecordVersions(
   serverSettings: ServerConnection.ISettings,
-  recordId: string
+  recordId: string,
+  includeDrafts: boolean
 ): Promise<ZenodoRecordVersion[]> {
+  const params = new URLSearchParams({
+    include_drafts: includeDrafts.toString()
+  });
   return await requestAPI<ZenodoRecordVersion[]>(
-    `records/${encodeURIComponent(recordId)}/versions`,
+    `records/${encodeURIComponent(recordId)}/versions?${params.toString()}`,
     serverSettings
   );
 }

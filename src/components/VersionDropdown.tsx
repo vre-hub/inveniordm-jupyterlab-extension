@@ -5,22 +5,24 @@ import { useServerSettings } from '../store';
 
 export function VersionDropdown({
   recordId,
+  includeDrafts,
   onChange
 }: {
   recordId: string;
+  includeDrafts: boolean;
   onChange: (recordId: string) => void;
 }): JSX.Element {
   const serverSettings = useServerSettings();
   const [versions, setVersions] = React.useState<ZenodoRecordVersion[]>([]);
 
   React.useEffect(() => {
-    void listZenodoRecordVersions(serverSettings, recordId).then(
+    void listZenodoRecordVersions(serverSettings, recordId, includeDrafts).then(
       (versions: ZenodoRecordVersion[]) => {
         console.log('Versions for record', recordId, versions);
         setVersions(versions);
       }
     );
-  }, [recordId, serverSettings]);
+  }, [includeDrafts, recordId, serverSettings]);
 
   return (
     <select

@@ -81,7 +81,7 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 | `GET /user/records`                                   | `listZenodoUserRecords`                                      | `GET /api/user/records`, optionally followed by one linked files request per draft or restricted hit  |
 | `GET /user/records/:id`                               | `getZenodoUserRecord`                                        | User-record search, followed by its linked files request if it is a draft or its files are restricted |
 | `GET /records/:id/permission`                         | `getZenodoRecordPermission`                                  | User-record lookup, `/api/me`, and sometimes general record details and/or linked access grants       |
-| `GET /records/:id/versions`                           | `listZenodoRecordVersions`                                   | General versions request plus a targeted user-record lookup or listing used to find a draft           |
+| `GET /records/:id/versions?include_drafts=true`       | `listZenodoRecordVersions`                                   | General versions request, optionally supplemented with a lookup for a draft                           |
 | `POST /records/:id/versions`                          | `createZenodoRecordVersion`                                  | Create a new-version draft, then import the previous files                                            |
 | `POST /user/records/draft-with-files`                 | `createZenodoRecordDraftWithFiles`                           | Create a draft, then initialize, upload, and commit every file                                        |
 | `POST /user/records/:id/files`                        | `uploadZenodoRecordFiles`                                    | `/api/me`, require an editable draft, then upload every file                                          |
@@ -184,6 +184,10 @@ access-grant call:
   - TODO maybe cache user id serverside?
 
 ### `GET /records/:id/versions`
+
+Pass `include_drafts=true` to include an unpublished draft in the returned
+versions. The parameter defaults to `true`; pass `false` to return only the
+published versions from Zenodo's general versions endpoint.
 
 1. Send `GET /api/records/:id/versions` and take its published hits.
 2. If there are no published hits, search

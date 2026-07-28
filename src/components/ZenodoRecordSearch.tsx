@@ -66,6 +66,7 @@ export const ZenodoRecordSearch: React.FC = () => {
           key={result.id}
           initialRecordId={result.id}
           initialRecordValue={result}
+          include_drafts_in_version_dropdown={false}
           fetchRecord={async (id: string): Promise<ZenodoRecordData> => {
             return await getZenodoRecord(serverSettings, id);
           }}

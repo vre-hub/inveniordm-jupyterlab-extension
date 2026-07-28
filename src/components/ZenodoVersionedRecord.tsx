@@ -10,11 +10,13 @@ import { VersionDropdown } from './VersionDropdown';
 export function ZenodoVersionedRecord({
   initialRecordId,
   initialRecordValue,
+  include_drafts_in_version_dropdown,
   fetchRecord,
   renderRecord
 }: {
   initialRecordId: string;
   initialRecordValue?: ZenodoRecordData;
+  include_drafts_in_version_dropdown: boolean;
   fetchRecord: (id: string) => Promise<ZenodoRecordData>;
   renderRecord: (record: ZenodoRecordData) => JSX.Element;
 }): JSX.Element {
@@ -74,6 +76,7 @@ export function ZenodoVersionedRecord({
       {isLoading && <p>Loading...</p>}
       <VersionDropdown
         recordId={recordId}
+        includeDrafts={include_drafts_in_version_dropdown}
         onChange={id => {
           setRecordId(id);
           void loadRecord(id);

@@ -57,6 +57,24 @@ async def test_find_active_download_jobs(jp_fetch):
     assert json.loads(response.body) == {"job_ids": []}
 
 
+async def test_list_record_versions_passes_include_drafts():
+    zenodo_requests = Mock()
+    zenodo_requests.list_zenodo_record_versions.return_value = []
+    responses = []
+    handler = SimpleNamespace(
+        get_query_argument=lambda name, default: "false",
+        get_zenodo_requests=lambda _: zenodo_requests,
+        finish=responses.append,
+    )
+
+    await ZenodoRecordVersionCollectionHandler.get.__wrapped__(handler, "record-1")
+
+    zenodo_requests.list_zenodo_record_versions.assert_called_once_with(
+        "record-1", include_drafts=False
+    )
+    assert json.loads(responses[0]) == []
+
+
 def test_import_cell_reuses_file_metadata_for_download_location(tmp_path):
     destination = tmp_path / "123" / "example.csv"
     destination.parent.mkdir()

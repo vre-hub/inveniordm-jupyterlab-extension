@@ -107,6 +107,7 @@ class ZenodoRequests:
     def list_zenodo_record_versions(
         self,
         record_id: int | str,
+        include_drafts: bool = True,
     ) -> list[dict[str, Any]]:
         response = list_zenodo_record_versions(
             record_id,
@@ -114,6 +115,9 @@ class ZenodoRequests:
             headers=self.headers,
         )
         versions = response.get("hits", {}).get("hits", [])
+
+        if not include_drafts:
+            return versions
 
         # The public versions endpoint only contains published records. For an
         # initial draft there are no published versions from which to derive

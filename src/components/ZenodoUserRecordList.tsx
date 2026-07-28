@@ -62,6 +62,7 @@ function ZenodoUserRecord({
       <ZenodoVersionedRecord
         initialRecordId={initialRecordId}
         initialRecordValue={initialRecordValue}
+        include_drafts_in_version_dropdown={true}
         fetchRecord={async (id: string): Promise<ZenodoRecordData> => {
           return await getZenodoUserRecord(serverSettings, id);
         }}
