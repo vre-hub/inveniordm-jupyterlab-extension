@@ -29,8 +29,8 @@ Bearer token even when calling a public endpoint.
 
 The route name expresses which view is requested. `GET /records/:id` always
 uses the general record API; `GET /user/records/:id` always uses the user-record
-API. There is no automatic fallback between the two except in the permission
-and file/version flows described below.
+API. There is no automatic fallback between the two except in the file/version
+flows described below.
 
 ### Drafts and published records
 
@@ -80,7 +80,7 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 | `GET /events`                                         | —                                                            | None; local server-sent event stream                                                                  |
 | `GET /user/records`                                   | `listZenodoUserRecords`                                      | `GET /api/user/records`, optionally followed by one linked files request per draft or restricted hit  |
 | `GET /user/records/:id`                               | `getZenodoUserRecord`                                        | User-record search, followed by its linked files request if it is a draft or its files are restricted |
-| `GET /records/:id/permission`                         | `getZenodoRecordPermission`                                  | User-record lookup, `/api/me`, and sometimes general record details and/or linked access grants       |
+| `GET /records/:id/permission`                         | `getZenodoRecordPermission`                                  | User-record lookup, followed by linked access grants or an edit-permission user-record query           |
 | `GET /records/:id/versions?include_drafts=true`       | `listZenodoRecordVersions`                                   | General versions request, optionally supplemented with a lookup for a draft                           |
 | `POST /records/:id/versions`                          | `createZenodoRecordVersion`                                  | Create a new-version draft, then import the previous files                                            |
 | `POST /user/records/draft-with-files`                 | `createZenodoRecordDraftWithFiles`                           | Create a draft, then initialize, upload, and commit every file                                        |
@@ -100,7 +100,7 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 Some routes are inherently complex because of how the Zenodo/ InvenioRDM API works:
 
 - Retrieving the file collection for a draft or a record with restricted files from `/api/user/records` requires an extra request
-- There is no API endpoint that simply tells us the permissions the current user has for a specific record. Instead of only sending an authenticated request to the zenodo api, we need to know the user id beforehand (or request it again) and we need the details of the record to infer if the current user is the owner because if we have access because of that, we cannot see that in the access_grants response.
+- There is no API endpoint that simply tells us the permissions the current user has for a specific record. The extension uses the user ID stored during authentication and the user-record details to infer ownership because owner access is not included in the access-grants response. Zenodo also denies editors access to the access-grants endpoint, so edit permission requires a filtered user-record query as a workaround.
 - Getting details for drafts and published records requires us to use two different endpoints, so if we want to make a call to the correct endpoint, we need to infer/cache/send from the client if a specific record is still in the draft stage or not. This is unneccessarily complex, so we usually just make two calls and get the details from the one that succeeds.
 
 ### `GET /records`
@@ -152,21 +152,24 @@ files.
 The route determines the current user's effective `view`, `preview`, `edit`, or
 `manage` permission as follows:
 
-1. Try to retrieve the ID from user records with
-   `GET /api/user/records?...`. File expansion is disabled because permissions
-   only require record metadata.
-2. If no exact user-record hit is found, retrieve general details with
-   `GET /api/records/:id`.
-3. If the user-record request instead fails with `401` or `403`, meaning that the user is not logged in, return `view`
-   immediately. Other HTTP errors are propagated.
-4. Send `GET /api/me` and read the current user's ID.
-5. If that ID occurs in the record's `owners`, return `manage` without querying
-   access grants.
-6. Otherwise, read `links.access_grants` from the record. If there is no such
-   link, return `view`.
-7. Send `GET` to `links.access_grants`. If that request returns `403`, return
-   `view`; propagate other errors.
-8. Keep grants whose subject is the current user and whose permission is one of
+1. Read the current user's cached Zenodo ID. It is stored with the access token
+   during the OAuth callback (or obtained from the proxy authentication status).
+   If no user ID is available, the request fails.
+2. Retrieve the record from user records with `GET /api/user/records?...`.
+   File expansion is disabled because permissions only require record metadata.
+   There is no fallback to the general records API.
+3. If the cached user ID matches `parent.access.owned_by.user`, return `manage`
+   without querying access grants.
+4. Otherwise, read `links.access_grants` from the record. If there is no such
+   link, the request fails because permission cannot be determined.
+5. Send `GET` to `links.access_grants`.
+6. If the access-grants request returns `403`, check for edit permission with
+   `GET /api/user/records?q=id:<record-id> AND parent.access.grant_tokens:<token>&page=1&size=1`.
+   The grant token is the dot-separated Base64 encoding of `user`, the cached
+   user ID, and `edit`. Return `edit` when the query has a hit and `view`
+   otherwise. This workaround is needed because editors cannot read access
+   grants. Other access-grant errors are propagated.
+7. When access grants can be read, keep grants whose subject is the current user and whose permission is one of
    `manage`, `edit`, `preview`, or `view`. Return the highest permission in that
    order, defaulting to `view`.
 
@@ -179,9 +182,8 @@ access-grant call:
 - The access-grants response can be empty when only the owner has access. It
   therefore cannot say whether the current user is the owner; the record's
   `owners` field is needed to infer `manage` rights.
-- `/api/me` is needed to determine which owner or grant subject represents the
-  current token. The server does not cache the zenodo user id right now.
-  - TODO maybe cache user id serverside?
+- The cached Zenodo user ID determines which owner or grant subject represents
+  the current token without an additional `/api/me` request.
 
 ### `GET /records/:id/versions`
 
@@ -270,9 +272,10 @@ only removes that local token; it does not call Zenodo to revoke it.
 
 ### `GET /me`
 
-Send `GET /api/me` and return only `email` and `id`. The request is needed to
-identify the Zenodo account represented by the current token. The same profile
-call is reused internally for permission checks and upload-job scoping.
+Send `GET /api/me` and return only `email` and `id`. The request identifies the
+Zenodo account represented by the current token. Permission checks use the user
+ID cached during authentication instead; the profile call is still reused for
+upload-job scoping.
 
 ### `POST /records/:id/versions`
 
