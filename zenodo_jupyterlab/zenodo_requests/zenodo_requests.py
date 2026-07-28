@@ -21,7 +21,6 @@ from .zenodo import (
     get_zenodo_record,
     get_zenodo_record_file,
     get_zenodo_user_record,
-    list_zenodo_access_grants,
     list_zenodo_record_versions,
     list_zenodo_user_records,
     open_zenodo_file,
@@ -249,73 +248,30 @@ class ZenodoRequests:
         user_id = self.zenodo_user_id
         if user_id is None:
             raise ValueError(
-                "Zenodo user ID is not set for this ZenodoRequests instance"
+                "Zenodo user ID is not set. Cannot determine record permission."
             )
 
         # Get the record details
+        # This fails if we have no special permissions or only "view" permission
         record = self.get_zenodo_user_record(record_id, include_files=False)
 
-        # If user is owner, return "manage"
-        owner_id = (
-            record.get("parent", {}).get("access", {}).get("owned_by", {}).get("user")
-        )
-        if str(owner_id) == user_id:
+        # if record.parent.access.grants exists, return "manage"
+        # this is the case if we are the owner of the record or have been granted manage access
+        print(f"parent: {record.get('parent', {})}")
+        if record.get("parent", {}).get("access", {}).get("grants") is not None:
             return "manage"
 
-        # If user is not owner, check access grants
-        access_grants_url = record.get("links", {}).get("access_grants")
-        if not access_grants_url:
-            raise ValueError("Record does not provide an access grants link")
-
-        try:
-            grants = list_zenodo_access_grants(
-                access_grants_url,
-                base_url=self.url,
-                headers=self.headers,
-            )
-        except requests.RequestException as error:
-            if getattr(error.response, "status_code", None) == 403:
-                has_edit = check_user_record_permission_workaround(
-                    record_id=record_id,
-                    user_id=user_id,
-                    permission_to_check="edit",
-                    base_url=self.url,
-                    headers=self.headers,
-                )
-                if has_edit:
-                    return "edit"
-                return "preview"
-            raise
-
-        permissions: list[ZenodoPermission] = []
-        for grant in grants.get("hits", {}).get("hits", []):
-            subject = grant.get("subject", {})
-            permission = grant.get("permission")
-            if (
-                subject.get("type") == "user"
-                and str(subject.get("id")) == user_id
-                and permission in {"manage", "edit", "preview", "view"}
-            ):
-                permissions.append(permission)
-
-        # select the highest permission the user has, defaulting to "view" if none found
-        permission_order: tuple[ZenodoPermission, ...] = (
-            "manage",
-            "edit",
-            "preview",
-            "view",
+        # the only options that are left are "edit" and "preview"
+        has_edit = check_user_record_permission_workaround(
+            record_id=record_id,
+            user_id=user_id,
+            permission_to_check="edit",
+            base_url=self.url,
+            headers=self.headers,
         )
-        perm = next(
-            (
-                permission
-                for permission in permission_order
-                if permission in permissions
-            ),
-            "view",
-        )
-        if perm not in permission_order:
-            raise ValueError(f"Unexpected permission value: {perm}")
-        return perm
+        if has_edit:
+            return "edit"
+        return "preview"
 
     def create_zenodo_record_version(
         self,
