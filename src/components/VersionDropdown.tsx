@@ -18,7 +18,10 @@ export function VersionDropdown({
   React.useEffect(() => {
     void listZenodoRecordVersions(serverSettings, recordId, includeDrafts).then(
       (versions: ZenodoRecordVersion[]) => {
-        setVersions(versions);
+        const sortedVersions = versions.sort(
+          (a, b) => a.versions.index - b.versions.index
+        );
+        setVersions(sortedVersions);
       }
     );
   }, [includeDrafts, recordId, serverSettings]);
