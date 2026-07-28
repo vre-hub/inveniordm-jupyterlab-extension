@@ -515,7 +515,6 @@ def check_user_record_permission_workaround(
         f"{encoded_subject_type}.{encoded_user_id}.{encoded_permission}"
     )
     query = f"id:{record_id} AND parent.access.grant_tokens:{encoded_grant_token}"
-    print(f"Checking permission with query: {query}")
     response = list_zenodo_user_records(
         base_url=base_url,
         headers=headers,
@@ -524,5 +523,4 @@ def check_user_record_permission_workaround(
         size=1,
     )
     has_permission = len(response) > 0
-    print(f"User has permission {permission_to_check}: {has_permission}")
     return has_permission
