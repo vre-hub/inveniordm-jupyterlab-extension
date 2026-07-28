@@ -4,6 +4,10 @@ from typing import Any
 
 import requests
 
+from zenodo_jupyterlab.zenodo_requests.zenodo_helpers import (
+    include_zenodo_file_if_draft_or_restricted,
+)
+
 from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
 from ..util.progress_reporting_reader import ProgressReportingReader
 from .zenodo import (
@@ -23,7 +27,6 @@ from .zenodo import (
     search_zenodo_records,
     upload_zenodo_draft_file,
 )
-from .zenodo_helpers import include_zenodo_files
 
 
 @dataclass
@@ -66,7 +69,6 @@ class ZenodoRequests:
         size: int = 10,
         sort: str = "bestmatch",
         allversions: bool = False,
-        include_files: bool = False,
     ) -> dict[str, Any]:
         records = search_zenodo_records(
             query,
@@ -77,13 +79,6 @@ class ZenodoRequests:
             sort=sort,
             allversions=allversions,
         )
-        if include_files:
-            include_zenodo_files(
-                records.get("hits", {}).get("hits", []),
-                base_url=self.url,
-                headers=self.headers,
-            )
-
         return records
 
     def list_zenodo_user_records(
@@ -100,11 +95,12 @@ class ZenodoRequests:
             size=size,
         )
         if include_files:
-            include_zenodo_files(
-                records,
-                base_url=self.url,
-                headers=self.headers,
-            )
+            for record in records:
+                include_zenodo_file_if_draft_or_restricted(
+                    record,
+                    base_url=self.url,
+                    headers=self.headers,
+                )
 
         return records
 
@@ -201,8 +197,8 @@ class ZenodoRequests:
         if include_files:
             # For user records that are drafts, the files are not included here,
             # so fetch them separately when the caller needs them.
-            include_zenodo_files(
-                [user_record],
+            include_zenodo_file_if_draft_or_restricted(
+                user_record,
                 base_url=self.url,
                 headers=self.headers,
             )
@@ -211,8 +207,6 @@ class ZenodoRequests:
     def get_zenodo_record(
         self,
         record_id: int | str,
-        *,
-        include_files: bool = True,
     ) -> dict[str, Any]:
         """Return a public Zenodo record, optionally expanding its linked files."""
         record = get_zenodo_record(
@@ -220,12 +214,6 @@ class ZenodoRequests:
             base_url=self.url,
             headers=self.headers,
         )
-        if include_files:
-            include_zenodo_files(
-                [record],
-                base_url=self.url,
-                headers=self.headers,
-            )
         return record
 
     def get_zenodo_record_permission(
@@ -237,7 +225,7 @@ class ZenodoRequests:
         try:
             record = self.get_zenodo_user_record(record_id, include_files=False)
         except ValueError:
-            record = self.get_zenodo_record(record_id, include_files=False)
+            record = self.get_zenodo_record(record_id)
         except requests.RequestException as error:
             if getattr(error.response, "status_code", None) in (401, 403):
                 return "view"

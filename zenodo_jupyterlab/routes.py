@@ -145,10 +145,6 @@ class ZenodoRecordCollectionHandler(APIHandler):
 
     @tornado.web.authenticated
     def get(self):
-        include_files = self.get_query_argument("include_files", "false").lower() in (
-            "1",
-            "true",
-        )
 
         try:
             # TODO refactor so we do not specify defaults twice (here and in zenodo.py)
@@ -159,7 +155,6 @@ class ZenodoRecordCollectionHandler(APIHandler):
                 sort=self.get_query_argument("sort", "bestmatch"),
                 allversions=self.get_query_argument("allversions", "false").lower()
                 in ("1", "true"),
-                include_files=include_files,
             )
         except ValueError:
             self.set_status(400)

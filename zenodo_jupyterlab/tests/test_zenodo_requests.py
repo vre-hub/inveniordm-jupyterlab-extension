@@ -237,11 +237,10 @@ def test_public_record_permission_falls_back_to_records_api(monkeypatch):
     )
 
     assert requests.get_zenodo_record_permission("public-123") == "view"
-    assert calls == [(("public-123",), {"include_files": False})]
+    assert calls == [(("public-123",), {})]
 
 
-@pytest.mark.parametrize("include_files", [True, False])
-def test_get_zenodo_record_optionally_includes_files(monkeypatch, include_files):
+def test_get_zenodo_record_uses_files_from_public_record_response(monkeypatch):
     record = {
         "id": "public-123",
         "links": {"files": "https://zenodo.org/api/records/public-123/files"},
@@ -254,22 +253,21 @@ def test_get_zenodo_record_optionally_includes_files(monkeypatch, include_files)
     )
     monkeypatch.setattr(
         zenodo_requests_module,
-        "include_zenodo_files",
+        "include_zenodo_file_if_draft_or_restricted",
         lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
     )
 
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
 
-    assert (
-        requests.get_zenodo_record("public-123", include_files=include_files) is record
-    )
-    assert bool(include_files_calls) is include_files
+    assert requests.get_zenodo_record("public-123") is record
+    assert include_files_calls == []
 
 
 @pytest.mark.parametrize("include_files", [True, False])
 def test_get_zenodo_user_record_optionally_includes_files(monkeypatch, include_files):
     record = {
         "id": "draft-123",
+        "is_draft": True,
         "links": {"files": "https://zenodo.org/api/records/draft-123/draft/files"},
     }
     include_files_calls = []
@@ -280,7 +278,7 @@ def test_get_zenodo_user_record_optionally_includes_files(monkeypatch, include_f
     )
     monkeypatch.setattr(
         zenodo_requests_module,
-        "include_zenodo_files",
+        "include_zenodo_file_if_draft_or_restricted",
         lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
     )
 
@@ -291,6 +289,38 @@ def test_get_zenodo_user_record_optionally_includes_files(monkeypatch, include_f
         is record
     )
     assert bool(include_files_calls) is include_files
+
+
+@pytest.mark.parametrize("include_files", [True, False])
+def test_list_zenodo_user_records_optionally_includes_files(
+    monkeypatch, include_files
+):
+    records = [
+        {"id": "draft-123", "is_draft": True},
+        {
+            "id": "restricted-123",
+            "is_draft": False,
+            "access": {"files": "restricted"},
+        },
+    ]
+    include_files_calls = []
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "list_zenodo_user_records",
+        lambda *args, **kwargs: records,
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "include_zenodo_file_if_draft_or_restricted",
+        lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
+    )
+
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+
+    assert requests.list_zenodo_user_records(include_files=include_files) is records
+    assert [call[0][0] for call in include_files_calls] == (
+        records if include_files else []
+    )
 
 
 def test_list_zenodo_access_grants_follows_record_link(monkeypatch):
@@ -581,12 +611,14 @@ def test_zenodo_requests_extracts_record_versions(monkeypatch):
     ]
     draft = {
         "id": "567677",
+        "is_draft": True,
         "parent": {"id": "515274"},
         "status": "new_version_draft",
         "versions": {"index": 3},
     }
     unrelated_draft = {
         "id": "other-draft",
+        "is_draft": True,
         "parent": {"id": "other-parent"},
         "status": "new_version_draft",
         "versions": {"index": 10},

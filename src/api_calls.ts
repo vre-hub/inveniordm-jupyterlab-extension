@@ -112,7 +112,6 @@ export async function searchZenodoRecords(
   query: string
 ): Promise<unknown> {
   const params = new URLSearchParams({ q: query });
-  params.append('include_files', 'true');
   return await requestAPI(`records?${params.toString()}`, serverSettings);
 }
 
