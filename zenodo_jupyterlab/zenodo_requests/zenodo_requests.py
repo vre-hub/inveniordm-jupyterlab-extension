@@ -162,7 +162,8 @@ class ZenodoRequests:
             family_records = list_zenodo_user_records(
                 base_url=self.url,
                 headers=self.headers,
-                size=25,  # TODO handle if this is too small, instead check if request with ?q=id:parent?id and taking the first result works
+                query=f"parent.id:{parent_id}",
+                size=25,  # TODO handle if this is too small
                 allversions=True,
             )
         except requests.HTTPError as error:
