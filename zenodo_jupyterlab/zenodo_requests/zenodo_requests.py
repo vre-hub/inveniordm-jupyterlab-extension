@@ -140,6 +140,11 @@ class ZenodoRequests:
         # Try to find a new version draft of the record and include it in the list of versions if it exists
         # (Because drafts are not included in the response of the /api/records/{record_id}/versions endpoint)
         # Strategy: find the parent ID of the record, then list all user records and find the newest draft with that parent ID
+
+        # TODO we only need to do that if there is something newer than the latest published version
+        # so we can change this to only atttempt to find the new version draft if record.versions.is_latest_draft is false
+        # because that is false for the latest draft or published version also
+
         parent_id = next(
             (
                 version.get("parent", {}).get("id")
