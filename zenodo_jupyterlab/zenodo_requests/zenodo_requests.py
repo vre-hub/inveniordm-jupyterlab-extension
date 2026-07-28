@@ -236,15 +236,13 @@ class ZenodoRequests:
     ) -> ZenodoPermission:
         """Return the authenticated user's effective permission for a record."""
         # Get the record details (either from user records or public record details)
+        # TODO only get the user record details because we dont need permissions elsewhere
         try:
             record = self.get_zenodo_user_record(record_id, include_files=False)
         except ValueError:
             record = self.get_zenodo_record(record_id)
-        except requests.RequestException as error:
-            if getattr(error.response, "status_code", None) in (401, 403):
-                return "view"
-            else:
-                raise
+        except requests.RequestException:
+            raise
 
         # Get user id
         user_id = self.zenodo_user_id
@@ -259,7 +257,7 @@ class ZenodoRequests:
         # If user is not owner, check access grants
         access_grants_url = record.get("links", {}).get("access_grants")
         if not access_grants_url:
-            return "view"
+            raise ValueError("Record does not provide an access grants link")
 
         try:
             grants = list_zenodo_access_grants(
@@ -269,6 +267,7 @@ class ZenodoRequests:
             )
         except requests.RequestException as error:
             if getattr(error.response, "status_code", None) == 403:
+                # TODO this is wrong, this can also mean "edit" (until editors can manage access grants, planned feature)
                 return "view"
             raise
 
