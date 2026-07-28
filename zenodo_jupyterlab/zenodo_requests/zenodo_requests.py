@@ -13,6 +13,7 @@ from ..util.progress_reporting_reader import ProgressReportingReader
 from .zenodo import (
     ZenodoFileResponse,
     ZenodoPermission,
+    check_user_record_permission_workaround,
     create_zenodo_record_draft,
     create_zenodo_record_version,
     delete_zenodo_draft_file,
@@ -234,18 +235,16 @@ class ZenodoRequests:
         self,
         record_id: int | str,
     ) -> ZenodoPermission:
-        """Return the authenticated user's effective permission for a record."""
-        # Get the record details (either from user records or public record details)
-        # TODO only get the user record details because we dont need permissions elsewhere
-        try:
-            record = self.get_zenodo_user_record(record_id, include_files=False)
-        except ValueError:
-            record = self.get_zenodo_record(record_id)
-        except requests.RequestException:
-            raise
-
+        """Return the authenticated user's effective permission for a user record."""
         # Get user id
         user_id = self.zenodo_user_id
+        if user_id is None:
+            raise ValueError(
+                "Zenodo user ID is not set for this ZenodoRequests instance"
+            )
+
+        # Get the record details
+        record = self.get_zenodo_user_record(record_id, include_files=False)
 
         # If user is owner, return "manage"
         owner_id = (
@@ -267,7 +266,15 @@ class ZenodoRequests:
             )
         except requests.RequestException as error:
             if getattr(error.response, "status_code", None) == 403:
-                # TODO this is wrong, this can also mean "edit" (until editors can manage access grants, planned feature)
+                has_edit = check_user_record_permission_workaround(
+                    record_id=record_id,
+                    user_id=user_id,
+                    permission_to_check="edit",
+                    base_url=self.url,
+                    headers=self.headers,
+                )
+                if has_edit:
+                    return "edit"
                 return "view"
             raise
 

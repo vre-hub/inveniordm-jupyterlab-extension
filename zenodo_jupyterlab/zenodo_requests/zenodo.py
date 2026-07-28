@@ -3,6 +3,7 @@ Wrapper for the raw Zenodo API requests, using the requests library.
 TODO consider using httpx instead of requests, for async support.
 """
 
+import base64
 from collections.abc import Iterable
 from typing import Any, Literal, Protocol
 from urllib.parse import quote, urljoin, urlparse, urlunparse
@@ -492,3 +493,36 @@ def delete_zenodo_draft_file(
         timeout=10,
     )
     response.raise_for_status()
+
+
+def check_user_record_permission_workaround(
+    record_id: int | str,
+    user_id: int | str,
+    permission_to_check: ZenodoPermission,
+    *,
+    base_url: str,
+    headers: dict[str, str] | None,
+) -> bool:
+    """
+    Check if a user has a specific permission on a record.
+    Do this by querying /api/user/records?q=id:<record_id> AND parent.access.grant_tokens:<base64(subject_type).base64(subject_id).base64(permission)>
+    """
+    subject_type = "user"
+    encoded_subject_type = base64.b64encode(subject_type.encode()).decode()
+    encoded_user_id = base64.b64encode(str(user_id).encode()).decode()
+    encoded_permission = base64.b64encode(permission_to_check.encode()).decode()
+    encoded_grant_token = (
+        f"{encoded_subject_type}.{encoded_user_id}.{encoded_permission}"
+    )
+    query = f"id:{record_id} AND parent.access.grant_tokens:{encoded_grant_token}"
+    print(f"Checking permission with query: {query}")
+    response = list_zenodo_user_records(
+        base_url=base_url,
+        headers=headers,
+        query=query,
+        page=1,
+        size=1,
+    )
+    has_permission = len(response) > 0
+    print(f"User has permission {permission_to_check}: {has_permission}")
+    return has_permission
