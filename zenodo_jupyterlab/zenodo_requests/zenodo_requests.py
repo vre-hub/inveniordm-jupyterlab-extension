@@ -257,7 +257,6 @@ class ZenodoRequests:
 
         # if record.parent.access.grants exists, return "manage"
         # this is the case if we are the owner of the record or have been granted manage access
-        print(f"parent: {record.get('parent', {})}")
         if record.get("parent", {}).get("access", {}).get("grants") is not None:
             return "manage"
 
