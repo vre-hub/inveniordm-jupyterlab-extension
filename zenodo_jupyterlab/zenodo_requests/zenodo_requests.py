@@ -284,7 +284,7 @@ class ZenodoRequests:
                 )
                 if has_edit:
                     return "edit"
-                return "view"
+                return "preview"
             raise
 
         permissions: list[ZenodoPermission] = []

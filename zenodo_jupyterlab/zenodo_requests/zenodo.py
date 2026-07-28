@@ -10,7 +10,9 @@ from urllib.parse import quote, urljoin, urlparse, urlunparse
 
 import requests
 
-ZenodoPermission = Literal["manage", "edit", "preview", "view"]
+ZenodoPermission = Literal[
+    "manage", "edit", "preview", "view"
+]  # "preview" means "preview drafts", "view" means "view restricted files"
 
 
 class ZenodoFileResponse(Protocol):
