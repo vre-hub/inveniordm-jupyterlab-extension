@@ -133,9 +133,9 @@ class ZenodoRequests:
                     raise
                 return []
 
-        # Try to find a draft version of the record and include it in the list of versions if it exists
+        # Try to find a new version draft of the record and include it in the list of versions if it exists
         # (Because drafts are not included in the response of the /api/records/{record_id}/versions endpoint)
-
+        # Strategy: find the parent ID of the record, then list all user records and find the newest draft with that parent ID
         parent_id = next(
             (
                 version.get("parent", {}).get("id")
@@ -176,8 +176,16 @@ class ZenodoRequests:
             key=lambda record: record.get("versions", {}).get("index", -1),
         )
         draft_id = str(newest_draft.get("id"))
+
+        # If the newest draft is a published version that is being edited,
+        # it is already included in the versions list
+        # because the public versions endpoint includes published records,
+        # so we don't need to add it again.
+        deduplicated_versions = [
+            version for version in versions if str(version.get("id")) != draft_id
+        ]
         return [
-            *[version for version in versions if str(version.get("id")) != draft_id],
+            *deduplicated_versions,
             newest_draft,
         ]
 
