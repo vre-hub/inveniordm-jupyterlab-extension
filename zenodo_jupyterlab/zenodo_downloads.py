@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 
 from .util.job_types import (
     CancelCheck,
@@ -21,31 +20,26 @@ class ZenodoDownloads:
     def __init__(self, downloads_dir: Path):
         self.location_manager = ZenodoDownloadLocationManager(downloads_dir)
 
-    def get_download_location_from_metadata(
+    def get_download_location(
         self,
-        file_metadata: dict[str, Any],
         *,
         record_id: int | str,
+        file_key: str,
     ) -> Path:
-        return self.location_manager.download_location_from_metadata(
-            file_metadata,
+        return self.location_manager.download_location(
             record_id=record_id,
+            file_key=file_key,
         )
 
     def get_download_status(
         self,
-        zenodo_requests: ZenodoFileSource,
         *,
         record_id: int | str,
         file_key: str,
     ) -> dict[str, object]:
-        file_metadata = zenodo_requests.get_zenodo_record_file(
+        existing_file = self.location_manager.find_downloaded_file(
             record_id=record_id,
             file_key=file_key,
-        )
-        existing_file = self.location_manager.find_downloaded_file_from_metadata(
-            file_metadata,
-            record_id=record_id,
         )
         return {
             "downloaded": existing_file is not None,
@@ -54,18 +48,13 @@ class ZenodoDownloads:
 
     def delete_download(
         self,
-        zenodo_requests: ZenodoFileSource,
         *,
         record_id: int | str,
         file_key: str,
     ) -> dict[str, object]:
-        file_metadata = zenodo_requests.get_zenodo_record_file(
+        existing_file = self.location_manager.find_downloaded_file(
             record_id=record_id,
             file_key=file_key,
-        )
-        existing_file = self.location_manager.find_downloaded_file_from_metadata(
-            file_metadata,
-            record_id=record_id,
         )
         if existing_file is None:
             return {"deleted": False, "path": None}
@@ -92,9 +81,9 @@ class ZenodoDownloads:
         ).get("content")
         if not file_url:
             raise ValueError("Missing file download metadata")
-        destination = self.location_manager.download_location_from_metadata(
-            file_metadata,
+        destination = self.location_manager.download_location(
             record_id=record_id,
+            file_key=file_key,
         )
 
         response = zenodo_requests.open_zenodo_file(file_url=file_url)

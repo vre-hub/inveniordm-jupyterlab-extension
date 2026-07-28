@@ -746,7 +746,6 @@ class ZenodoFileDownloadHandler(APIHandler):
 
         try:
             result = self.get_zenodo_download_manager(self).delete_download(
-                self.get_zenodo_requests(self),
                 record_id=record_id,
                 file_key=file_key,
             )
@@ -789,7 +788,6 @@ class ZenodoFileDownloadStatusHandler(APIHandler):
 
         try:
             status = self.get_zenodo_download_manager(self).get_download_status(
-                self.get_zenodo_requests(self),
                 record_id=record_id,
                 file_key=file_key,
             )
@@ -825,16 +823,11 @@ class ZenodoFileImportCellHandler(APIHandler):
             return
 
         try:
-            zenodo_requests = self.get_zenodo_requests(self)
-            file_metadata = zenodo_requests.get_zenodo_record_file(
-                record_id=record_id,
-                file_key=file_key,
-            )
             destination = self.get_zenodo_download_manager(
                 self
-            ).get_download_location_from_metadata(
-                file_metadata,
+            ).get_download_location(
                 record_id=record_id,
+                file_key=file_key,
             )
             if not destination.exists():
                 raise ValueError("Zenodo file has not been downloaded yet")
@@ -842,7 +835,6 @@ class ZenodoFileImportCellHandler(APIHandler):
                 path=destination,
                 record_id=record_id,
                 file_key=file_key,
-                file_metadata=file_metadata,
             )
         except ValueError as error:
             self.set_status(400)

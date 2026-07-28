@@ -100,16 +100,13 @@ def test_search_records_passes_include_files():
     assert json.loads(responses[0]) == {"hits": {"hits": []}}
 
 
-def test_import_cell_reuses_file_metadata_for_download_location(tmp_path):
+def test_import_cell_constructs_download_location_without_metadata_lookup(tmp_path):
     destination = tmp_path / "123" / "example.csv"
     destination.parent.mkdir()
     destination.touch()
-    file_metadata = {"filename": "example.csv"}
-
     zenodo_requests = Mock()
-    zenodo_requests.get_zenodo_record_file.return_value = file_metadata
     download_manager = Mock()
-    download_manager.get_download_location_from_metadata.return_value = destination
+    download_manager.get_download_location.return_value = destination
     responses = []
     handler = SimpleNamespace(
         get_json_body=lambda: {"record_id": "123", "file_key": "example.csv"},
@@ -120,13 +117,10 @@ def test_import_cell_reuses_file_metadata_for_download_location(tmp_path):
 
     ZenodoFileImportCellHandler.post.__wrapped__(handler)
 
-    zenodo_requests.get_zenodo_record_file.assert_called_once_with(
+    zenodo_requests.get_zenodo_record_file.assert_not_called()
+    download_manager.get_download_location.assert_called_once_with(
         record_id="123",
         file_key="example.csv",
-    )
-    download_manager.get_download_location_from_metadata.assert_called_once_with(
-        file_metadata,
-        record_id="123",
     )
     assert len(responses) == 1
     assert json.loads(responses[0])["metadata_zenodo_jupyterlab"] == {

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 
 from .util.job_manager import JobContext, JobManager, ProgressListener
 from .util.job_types import JobProgress
@@ -62,37 +61,33 @@ class ZenodoDownloadManager:
 
     def get_download_status(
         self,
-        zenodo_requests: ZenodoFileSource,
         *,
         record_id: int | str,
         file_key: str,
     ) -> dict[str, object]:
         return self.zenodo_downloads.get_download_status(
-            zenodo_requests,
             record_id=record_id,
             file_key=file_key,
         )
 
     def delete_download(
         self,
-        zenodo_requests: ZenodoFileSource,
         *,
         record_id: int | str,
         file_key: str,
     ) -> dict[str, object]:
         return self.zenodo_downloads.delete_download(
-            zenodo_requests,
             record_id=record_id,
             file_key=file_key,
         )
 
-    def get_download_location_from_metadata(
+    def get_download_location(
         self,
-        file_metadata: dict[str, Any],
         *,
         record_id: int | str,
+        file_key: str,
     ) -> Path:
-        return self.zenodo_downloads.get_download_location_from_metadata(
-            file_metadata,
+        return self.zenodo_downloads.get_download_location(
             record_id=record_id,
+            file_key=file_key,
         )
