@@ -72,7 +72,13 @@ export function ZenodoVersionedRecord({
   });
 
   return (
-    <div>
+    <div
+      style={{
+        border: '1px solid #ccc',
+        padding: '1rem',
+        borderRadius: '0.5rem'
+      }}
+    >
       {isLoading && <p>Loading...</p>}
       <VersionDropdown
         recordId={recordId}
