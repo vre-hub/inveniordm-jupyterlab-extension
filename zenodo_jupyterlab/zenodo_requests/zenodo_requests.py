@@ -183,23 +183,17 @@ class ZenodoRequests:
         if not drafts:
             return versions
 
-        newest_draft = max(
-            drafts,
-            key=lambda record: record.get("versions", {}).get("index", -1),
-        )
-        draft_id = str(newest_draft.get("id"))
-
-        # If the newest draft is a published version that is being edited,
-        # it is already included in the versions list
-        # because the public versions endpoint includes published records,
-        # so we don't need to add it again.
-        deduplicated_versions = [
-            version for version in versions if str(version.get("id")) != draft_id
-        ]
-        return [
-            *deduplicated_versions,
-            newest_draft,
-        ]
+        # New version drafts are not included in the public versions endpoint,
+        # so we need to query the user records endpoint to find it if it exists.
+        # Also, drafts may represent published versions that are being edited, in
+        # which case the public versions endpoint already returned a record with the same ID,
+        # but we want to return the draft because we assume the user is interested in editing it.
+        # Therefore, add every draft after the published versions
+        # so that it replaces the published representation during deduplication (if present).
+        versions_by_id = {
+            str(version.get("id")): version for version in [*versions, *drafts]
+        }
+        return list(versions_by_id.values())
 
     def get_zenodo_user_record(
         self,

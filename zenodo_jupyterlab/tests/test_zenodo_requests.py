@@ -593,7 +593,7 @@ def test_empty_record_versions_propagate_other_draft_errors(monkeypatch):
     assert raised.value is error
 
 
-def test_zenodo_requests_extracts_record_versions(monkeypatch):
+def test_record_versions_extracts_all_drafts_and_prefers_them(monkeypatch):
     calls = []
     versions = [
         {
@@ -609,12 +609,19 @@ def test_zenodo_requests_extracts_record_versions(monkeypatch):
             "versions": {"index": 1},
         },
     ]
-    draft = {
+    new_version_draft = {
         "id": "567677",
         "is_draft": True,
         "parent": {"id": "515274"},
         "status": "new_version_draft",
         "versions": {"index": 3},
+    }
+    edited_version_draft = {
+        "id": "518963",
+        "is_draft": True,
+        "parent": {"id": "515274"},
+        "status": "draft",
+        "versions": {"index": 2},
     }
     unrelated_draft = {
         "id": "other-draft",
@@ -632,18 +639,29 @@ def test_zenodo_requests_extracts_record_versions(monkeypatch):
         zenodo_requests_module,
         "list_zenodo_user_records",
         lambda *args, **kwargs: (
-            calls.append((args, kwargs)) or [*versions, draft, unrelated_draft]
+            calls.append((args, kwargs))
+            or [
+                *versions,
+                new_version_draft,
+                edited_version_draft,
+                unrelated_draft,
+            ]
         ),
     )
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
 
-    assert requests.list_zenodo_record_versions("518963") == [*versions, draft]
+    assert requests.list_zenodo_record_versions("518963") == [
+        edited_version_draft,
+        versions[1],
+        new_version_draft,
+    ]
     assert calls == [
         (
             (),
             {
                 "base_url": "https://zenodo.org",
                 "headers": {"Authorization": "x"},
+                "query": "parent.id:515274",
                 "size": 25,
                 "allversions": True,
             },

@@ -185,7 +185,7 @@ access-grant call:
 
 ### `GET /records/:id/versions`
 
-Pass `include_drafts=true` to include an unpublished draft in the returned
+Pass `include_drafts=true` to include unpublished drafts (either new version drafts or drafts of old versions being edited) in the returned
 versions. The parameter defaults to `true`; pass `false` to return only the
 published versions from Zenodo's general versions endpoint.
 
@@ -196,11 +196,11 @@ published versions from Zenodo's general versions endpoint.
    as no accessible record and return an empty list.
 3. Otherwise, obtain the published hits' parent ID, which identifies the
    version family.
-4. Send `GET /api/user/records?page=1&size=25&allversions=true`.
-5. Keep records whose `is_draft` field is true and whose parent ID matches. If
-   more than one matches, select the one with the greatest `versions.index`.
-6. Append that draft to the published versions, replacing a published hit with
-   the same ID if necessary.
+4. Send
+   `GET /api/user/records?q=parent.id:<parent-id>&page=1&size=25&allversions=true`.
+5. Keep all records whose `is_draft` field is true and whose parent ID matches.
+6. Append those drafts to the published versions and deduplicate by record ID,
+   preferring the draft representation when a published hit has the same ID.
 
 The general versions call is the authoritative list of published versions but
 does not include drafts. The targeted user-record lookup handles a first-version
