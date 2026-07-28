@@ -382,6 +382,39 @@ def test_list_zenodo_user_records_optionally_includes_files(monkeypatch, include
     )
 
 
+@pytest.mark.parametrize("include_files", [True, False])
+def test_search_zenodo_records_optionally_includes_files(monkeypatch, include_files):
+    records = {
+        "hits": {
+            "hits": [
+                {"id": "public-123", "access": {"files": "public"}},
+                {"id": "restricted-123", "access": {"files": "restricted"}},
+            ]
+        }
+    }
+    include_files_calls = []
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "search_zenodo_records",
+        lambda *args, **kwargs: records,
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "include_zenodo_file_if_draft_or_restricted",
+        lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
+    )
+
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+
+    assert (
+        requests.search_zenodo_records(query="climate", include_files=include_files)
+        is records
+    )
+    assert [call[0][0] for call in include_files_calls] == (
+        records["hits"]["hits"] if include_files else []
+    )
+
+
 def test_list_zenodo_access_grants_follows_record_link(monkeypatch):
     calls = []
     monkeypatch.setattr(

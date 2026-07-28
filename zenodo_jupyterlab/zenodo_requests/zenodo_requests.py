@@ -70,6 +70,7 @@ class ZenodoRequests:
         size: int = 10,
         sort: str = "bestmatch",
         allversions: bool = False,
+        include_files: bool = False,
     ) -> dict[str, Any]:
         records = search_zenodo_records(
             query,
@@ -80,6 +81,14 @@ class ZenodoRequests:
             sort=sort,
             allversions=allversions,
         )
+        if include_files:
+            for record in records.get("hits", {}).get("hits", []):
+                include_zenodo_file_if_draft_or_restricted(
+                    record,
+                    base_url=self.url,
+                    headers=self.headers,
+                )
+
         return records
 
     def list_zenodo_user_records(

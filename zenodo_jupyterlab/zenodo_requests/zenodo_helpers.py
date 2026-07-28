@@ -12,8 +12,8 @@ def include_zenodo_file_if_draft_or_restricted(
     - or if the files are restricted.
     Those are the two cases where /api/user/records does not include the files,
     so we need to fetch them separately.
-    It should not be necessary to call this on results of /api/records,
-    since that endpoint should always include the files.
+    Search queries to /api/records do not return drafts but the results do not include the files of restricted records,
+    therefore we need to call this function on those records also.
     """
     access = item.get("access")
     if item.get("is_draft") or (access and access.get("files") == "restricted"):

@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 from zenodo_jupyterlab.routes import (
     ZenodoFileImportCellHandler,
+    ZenodoRecordCollectionHandler,
     ZenodoRecordVersionCollectionHandler,
 )
 from zenodo_jupyterlab.util.sse import EventBus
@@ -73,6 +74,30 @@ async def test_list_record_versions_passes_include_drafts():
         "record-1", include_drafts=False
     )
     assert json.loads(responses[0]) == []
+
+
+def test_search_records_passes_include_files():
+    zenodo_requests = Mock()
+    zenodo_requests.search_zenodo_records.return_value = {"hits": {"hits": []}}
+    responses = []
+    query_arguments = {"q": "climate", "include_files": "true"}
+    handler = SimpleNamespace(
+        get_query_argument=lambda name, default: query_arguments.get(name, default),
+        get_zenodo_requests=lambda _: zenodo_requests,
+        finish=responses.append,
+    )
+
+    ZenodoRecordCollectionHandler.get.__wrapped__(handler)
+
+    zenodo_requests.search_zenodo_records.assert_called_once_with(
+        query="climate",
+        page=1,
+        size=10,
+        sort="bestmatch",
+        allversions=False,
+        include_files=True,
+    )
+    assert json.loads(responses[0]) == {"hits": {"hits": []}}
 
 
 def test_import_cell_reuses_file_metadata_for_download_location(tmp_path):

@@ -110,8 +110,9 @@ Some routes are inherently complex because of how the Zenodo/ InvenioRDM API wor
 Send `GET /api/records` with `q`, `page`, `size`, `sort`, and `allversions`.
 
 The request searches the general published record space. Results from
-`/api/records` already contain their file collections, so the extension does
-not make additional linked files requests.
+`/api/records` contain their file collections, but not if the files are restricted. If
+`include_files=true`, follow `links.files` for restricted results whose files
+are not included in the search response and add the result as `files`.
 
 ### `GET /records/:id`
 
