@@ -142,8 +142,10 @@ class ZenodoRequests:
         # Strategy: find the parent ID of the record, then list all user records and find the newest draft with that parent ID
 
         # TODO we only need to do that if there is something newer than the latest published version
-        # so we can change this to only atttempt to find the new version draft if record.versions.is_latest_draft is false
-        # because that is false for the latest draft or published version also
+        # I thought we could change this to only atttempt to find the new version draft if record.versions.is_latest_draft is false
+        # because that is false for the latest draft or published version also.
+        # The problem with that is if we have a draft that is not the latest draft (e.g. of a published version)
+        # then we would not find it and the dropdown could not show that this record is a draft.
 
         parent_id = next(
             (
