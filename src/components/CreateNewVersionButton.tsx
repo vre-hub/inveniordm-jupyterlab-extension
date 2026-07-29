@@ -16,7 +16,7 @@ export function CreateNewVersionButton({
 }): JSX.Element {
   // check if the latest version is a draft or not. If it is, disable button
   const noNewVersionDraftExists =
-    versions.sort((a, b) => b.versions.index - a.versions.index)?.[0]
+    [...versions].sort((a, b) => b.versions.index - a.versions.index)?.[0]
       ?.is_draft === false;
 
   const disable = !allowedToCreateNewVersion || !noNewVersionDraftExists;
