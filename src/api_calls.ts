@@ -411,16 +411,19 @@ export type ZenodoRecordPermission = 'manage' | 'edit' | 'preview' | 'view';
 
 export async function getZenodoRecordPermission(
   serverSettings: ServerConnection.ISettings,
-  recordId: string
+  recordId: string,
+  recordStatus: ZenodoFileIdentifier['record_status']
 ): Promise<ZenodoRecordPermission> {
+  const params = new URLSearchParams({ record_status: recordStatus });
   return await requestAPI<ZenodoRecordPermission>(
-    `records/${encodeURIComponent(recordId)}/permission`,
+    `records/${encodeURIComponent(recordId)}/permission?${params.toString()}`,
     serverSettings
   );
 }
 
 export function useZenodoRecordPermission(
-  id: string
+  id: string,
+  recordStatus: ZenodoFileIdentifier['record_status']
 ): ZenodoRecordPermission | null {
   const serverSettings = useServerSettings();
   const [userPermission, setUserPermission] =
@@ -430,7 +433,11 @@ export function useZenodoRecordPermission(
     let isMounted = true;
 
     const fetchUserPermission = async () => {
-      const permission = await getZenodoRecordPermission(serverSettings, id);
+      const permission = await getZenodoRecordPermission(
+        serverSettings,
+        id,
+        recordStatus
+      );
       if (isMounted) {
         setUserPermission(permission);
       }
@@ -441,7 +448,7 @@ export function useZenodoRecordPermission(
     return () => {
       isMounted = false;
     };
-  }, [id, serverSettings]);
+  }, [id, recordStatus, serverSettings]);
 
   return userPermission;
 }

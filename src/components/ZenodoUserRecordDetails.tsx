@@ -17,7 +17,10 @@ export const ZenodoUserRecordDetails: React.FC<{
   versions: ZenodoRecordVersion[];
 }> = ({ record, versions }) => {
   const isDraft = record.is_draft;
-  const userPermission = useZenodoRecordPermission(record.id);
+  const userPermission = useZenodoRecordPermission(
+    record.id,
+    isDraft ? 'draft' : 'published'
+  );
   const hasEditingRights =
     userPermission === 'edit' || userPermission === 'manage';
   const editable = isDraft && hasEditingRights;

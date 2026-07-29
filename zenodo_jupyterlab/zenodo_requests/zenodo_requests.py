@@ -10,7 +10,7 @@ from zenodo_jupyterlab.zenodo_requests.zenodo_helpers import (
 
 from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
 from ..util.progress_reporting_reader import ProgressReportingReader
-from ..zenodo_file_identifier import ZenodoFileIdentifier
+from ..zenodo_file_identifier import ZenodoFileIdentifier, ZenodoRecordStatus
 from .zenodo import (
     ZenodoFileResponse,
     ZenodoPermission,
@@ -20,6 +20,7 @@ from .zenodo import (
     delete_zenodo_draft_file,
     get_zenodo_me,
     get_zenodo_record,
+    get_zenodo_record_public_or_draft,
     get_zenodo_user_record,
     list_zenodo_record_versions,
     list_zenodo_user_records,
@@ -242,8 +243,9 @@ class ZenodoRequests:
     def get_zenodo_record_permission(
         self,
         record_id: int | str,
+        record_status: ZenodoRecordStatus,
     ) -> ZenodoPermission:
-        """Return the authenticated user's effective permission for a user record."""
+        """Return the authenticated user's effective permission for a record."""
         # Get user id
         user_id = self.zenodo_user_id
         if user_id is None:
@@ -251,9 +253,13 @@ class ZenodoRequests:
                 "Zenodo user ID is not set. Cannot determine record permission."
             )
 
-        # Get the record details
-        # This fails if we have no special permissions or only "view" permission
-        record = self.get_zenodo_user_record(record_id, include_files=False)
+        # Fetch the requested variant directly.
+        record = get_zenodo_record_public_or_draft(
+            record_id,
+            record_status=record_status,
+            base_url=self.url,
+            headers=self.headers,
+        )
 
         # if record.parent.access.grants exists, return "manage"
         # this is the case if we are the owner of the record or have been granted manage access

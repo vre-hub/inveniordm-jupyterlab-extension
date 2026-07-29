@@ -78,7 +78,7 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 | `GET /events`                                   | `subscribeToEvents`                | None; local server-sent event stream                                                                  |
 | `GET /user/records`                             | `listZenodoUserRecords`            | `GET /api/user/records`, optionally followed by one linked files request per draft or restricted hit  |
 | `GET /user/records/:id`                         | `getZenodoUserRecord`              | User-record search, followed by its linked files request if it is a draft or its files are restricted |
-| `GET /records/:id/permission`                   | `getZenodoRecordPermission`        | User-record lookup, optionally followed by an edit-permission user-record query                       |
+| `GET /records/:id/permission`                   | `getZenodoRecordPermission`        | Direct draft or published record lookup, optionally followed by an edit-permission user-record query  |
 | `GET /records/:id/versions?include_drafts=true` | `listZenodoRecordVersions`         | General versions request, optionally supplemented with a user-record lookup for drafts                |
 | `POST /records/:id/versions`                    | `createZenodoRecordVersion`        | Create a new-version draft, then import the previous files                                            |
 | `POST /user/records/draft-with-files`           | `createZenodoRecordDraftWithFiles` | Create a draft, then initialize, upload, and commit every file                                        |
@@ -148,21 +148,20 @@ request helper accepts `include_files=false` for callers that only need record
 metadata; this route keeps the default value of `true` because its frontend
 response includes files.
 
-### `GET /records/:id/permission`
+### `GET /records/:id/permission?record_status=:status`
 
 The route determines the current user's effective `preview`, `edit`, or
-`manage` permission as follows. It returns the permission as a JSON string.
+`manage` permission as follows. The required `record_status` query parameter
+must be `draft` or `published`; any other or missing value returns HTTP 400. The
+route returns the permission as a JSON string.
 
 1. Read the current user's cached Zenodo ID. It is stored with the access token
    during the OAuth callback (or obtained from the proxy authentication status).
    If no user ID is available, the request fails.
-2. Retrieve the record from user records with `GET /api/user/records?...`.
-   File expansion is disabled because permissions only require record metadata.
-   More precisely, this is
-   `GET /api/user/records?q=id:<record-id>&size=10&allversions=true`, followed
-   by an exact ID match. There is no fallback to the general records API. The
-   lookup itself fails for users with no special permission or only `view`
-   permission.
+2. Retrieve the record directly from the endpoint selected by `record_status`:
+   `GET /api/records/:id/draft` for a draft or `GET /api/records/:id` for a
+   published record. This avoids returning wrong permissions when published and draft permissions can differ, and avoids the only eventually consistent user-record search,
+   which could miss a newly created draft and cause a race condition.
 3. If `parent.access.grants` is present (including an empty list), return
    `manage`. In the responses used by this route, that field marks owners and
    users who have been granted manage access.

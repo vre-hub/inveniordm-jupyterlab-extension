@@ -10,7 +10,7 @@ from urllib.parse import quote, urljoin, urlparse, urlunparse
 
 import requests
 
-from ..zenodo_file_identifier import ZenodoFileIdentifier
+from ..zenodo_file_identifier import ZenodoFileIdentifier, ZenodoRecordStatus
 
 ZenodoPermission = Literal[
     "manage", "edit", "preview", "view"
@@ -312,11 +312,28 @@ def get_zenodo_record(
     base_url: str,
     headers: dict[str, str] | None,
 ) -> dict[str, Any]:
-    """Fetch a record directly from the records API."""
+    """Fetch a public record directly from the records API."""
+    return get_zenodo_record_public_or_draft(
+        record_id,
+        record_status="published",
+        base_url=base_url,
+        headers=headers,
+    )
+
+
+def get_zenodo_record_public_or_draft(
+    record_id: int | str,
+    *,
+    record_status: ZenodoRecordStatus,
+    base_url: str,
+    headers: dict[str, str] | None,
+) -> dict[str, Any]:
+    """Fetch a draft or published record directly from the records API."""
+    variant_path = "/draft" if record_status == "draft" else ""
     response = requests.get(
         (
             f"{_normalize_base_url(base_url)}/api/records/"
-            f"{quote(str(record_id), safe='')}"
+            f"{quote(str(record_id), safe='')}{variant_path}"
         ),
         headers=_headers(headers, accept_invenio=True),
         timeout=10,

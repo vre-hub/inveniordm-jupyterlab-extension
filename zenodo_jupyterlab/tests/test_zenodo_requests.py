@@ -150,8 +150,8 @@ def test_record_with_grants_has_manage_permission_without_workaround(monkeypatch
     )
     calls = []
     monkeypatch.setattr(
-        requests,
-        "get_zenodo_user_record",
+        zenodo_requests_module,
+        "get_zenodo_record",
         lambda record_id, **kwargs: (
             calls.append((record_id, kwargs))
             or {
@@ -166,8 +166,17 @@ def test_record_with_grants_has_manage_permission_without_workaround(monkeypatch
         lambda *args, **kwargs: pytest.fail("permission workaround should not run"),
     )
 
-    assert requests.get_zenodo_record_permission("123") == "manage"
-    assert calls == [("123", {"include_files": False})]
+    assert requests.get_zenodo_record_permission("123", "draft") == "manage"
+    assert calls == [
+        (
+            "123",
+            {
+                "record_status": "draft",
+                "base_url": "https://zenodo.org",
+                "headers": {"Authorization": "x"},
+            },
+        )
+    ]
 
 
 @pytest.mark.parametrize(
@@ -185,8 +194,8 @@ def test_record_without_grants_uses_edit_permission_workaround(
         zenodo_user_id="58370",
     )
     monkeypatch.setattr(
-        requests,
-        "get_zenodo_user_record",
+        zenodo_requests_module,
+        "get_zenodo_record",
         lambda record_id, **kwargs: {
             "id": record_id,
             "parent": {"access": {}},
@@ -199,7 +208,7 @@ def test_record_without_grants_uses_edit_permission_workaround(
         lambda **kwargs: workaround_calls.append(kwargs) or has_edit,
     )
 
-    assert requests.get_zenodo_record_permission("123") == expected_permission
+    assert requests.get_zenodo_record_permission("123", "published") == expected_permission
     assert workaround_calls == [
         {
             "record_id": "123",
@@ -214,8 +223,8 @@ def test_record_without_grants_uses_edit_permission_workaround(
 def test_record_permission_requires_cached_user_id(monkeypatch):
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
     monkeypatch.setattr(
-        requests,
-        "get_zenodo_user_record",
+        zenodo_requests_module,
+        "get_zenodo_record",
         lambda *args, **kwargs: pytest.fail("record should not be fetched"),
     )
 
@@ -223,7 +232,7 @@ def test_record_permission_requires_cached_user_id(monkeypatch):
         ValueError,
         match="Zenodo user ID is not set. Cannot determine record permission.",
     ):
-        requests.get_zenodo_record_permission("123")
+        requests.get_zenodo_record_permission("123", "published")
 
 
 @pytest.mark.parametrize(
@@ -445,6 +454,26 @@ def test_get_zenodo_record_uses_invenio_response_format(monkeypatch):
             },
         )
     ]
+
+
+def test_get_zenodo_record_uses_draft_endpoint(monkeypatch):
+    calls = []
+    draft = {"id": "draft-123", "is_draft": True}
+    monkeypatch.setattr(
+        zenodo_module.requests,
+        "get",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or Response(draft),
+    )
+
+    result = zenodo_module.get_zenodo_record(
+        "draft-123",
+        record_status="draft",
+        base_url="https://zenodo.org",
+        headers={"Authorization": "x"},
+    )
+
+    assert result is draft
+    assert calls[0][0] == ("https://zenodo.org/api/records/draft-123/draft",)
 
 
 def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):

@@ -5,6 +5,7 @@ from unittest.mock import Mock
 from zenodo_jupyterlab.routes import (
     ZenodoFileImportCellHandler,
     ZenodoRecordCollectionHandler,
+    ZenodoRecordPermissionHandler,
     ZenodoRecordVersionCollectionHandler,
 )
 from zenodo_jupyterlab.util.sse import EventBus
@@ -76,6 +77,44 @@ async def test_list_record_versions_passes_include_drafts():
         "record-1", include_drafts=False
     )
     assert json.loads(responses[0]) == []
+
+
+async def test_record_permission_passes_record_status():
+    zenodo_requests = Mock()
+    zenodo_requests.get_zenodo_record_permission.return_value = "manage"
+    responses = []
+    handler = SimpleNamespace(
+        get_query_argument=lambda name, default: "draft",
+        get_zenodo_requests=lambda _: zenodo_requests,
+        finish=responses.append,
+    )
+
+    await ZenodoRecordPermissionHandler.get.__wrapped__(handler, "record-1")
+
+    zenodo_requests.get_zenodo_record_permission.assert_called_once_with(
+        "record-1", "draft"
+    )
+    assert json.loads(responses[0]) == "manage"
+
+
+async def test_record_permission_rejects_missing_record_status():
+    zenodo_requests = Mock()
+    responses = []
+    statuses = []
+    handler = SimpleNamespace(
+        get_query_argument=lambda name, default: default,
+        get_zenodo_requests=lambda _: zenodo_requests,
+        set_status=statuses.append,
+        finish=responses.append,
+    )
+
+    await ZenodoRecordPermissionHandler.get.__wrapped__(handler, "record-1")
+
+    assert statuses == [400]
+    assert json.loads(responses[0]) == {
+        "message": "record_status must be 'draft' or 'published'"
+    }
+    zenodo_requests.get_zenodo_record_permission.assert_not_called()
 
 
 def test_search_records_passes_include_files():

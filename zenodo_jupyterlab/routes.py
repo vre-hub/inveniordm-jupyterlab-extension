@@ -1,7 +1,7 @@
 import asyncio
 import json
 from pathlib import Path
-from typing import Callable
+from typing import Callable, cast
 from urllib.parse import quote
 
 import requests
@@ -23,6 +23,7 @@ from .zenodo_auth.auth_controller import ZenodoAuthController
 from .zenodo_download_manager import ZenodoDownloadManager
 from .zenodo_file_identifier import (
     ZenodoFileIdentifier,
+    ZenodoRecordStatus,
     _zenodo_file_identifier,
 )
 from .zenodo_requests.zenodo_requests import ZenodoRequests
@@ -295,11 +296,20 @@ class ZenodoRecordPermissionHandler(APIHandler):
 
     @tornado.web.authenticated
     async def get(self, record_id: str):
+        record_status = self.get_query_argument("record_status", None)
+        if record_status not in {"draft", "published"}:
+            self.set_status(400)
+            self.finish(
+                json.dumps({"message": "record_status must be 'draft' or 'published'"})
+            )
+            return
+
         try:
             zenodo_requests = self.get_zenodo_requests(self)
             permission = await asyncio.to_thread(
                 zenodo_requests.get_zenodo_record_permission,
                 record_id,
+                cast(ZenodoRecordStatus, record_status),
             )  # run this in a thread until we have a proper async implementation of the api calls
         except ValueError as error:
             self.set_status(
@@ -332,9 +342,10 @@ class ZenodoRecordVersionCollectionHandler(APIHandler):
 
     @tornado.web.authenticated
     async def get(self, record_id: str):
-        include_drafts = self.get_query_argument(
-            "include_drafts", "true"
-        ).lower() in ("1", "true")
+        include_drafts = self.get_query_argument("include_drafts", "true").lower() in (
+            "1",
+            "true",
+        )
         try:
             versions = await asyncio.to_thread(
                 self.get_zenodo_requests(self).list_zenodo_record_versions,
@@ -839,9 +850,7 @@ class ZenodoFileImportCellHandler(APIHandler):
             return
 
         try:
-            destination = self.get_zenodo_download_manager(
-                self
-            ).get_download_location(
+            destination = self.get_zenodo_download_manager(self).get_download_location(
                 file_id=file_id,
             )
             if not destination.exists():
