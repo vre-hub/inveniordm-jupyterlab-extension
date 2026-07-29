@@ -33,6 +33,7 @@ export const ZenodoRecordDetails: React.FC<{
               file={file}
               key={file.key}
               recordId={record.id}
+              isDraft={record.is_draft}
               editable={editable}
             />
           ))}

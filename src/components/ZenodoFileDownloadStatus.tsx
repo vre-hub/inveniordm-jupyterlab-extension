@@ -20,6 +20,7 @@ function downloadStatusChangedTopic(fileId: ZenodoFileIdentifier): string {
   return [
     'file.download-status.changed',
     encodeTopicPart(fileId.record_id),
+    encodeTopicPart(fileId.record_status),
     encodeTopicPart(fileId.file_key)
   ].join('.');
 }

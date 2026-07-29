@@ -49,6 +49,7 @@ async def test_find_active_download_jobs(jp_fetch):
         params={
             "job_type": "download",
             "record_id": "123",
+            "record_status": "draft",
             "file_key": "file-1",
             "status": "active",
             "latest": "true",
@@ -102,15 +103,19 @@ def test_search_records_passes_include_files():
 
 
 def test_import_cell_constructs_download_location_without_metadata_lookup(tmp_path):
-    destination = tmp_path / "123" / "example.csv"
-    destination.parent.mkdir()
+    destination = tmp_path / "123" / "draft" / "example.csv"
+    destination.parent.mkdir(parents=True)
     destination.touch()
     zenodo_requests = Mock()
     download_manager = Mock()
     download_manager.get_download_location.return_value = destination
     responses = []
     handler = SimpleNamespace(
-        get_json_body=lambda: {"record_id": "123", "file_key": "example.csv"},
+        get_json_body=lambda: {
+            "record_id": "123",
+            "record_status": "draft",
+            "file_key": "example.csv",
+        },
         get_zenodo_requests=lambda _: zenodo_requests,
         get_zenodo_download_manager=lambda _: download_manager,
         finish=responses.append,
@@ -120,13 +125,18 @@ def test_import_cell_constructs_download_location_without_metadata_lookup(tmp_pa
 
     zenodo_requests.get_zenodo_record_file.assert_not_called()
     download_manager.get_download_location.assert_called_once_with(
-        file_id=ZenodoFileIdentifier(record_id="123", file_key="example.csv"),
+        file_id=ZenodoFileIdentifier(
+            record_id="123",
+            record_status="draft",
+            file_key="example.csv",
+        ),
     )
     assert len(responses) == 1
     assert json.loads(responses[0])["metadata_zenodo_jupyterlab"] == {
         "kind": "import-cell",
         "version": 1,
         "record_id": "123",
+        "record_status": "draft",
         "file_key": "example.csv",
         "path": str(destination),
     }

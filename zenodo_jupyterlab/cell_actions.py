@@ -53,6 +53,7 @@ def make_zenodo_import_cell_action(
             "kind": "import-cell",
             "version": 1,
             "record_id": str(file_id.record_id),
+            "record_status": file_id.record_status,
             "file_key": file_id.file_key,
             "path": str(path),
         },

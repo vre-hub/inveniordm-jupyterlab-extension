@@ -226,6 +226,7 @@ export type FindJobsResponse = {
 
 export type ZenodoFileIdentifier = {
   record_id: string;
+  record_status: 'draft' | 'published';
   file_key: string;
 };
 
@@ -255,6 +256,7 @@ export async function getLatestActiveJobId(
   });
   if (identifier.jobType === 'download') {
     params.set('file_key', identifier.fileId.file_key);
+    params.set('record_status', identifier.fileId.record_status);
   }
 
   const response = await requestAPI<FindJobsResponse>(

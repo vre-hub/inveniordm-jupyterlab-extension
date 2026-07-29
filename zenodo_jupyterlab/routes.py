@@ -81,6 +81,7 @@ def _download_status_changed_topic(file_id: ZenodoFileIdentifier) -> str:
     return (
         "file.download-status.changed."
         f"{quote(str(file_id.record_id), safe='')}."
+        f"{quote(file_id.record_status, safe='')}."
         f"{quote(file_id.file_key, safe='')}"
     )
 
@@ -564,6 +565,7 @@ class ZenodoRecordFileCollectionHandler(APIHandler):
         data = self.get_json_body() or {}
         file_id = _zenodo_file_identifier(
             data.get("record_id"),
+            data.get("record_status"),
             data.get("file_key"),
         )
 
@@ -628,10 +630,13 @@ class JobsHandler(APIHandler):
         metadata: dict[str, object] = {}
         record_id = self.get_query_argument("record_id", None)
         file_key = self.get_query_argument("file_key", None)
+        record_status = self.get_query_argument("record_status", None)
         if record_id is not None:
             metadata["record_id"] = record_id
         if file_key is not None:
             metadata["file_key"] = file_key
+        if record_status is not None:
+            metadata["record_status"] = record_status
 
         if job_type == "upload":
             zenodo_requests = self.get_zenodo_requests(self)
@@ -708,11 +713,12 @@ class ZenodoFileDownloadHandler(APIHandler):
     def post(self):
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
+        record_status = data.get("record_status")
         file_key = data.get("file_key")
-        file_id = _zenodo_file_identifier(record_id, file_key)
+        file_id = _zenodo_file_identifier(record_id, record_status, file_key)
         if file_id is None:
             self.set_status(400)
-            self.finish(json.dumps({"message": "Missing record_id or file_key"}))
+            self.finish(json.dumps({"message": "Invalid file identifier"}))
             return
 
         zenodo_requests = self.get_zenodo_requests(self)
@@ -744,11 +750,12 @@ class ZenodoFileDownloadHandler(APIHandler):
     def delete(self):
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
+        record_status = data.get("record_status")
         file_key = data.get("file_key")
-        file_id = _zenodo_file_identifier(record_id, file_key)
+        file_id = _zenodo_file_identifier(record_id, record_status, file_key)
         if file_id is None:
             self.set_status(400)
-            self.finish(json.dumps({"message": "Missing record_id or file_key"}))
+            self.finish(json.dumps({"message": "Invalid file identifier"}))
             return
 
         try:
@@ -786,11 +793,12 @@ class ZenodoFileDownloadStatusHandler(APIHandler):
     def post(self):
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
+        record_status = data.get("record_status")
         file_key = data.get("file_key")
-        file_id = _zenodo_file_identifier(record_id, file_key)
+        file_id = _zenodo_file_identifier(record_id, record_status, file_key)
         if file_id is None:
             self.set_status(400)
-            self.finish(json.dumps({"message": "Missing record_id or file_key"}))
+            self.finish(json.dumps({"message": "Invalid file identifier"}))
             return
 
         try:
@@ -822,11 +830,12 @@ class ZenodoFileImportCellHandler(APIHandler):
     def post(self):
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
+        record_status = data.get("record_status")
         file_key = data.get("file_key")
-        file_id = _zenodo_file_identifier(record_id, file_key)
+        file_id = _zenodo_file_identifier(record_id, record_status, file_key)
         if file_id is None:
             self.set_status(400)
-            self.finish(json.dumps({"message": "Missing record_id or file_key"}))
+            self.finish(json.dumps({"message": "Invalid file identifier"}))
             return
 
         try:

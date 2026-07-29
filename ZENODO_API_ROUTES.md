@@ -47,13 +47,10 @@ version. Consequently, the versions route combines the general versions API
 with the user's record list to add accessible drafts. It uses the boolean
 `is_draft` field, rather than `status`, to identify drafts in that list.
 
-When downloading a file, the extension looks up its remote download URL by
-trying the draft file endpoint first and falling back to the published file
-endpoint only on `403` or `404`. This lets one code path handle both draft and
-published records without knowing the state in advance. Local download paths
-are constructed directly from the record ID and file key.
-
-TODO maybe cache/ propagate if file is from draft or published record
+File operations include a `record_status` of either `draft` or `published` in
+their file identifier. Downloads use only the matching draft or published file
+endpoint. Local paths include the status as well as the record ID and file key,
+so the two variants can be downloaded without overwriting one another.
 
 ## Naming convention
 
@@ -90,7 +87,7 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 | `GET /jobs`                                     | `getLatestActiveJobId`             | None                                                                                                  |
 | `GET /jobs/:id`                                 | `getJobProgress`                   | None                                                                                                  |
 | `POST /jobs/:id/cancel`                         | `cancelJob`                        | None directly; cancellation cleanup can delete an initialized draft file                              |
-| `POST /files/download`                          | `downloadZenodoFile`               | In the background: draft-first file metadata lookup and a streaming request to its link               |
+| `POST /files/download`                          | `downloadZenodoFile`               | In the background: status-specific file metadata lookup and a streaming request to its link           |
 | `DELETE /files/download`                        | `deleteZenodoFileDownload`         | None                                                                                                  |
 | `POST /files/status`                            | `getZenodoFileDownloadStatus`      | None                                                                                                  |
 | `POST /files/import-cell`                       | `getZenodoFileImportCell`          | None                                                                                                  |
@@ -325,34 +322,34 @@ deletes that entry from the draft.
 
 The background download job:
 
-1. Sends `GET /api/records/:id/draft/files/:file-key` for file metadata.
-2. On `403` or `404`, sends `GET /api/records/:id/files/:file-key` instead.
-3. Reads `links.download`, or `links.content` as a fallback, from the metadata.
-4. Sends a streaming `GET` to that returned link and writes the bytes locally.
+1. For a draft identifier, sends
+   `GET /api/records/:id/draft/files/:file-key`; for a published identifier,
+   sends `GET /api/records/:id/files/:file-key`.
+2. Reads `links.download`, or `links.content` as a fallback, from the metadata.
+3. Sends a streaming `GET` to that returned link and writes the bytes locally.
 
-The draft-first lookup supports unpublished files while the fallback supports
-published files and users who cannot access a draft. File metadata supplies
-Zenodo's canonical download URL. The local destination is constructed from the
-record ID and file key. The streaming request is the call that transfers the
-actual file contents.
+File metadata supplies Zenodo's canonical download URL. The local destination
+is `<downloads>/<record-id>/<draft|published>/<file-key>`. The streaming request
+is the call that transfers the actual file contents.
 
 ### `DELETE /files/download`
 
-This constructs the local path directly from the record ID and file key, then
-deletes only the local copy. It does not make a Zenodo request or delete the
-file from Zenodo.
+This constructs the local path directly from the record ID, record status, and
+file key, then deletes only the local copy. It does not make a Zenodo request
+or delete the file from Zenodo.
 
 ### `POST /files/status`
 
-This constructs the local path directly from the record ID and file key and
-tests whether the corresponding local file exists. It does not make a Zenodo
-request or download any content.
+This constructs the local path directly from the record ID, record status, and
+file key and tests whether the corresponding local file exists. It does not
+make a Zenodo request or download any content.
 
 ### `POST /files/import-cell`
 
-This constructs the expected local download path directly from the record ID
-and file key. It then checks that the local file exists and constructs the
-Jupyter code-cell action locally, without making a Zenodo request.
+This constructs the expected local download path directly from the record ID,
+record status, and file key. It then checks that the local file exists and
+constructs the Jupyter code-cell action locally, without making a Zenodo
+request.
 
 ### Routes with no Zenodo traffic
 

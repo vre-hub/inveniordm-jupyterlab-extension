@@ -34,18 +34,18 @@ class ZenodoDownloadLocationManager:
         file_id: ZenodoFileIdentifier,
     ) -> Path | None:
         """
-        Find a downloaded zenodo file on disk, based on the record_id and file_key.
+        Find a downloaded Zenodo file on disk, based on its full file identifier.
         Returns the path to the file if found, or None if not found.
         """
         candidate = self.download_location(file_id=file_id)
         return candidate if candidate.is_file() else None
 
     def remove_empty_parent(self, path: Path) -> None:
-        parent = path.parent
-        try:
-            parent.rmdir()
-        except OSError:
-            pass
+        for parent in (path.parent, path.parent.parent):
+            try:
+                parent.rmdir()
+            except OSError:
+                break
 
     def download_location(
         self,
@@ -59,4 +59,9 @@ class ZenodoDownloadLocationManager:
         if not safe_file_key:
             raise ValueError("Missing file_key")
 
-        return self.downloads_dir / safe_record_id / safe_file_key
+        return (
+            self.downloads_dir
+            / safe_record_id
+            / file_id.record_status
+            / safe_file_key
+        )

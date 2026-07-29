@@ -14,13 +14,18 @@ import type { ZenodoFile, ZenodoFileIdentifier } from '../api_calls';
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;
   recordId: string;
+  isDraft: boolean;
   editable: boolean;
-}> = ({ file, recordId, editable }) => {
+}> = ({ file, recordId, isDraft, editable }) => {
   const fileKey = file.key;
 
   const fileId = React.useMemo<ZenodoFileIdentifier>(
-    () => ({ file_key: fileKey, record_id: recordId }),
-    [fileKey, recordId]
+    () => ({
+      file_key: fileKey,
+      record_id: recordId,
+      record_status: isDraft ? 'draft' : 'published'
+    }),
+    [fileKey, isDraft, recordId]
   );
 
   return (

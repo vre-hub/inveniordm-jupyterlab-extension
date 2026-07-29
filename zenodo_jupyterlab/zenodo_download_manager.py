@@ -45,6 +45,7 @@ class ZenodoDownloadManager:
                 job_type="download",
                 metadata={
                     "record_id": str(file_id.record_id),
+                    "record_status": file_id.record_status,
                     "file_key": file_id.file_key,
                 },
             ),

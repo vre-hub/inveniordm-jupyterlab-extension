@@ -1008,31 +1008,34 @@ def test_open_zenodo_file_uses_streaming_response(monkeypatch):
     assert calls[0][1]["timeout"] == 30
 
 
-@pytest.mark.parametrize("draft_status", [403, 404])
-def test_get_record_file_falls_back_to_published_file(monkeypatch, draft_status):
+@pytest.mark.parametrize(
+    ("record_status", "variant_path"),
+    [("draft", "draft/files"), ("published", "files")],
+)
+def test_get_record_file_uses_selected_record_variant(
+    monkeypatch, record_status, variant_path
+):
     calls = []
-    responses = iter(
-        [
-            Response(status_code=draft_status),
-            Response({"key": "Devoir 2.docx"}),
-        ]
-    )
     monkeypatch.setattr(
         zenodo_module.requests,
         "get",
-        lambda *args, **kwargs: calls.append((args, kwargs)) or next(responses),
+        lambda *args, **kwargs: calls.append((args, kwargs))
+        or Response({"key": "Devoir 2.docx"}),
     )
 
     result = zenodo_module.get_zenodo_record_file(
-        ZenodoFileIdentifier(record_id="565160", file_key="Devoir 2.docx"),
+        ZenodoFileIdentifier(
+            record_id="565160",
+            record_status=record_status,
+            file_key="Devoir 2.docx",
+        ),
         base_url="https://sandbox.zenodo.org",
         headers={"Authorization": "x"},
     )
 
     assert result == {"key": "Devoir 2.docx"}
     assert [call[0][0] for call in calls] == [
-        "https://sandbox.zenodo.org/api/records/565160/draft/files/Devoir%202.docx",
-        "https://sandbox.zenodo.org/api/records/565160/files/Devoir%202.docx",
+        f"https://sandbox.zenodo.org/api/records/565160/{variant_path}/Devoir%202.docx"
     ]
 
 

@@ -217,27 +217,16 @@ def get_zenodo_record_file(
     headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """
-    Fetch one file for a Zenodo record.
-    Works for files in both draft and published records.
+    Fetch one file from the selected draft or published record variant.
     """
     record_id = quote(str(file_id.record_id), safe="")
     filename = quote(file_id.file_key, safe="")
+    variant_path = "draft/files" if file_id.record_status == "draft" else "files"
     response = requests.get(
-        (
-            f"{_normalize_base_url(base_url)}/api/records/{record_id}"
-            f"/draft/files/{filename}"
-        ),
+        f"{_normalize_base_url(base_url)}/api/records/{record_id}/{variant_path}/{filename}",
         headers=_headers(headers),
         timeout=10,
     )
-
-    # If the file is not in the draft or we cannot access the draft, try the published version.
-    if response.status_code in {403, 404}:
-        response = requests.get(
-            f"{_normalize_base_url(base_url)}/api/records/{record_id}/files/{filename}",
-            headers=_headers(headers),
-            timeout=10,
-        )
     response.raise_for_status()
     return response.json()
 
