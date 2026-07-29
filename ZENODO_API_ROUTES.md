@@ -78,7 +78,7 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 | `GET /events`                                   | `subscribeToEvents`                | None; local server-sent event stream                                                                  |
 | `GET /user/records`                             | `listZenodoUserRecords`            | `GET /api/user/records`, optionally followed by one linked files request per draft or restricted hit  |
 | `GET /user/records/:id`                         | `getZenodoUserRecord`              | User-record search, followed by its linked files request if it is a draft or its files are restricted |
-| `GET /records/:id/permission`                   | `getZenodoRecordPermission`        | User-record lookup, followed by linked access grants or an edit-permission user-record query          |
+| `GET /records/:id/permission`                   | `getZenodoRecordPermission`        | User-record lookup, optionally followed by an edit-permission user-record query                       |
 | `GET /records/:id/versions?include_drafts=true` | `listZenodoRecordVersions`         | General versions request, optionally supplemented with a user-record lookup for drafts                |
 | `POST /records/:id/versions`                    | `createZenodoRecordVersion`        | Create a new-version draft, then import the previous files                                            |
 | `POST /user/records/draft-with-files`           | `createZenodoRecordDraftWithFiles` | Create a draft, then initialize, upload, and commit every file                                        |
@@ -150,41 +150,31 @@ response includes files.
 
 ### `GET /records/:id/permission`
 
-The route determines the current user's effective `view`, `preview`, `edit`, or
-`manage` permission as follows:
+The route determines the current user's effective `preview`, `edit`, or
+`manage` permission as follows. It returns the permission as a JSON string.
 
 1. Read the current user's cached Zenodo ID. It is stored with the access token
    during the OAuth callback (or obtained from the proxy authentication status).
    If no user ID is available, the request fails.
 2. Retrieve the record from user records with `GET /api/user/records?...`.
    File expansion is disabled because permissions only require record metadata.
-   There is no fallback to the general records API.
-3. If the cached user ID matches `parent.access.owned_by.user`, return `manage`
-   without querying access grants.
-4. Otherwise, read `links.access_grants` from the record. If there is no such
-   link, the request fails because permission cannot be determined.
-5. Send `GET` to `links.access_grants`.
-6. If the access-grants request returns `403`, check for edit permission with
+   More precisely, this is
+   `GET /api/user/records?q=id:<record-id>&size=10&allversions=true`, followed
+   by an exact ID match. There is no fallback to the general records API. The
+   lookup itself fails for users with no special permission or only `view`
+   permission.
+3. If `parent.access.grants` is present (including an empty list), return
+   `manage`. In the responses used by this route, that field marks owners and
+   users who have been granted manage access.
+4. Otherwise, check for edit permission with
    `GET /api/user/records?q=id:<record-id> AND parent.access.grant_tokens:<token>&page=1&size=1`.
    The grant token is the dot-separated Base64 encoding of `user`, the cached
-   user ID, and `edit`. Return `edit` when the query has a hit and `view`
-   otherwise. This workaround is needed because editors cannot read access
-   grants. Other access-grant errors are propagated.
-7. When access grants can be read, keep grants whose subject is the current user and whose permission is one of
-   `manage`, `edit`, `preview`, or `view`. Return the highest permission in that
-   order, defaulting to `view`.
+   user ID, and `edit` (including normal Base64 padding). Return `edit` when the
+   query has a hit and `preview` otherwise.
 
-The record-detail and access-grant calls cannot be collapsed into only an
-access-grant call:
-
-- `access_grants` is a link returned in the record details. The extension
-  follows that link instead of hard-coding an assumed endpoint.
-  - TODO maybe hardcode link to access grants route so we do not need to read record details for that? but we need to do that anyway to find out if we are the owner
-- The access-grants response can be empty when only the owner has access. It
-  therefore cannot say whether the current user is the owner; the record's
-  `parent.access.owned_by.user` field is needed to infer `manage` rights.
-- The cached Zenodo user ID determines which owner or grant subject represents
-  the current token without an additional `/api/me` request.
+The route does not request `links.access_grants` and does not compare the
+cached user ID with `parent.access.owned_by.user`. The cached ID is used only to
+construct the edit grant token, avoiding an additional `/api/me` request.
 
 ### `GET /records/:id/versions`
 
@@ -333,25 +323,6 @@ The background download job:
 
 The local destination is
 `<downloads>/<record-id>/<draft|published>/<file-key>`.
-
-### `DELETE /files/download`
-
-This constructs the local path directly from the record ID, record status, and
-file key, then deletes only the local copy. It does not make a Zenodo request
-or delete the file from Zenodo.
-
-### `POST /files/status`
-
-This constructs the local path directly from the record ID, record status, and
-file key and tests whether the corresponding local file exists. It does not
-make a Zenodo request or download any content.
-
-### `POST /files/import-cell`
-
-This constructs the expected local download path directly from the record ID,
-record status, and file key. It then checks that the local file exists and
-constructs the Jupyter code-cell action locally, without making a Zenodo
-request.
 
 ### Routes with no Zenodo traffic
 
