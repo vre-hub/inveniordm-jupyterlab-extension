@@ -286,37 +286,21 @@ class ZenodoRequests:
             headers=self.headers,
         )
 
-    def _get_editable_record_draft(
-        self,
-        record_id: int | str,
-    ) -> dict[str, Any]:
-        """
-        Return the editable draft used to change a record's files.
-
-        Published records are immutable and must be explicitly versioned
-        before their files can be changed.
-        """
-        record = self.get_zenodo_user_record(record_id, include_files=False)
-        if record.get("is_published"):
-            raise ValueError(
-                f"Record {record_id} is published and cannot be edited as a draft"
-            )
-
-        return record
-
     def delete_zenodo_record_file(
         self,
         *,
         file_id: ZenodoFileIdentifier,
-    ) -> dict[str, Any]:
+    ) -> None:
         """Delete a file from the editable draft of a record."""
-        draft = self._get_editable_record_draft(file_id.record_id)
+        if not self.headers:
+            raise ValueError("Missing Zenodo request authentication headers")
 
-        self.delete_zenodo_draft_file(
-            record_id=draft["id"],
+        delete_zenodo_draft_file(
+            file_id.record_id,
+            base_url=self.url,
+            headers=self.headers,
             file_key=file_id.file_key,
         )
-        return draft
 
     def upload_zenodo_record_files(
         self,
@@ -325,47 +309,8 @@ class ZenodoRequests:
         file_paths: list[Path],
         on_upload_progress: UploadProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
-    ) -> dict[str, Any]:
-        """Upload files to the editable draft of a record."""
-        draft = self._get_editable_record_draft(record_id)
-
-        self.upload_zenodo_draft_files(
-            file_paths=file_paths,
-            record_id=draft["id"],
-            on_upload_progress=on_upload_progress,
-            should_cancel=should_cancel,
-        )
-        return draft
-
-    def delete_zenodo_draft_file(
-        self,
-        *,
-        record_id: int | str,
-        file_key: str,
     ) -> None:
-        """
-        Delete a file from an InvenioRDM draft's file collection.
-        """
-        if not self.headers:
-            raise ValueError("Missing Zenodo request authentication headers")
-
-        delete_zenodo_draft_file(
-            record_id,
-            base_url=self.url,
-            headers=self.headers,
-            file_key=file_key,
-        )
-
-    def upload_zenodo_draft_files(
-        self,
-        file_paths: list[Path],
-        record_id: int | str,
-        on_upload_progress: UploadProgressCallback | None = None,
-        should_cancel: CancelCheck | None = None,
-    ):
-        """
-        Upload files on the local filesystem to an InvenioRDM draft.
-        """
+        """Upload files to the editable draft of a record."""
         if not self.headers:
             raise ValueError("Missing Zenodo request authentication headers")
 
@@ -413,9 +358,12 @@ class ZenodoRequests:
                     # Initializing an InvenioRDM upload creates the file entry
                     # before the content is streamed. Remove that empty entry
                     # when streaming is canceled.
-                    self.delete_zenodo_draft_file(
-                        record_id=record_id,
-                        file_key=path.name,
+                    self.delete_zenodo_record_file(
+                        file_id=ZenodoFileIdentifier(
+                            record_id=record_id,
+                            record_status="draft",
+                            file_key=path.name,
+                        )
                     )
                     raise
 
@@ -438,7 +386,7 @@ class ZenodoRequests:
         )
         if should_cancel is not None and should_cancel():
             raise JobCancelled("Upload canceled")
-        self.upload_zenodo_draft_files(
+        self.upload_zenodo_record_files(
             file_paths=file_paths,
             record_id=draft["id"],
             on_upload_progress=on_upload_progress,

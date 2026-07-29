@@ -43,89 +43,33 @@ def test_local_factory_passes_stored_zenodo_user_id(tmp_path):
     assert requests.zenodo_user_id == "123"
 
 
-def test_draft_is_its_own_file_edit_target(monkeypatch):
-    draft = {
-        "id": "draft-1",
-        "is_published": False,
-        "links": {"files": "/api/records/draft-1/draft/files"},
-    }
+def test_upload_record_files_passes_record_id(monkeypatch, tmp_path):
+    file_path = tmp_path / "results.csv"
+    file_path.write_bytes(b"content")
     requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
     calls = []
     monkeypatch.setattr(
-        requests,
-        "get_zenodo_user_record",
-        lambda *args, **kwargs: calls.append((args, kwargs)) or draft,
+        zenodo_requests_module,
+        "upload_zenodo_draft_file",
+        lambda *args, **kwargs: calls.append((args, kwargs)),
     )
 
-    assert requests._get_editable_record_draft("draft-1") is draft
-    assert calls == [(("draft-1",), {"include_files": False})]
+    assert requests.upload_zenodo_record_files(
+        record_id="draft-1", file_paths=[file_path]
+    ) is None
+    assert calls[0][0] == ("draft-1",)
+    assert calls[0][1]["base_url"] == "https://sandbox.zenodo.org"
+    assert calls[0][1]["headers"] == {"Authorization": "x"}
+    assert calls[0][1]["filename"] == "results.csv"
 
 
-def test_published_record_is_not_an_editable_draft(monkeypatch):
-    published = {"id": "record-1", "is_published": True}
+def test_delete_record_file_passes_file_identifier(monkeypatch):
     requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
     calls = []
     monkeypatch.setattr(
-        requests,
-        "get_zenodo_user_record",
-        lambda *args, **kwargs: calls.append((args, kwargs)) or published,
-    )
-    monkeypatch.setattr(
-        requests,
-        "create_zenodo_record_version",
-        lambda *args, **kwargs: pytest.fail("must not create a record version"),
-    )
-
-    with pytest.raises(
-        ValueError,
-        match="Record record-1 is published and cannot be edited as a draft",
-    ):
-        requests._get_editable_record_draft("record-1")
-    assert calls == [(("record-1",), {"include_files": False})]
-
-
-def test_upload_record_files_passes_only_draft_record_id(monkeypatch):
-    draft = {"id": "draft-1", "is_published": False}
-    requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
-    calls = []
-    monkeypatch.setattr(
-        requests,
-        "_get_editable_record_draft",
-        lambda record_id: draft,
-    )
-    monkeypatch.setattr(
-        requests,
-        "upload_zenodo_draft_files",
-        lambda **kwargs: calls.append(kwargs),
-    )
-
-    assert (
-        requests.upload_zenodo_record_files(record_id="draft-1", file_paths=[])
-        is draft
-    )
-    assert calls == [
-        {
-            "file_paths": [],
-            "record_id": "draft-1",
-            "on_upload_progress": None,
-            "should_cancel": None,
-        }
-    ]
-
-
-def test_delete_record_file_passes_only_draft_record_id(monkeypatch):
-    draft = {"id": "draft-1", "is_published": False}
-    requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
-    calls = []
-    monkeypatch.setattr(
-        requests,
-        "_get_editable_record_draft",
-        lambda record_id: draft,
-    )
-    monkeypatch.setattr(
-        requests,
+        zenodo_requests_module,
         "delete_zenodo_draft_file",
-        lambda **kwargs: calls.append(kwargs),
+        lambda *args, **kwargs: calls.append((args, kwargs)),
     )
     file_id = ZenodoFileIdentifier(
         record_id="draft-1",
@@ -133,8 +77,17 @@ def test_delete_record_file_passes_only_draft_record_id(monkeypatch):
         file_key="results.csv",
     )
 
-    assert requests.delete_zenodo_record_file(file_id=file_id) is draft
-    assert calls == [{"record_id": "draft-1", "file_key": "results.csv"}]
+    assert requests.delete_zenodo_record_file(file_id=file_id) is None
+    assert calls == [
+        (
+            ("draft-1",),
+            {
+                "base_url": "https://sandbox.zenodo.org",
+                "headers": {"Authorization": "x"},
+                "file_key": "results.csv",
+            },
+        )
+    ]
 
 
 def test_create_draft_with_files_passes_only_created_record_id(monkeypatch):
@@ -148,7 +101,7 @@ def test_create_draft_with_files_passes_only_created_record_id(monkeypatch):
     )
     monkeypatch.setattr(
         requests,
-        "upload_zenodo_draft_files",
+        "upload_zenodo_record_files",
         lambda **kwargs: calls.append(kwargs),
     )
 
@@ -939,6 +892,10 @@ def test_cancelled_upload_deletes_initialized_file(monkeypatch, tmp_path):
     file_path = tmp_path / "results 2026.csv"
     file_path.write_bytes(b"content")
     delete_calls = []
+    requests = ZenodoRequests(
+        "https://sandbox.zenodo.org",
+        {"Authorization": "x"},
+    )
 
     monkeypatch.setattr(
         zenodo_requests_module,
@@ -946,31 +903,25 @@ def test_cancelled_upload_deletes_initialized_file(monkeypatch, tmp_path):
         lambda *args, **kwargs: (_ for _ in ()).throw(JobCancelled("Upload canceled")),
     )
     monkeypatch.setattr(
-        zenodo_requests_module,
-        "delete_zenodo_draft_file",
-        lambda *args, **kwargs: delete_calls.append((args, kwargs)),
-    )
-
-    requests = ZenodoRequests(
-        "https://sandbox.zenodo.org",
-        {"Authorization": "x"},
+        requests,
+        "delete_zenodo_record_file",
+        lambda **kwargs: delete_calls.append(kwargs),
     )
 
     with pytest.raises(JobCancelled, match="Upload canceled"):
-        requests.upload_zenodo_draft_files(
-            [file_path],
-            "draft-1",
+        requests.upload_zenodo_record_files(
+            file_paths=[file_path],
+            record_id="draft-1",
         )
 
     assert delete_calls == [
-        (
-            ("draft-1",),
-            {
-                "base_url": "https://sandbox.zenodo.org",
-                "headers": {"Authorization": "x"},
-                "file_key": "results 2026.csv",
-            },
-        )
+        {
+            "file_id": ZenodoFileIdentifier(
+                record_id="draft-1",
+                record_status="draft",
+                file_key="results 2026.csv",
+            )
+        }
     ]
 
 

@@ -538,13 +538,13 @@ class ZenodoRecordFileCollectionHandler(APIHandler):
                     current_item=current_file,
                 )
 
-            draft = zenodo_requests.upload_zenodo_record_files(
+            zenodo_requests.upload_zenodo_record_files(
                 record_id=record_id,
                 file_paths=resolved_file_paths,
                 on_upload_progress=on_upload_progress,
                 should_cancel=context.should_cancel,
             )
-            return {"draft": draft}
+            return {}
 
         job_id = self.get_job_manager(self).start(
             upload,
@@ -576,7 +576,7 @@ class ZenodoRecordFileCollectionHandler(APIHandler):
 
         try:
             zenodo_requests = self.get_zenodo_requests(self)
-            draft = zenodo_requests.delete_zenodo_record_file(
+            zenodo_requests.delete_zenodo_record_file(
                 file_id=file_id,
             )
         except ValueError as error:
@@ -592,7 +592,7 @@ class ZenodoRecordFileCollectionHandler(APIHandler):
             get_user_id(self),
             _record_changed_topic(record_id),
         )
-        self.finish(json.dumps({"draft": draft, "deleted_key": file_id.file_key}))
+        self.finish(json.dumps({"deleted_key": file_id.file_key}))
 
 
 class JobsHandler(APIHandler):

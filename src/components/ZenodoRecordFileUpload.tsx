@@ -2,7 +2,6 @@ import React from 'react';
 
 import {
   getLatestActiveJobId,
-  ZenodoRecordDraftResponse,
   uploadZenodoRecordFiles
 } from '../api_calls';
 import { useServerSettings } from '../store';
@@ -53,14 +52,11 @@ export const ZenodoRecordFileUpload: React.FC<{
     }
   };
 
-  const completeUpload = React.useCallback(
-    (_record: ZenodoRecordDraftResponse): void => {
-      setUploadId(null);
-      setMessage('Files uploaded.');
-      onDone();
-    },
-    [onDone]
-  );
+  const completeUpload = React.useCallback((): void => {
+    setUploadId(null);
+    setMessage('Files uploaded.');
+    onDone();
+  }, [onDone]);
 
   const failUpload = React.useCallback((reason: string): void => {
     setUploadId(null);
@@ -83,14 +79,7 @@ export const ZenodoRecordFileUpload: React.FC<{
       {uploadId ? (
         <JobProgress
           onCanceled={cancelUpload}
-          onDone={progress => {
-            const draft = progress.result?.draft;
-            if (draft) {
-              completeUpload(draft);
-            } else {
-              failUpload('Upload completed without a record');
-            }
-          }}
+          onDone={completeUpload}
           onError={failUpload}
           jobId={uploadId}
         />

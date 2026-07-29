@@ -298,7 +298,6 @@ export async function uploadZenodoRecordFiles(
 }
 
 export type DeleteZenodoRecordFileResponse = {
-  draft: ZenodoRecordDraftResponse;
   deleted_key: string;
 };
 
