@@ -1,5 +1,9 @@
 import React from 'react';
-import { ZenodoRecordData, useZenodoRecordPermission } from '../api_calls';
+import {
+  ZenodoRecordData,
+  ZenodoRecordVersion,
+  useZenodoRecordPermission
+} from '../api_calls';
 import { CreateNewVersionButton } from './CreateNewVersionButton';
 import { ZenodoRecordDetails } from './ZenodoRecordDetails';
 import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
@@ -10,18 +14,22 @@ import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
  */
 export const ZenodoUserRecordDetails: React.FC<{
   record: ZenodoRecordData;
-}> = ({ record }) => {
+  versions: ZenodoRecordVersion[];
+}> = ({ record, versions }) => {
   const isDraft = record.is_draft;
   const userPermission = useZenodoRecordPermission(record.id);
   const hasEditingRights =
     userPermission === 'edit' || userPermission === 'manage';
   const editable = isDraft && hasEditingRights;
-  const canCreateNewVersion = !isDraft && hasEditingRights;
 
   return (
     <section>
       <ZenodoRecordDetails record={record} editable={editable} />
-      {canCreateNewVersion && <CreateNewVersionButton id={record.id} />}
+      <CreateNewVersionButton
+        id={record.id}
+        versions={versions}
+        allowedToCreateNewVersion={hasEditingRights}
+      />
       {editable && (
         <>
           <ZenodoRecordFileUpload recordId={record.id} />

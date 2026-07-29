@@ -1,15 +1,31 @@
 import React from 'react';
 
-import { createZenodoRecordVersion } from '../api_calls';
+import { createZenodoRecordVersion, ZenodoRecordVersion } from '../api_calls';
 import { useServerSettings } from '../store';
 
 export function CreateNewVersionButton({
   id,
-  onCreated
+  onCreated,
+  versions,
+  allowedToCreateNewVersion
 }: {
   id: string;
   onCreated?: () => void | Promise<void>;
+  versions: ZenodoRecordVersion[];
+  allowedToCreateNewVersion: boolean;
 }): JSX.Element {
+  // check if the latest version is a draft or not. If it is, disable button
+  const noNewVersionDraftExists =
+    versions.sort((a, b) => b.versions.index - a.versions.index)?.[0]
+      ?.is_draft === false;
+
+  const disable = !allowedToCreateNewVersion || !noNewVersionDraftExists;
+  const hint = !allowedToCreateNewVersion
+    ? 'You do not have permission to create a new version.'
+    : !noNewVersionDraftExists
+      ? 'A new version draft already exists.'
+      : '';
+
   const serverSettings = useServerSettings();
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -31,9 +47,10 @@ export function CreateNewVersionButton({
   return (
     <>
       <button
-        disabled={isLoading}
+        disabled={disable}
         onClick={() => void createVersion()}
         type="button"
+        title={hint}
       >
         {isLoading ? 'Creating...' : 'Create New Version'}
       </button>

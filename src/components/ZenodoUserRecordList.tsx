@@ -66,7 +66,9 @@ function ZenodoUserRecord({
         fetchRecord={async (id: string): Promise<ZenodoRecordData> => {
           return await getZenodoUserRecord(serverSettings, id);
         }}
-        renderRecord={record => <ZenodoUserRecordDetails record={record} />}
+        renderRecord={(record, versions) => (
+          <ZenodoUserRecordDetails record={record} versions={versions} />
+        )}
       />
     </div>
   );

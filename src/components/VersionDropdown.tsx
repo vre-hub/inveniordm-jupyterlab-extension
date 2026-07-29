@@ -1,31 +1,16 @@
 import React from 'react';
 
-import { listZenodoRecordVersions, ZenodoRecordVersion } from '../api_calls';
-import { useServerSettings } from '../store';
+import { ZenodoRecordVersion } from '../api_calls';
 
 export function VersionDropdown({
   recordId,
-  includeDrafts,
+  versions,
   onChange
 }: {
   recordId: string;
-  includeDrafts: boolean;
+  versions: ZenodoRecordVersion[];
   onChange: (recordId: string) => void;
 }): JSX.Element {
-  const serverSettings = useServerSettings();
-  const [versions, setVersions] = React.useState<ZenodoRecordVersion[]>([]);
-
-  React.useEffect(() => {
-    void listZenodoRecordVersions(serverSettings, recordId, includeDrafts).then(
-      (versions: ZenodoRecordVersion[]) => {
-        const sortedVersions = versions.sort(
-          (a, b) => a.versions.index - b.versions.index
-        );
-        setVersions(sortedVersions);
-      }
-    );
-  }, [includeDrafts, recordId, serverSettings]);
-
   return (
     <select
       aria-label="Record version"

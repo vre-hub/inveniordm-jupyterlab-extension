@@ -1,5 +1,9 @@
 import React from 'react';
-import { ZenodoRecordData } from '../api_calls';
+import {
+  useZenodoRecordVersions,
+  ZenodoRecordData,
+  ZenodoRecordVersion
+} from '../api_calls';
 import { useEventListener } from '../sse';
 import { VersionDropdown } from './VersionDropdown';
 
@@ -18,7 +22,10 @@ export function ZenodoVersionedRecord({
   initialRecordValue?: ZenodoRecordData;
   include_drafts_in_version_dropdown: boolean;
   fetchRecord: (id: string) => Promise<ZenodoRecordData>;
-  renderRecord: (record: ZenodoRecordData) => JSX.Element;
+  renderRecord: (
+    record: ZenodoRecordData,
+    versions: ZenodoRecordVersion[] // TODO we pass this versions array around a lot, think about better component structure
+  ) => JSX.Element;
 }): JSX.Element {
   const [recordId, setRecordId] = React.useState<string>(initialRecordId);
 
@@ -71,6 +78,11 @@ export function ZenodoVersionedRecord({
     }
   });
 
+  const versions = useZenodoRecordVersions(
+    recordId,
+    include_drafts_in_version_dropdown
+  );
+
   return (
     <div
       style={{
@@ -81,14 +93,16 @@ export function ZenodoVersionedRecord({
     >
       {isLoading && <p>Loading...</p>}
       <VersionDropdown
+        versions={versions}
         recordId={recordId}
-        includeDrafts={include_drafts_in_version_dropdown}
         onChange={id => {
           setRecordId(id);
           void loadRecord(id);
         }}
       />
-      {record && !('error' in record) ? renderRecord(record) : record?.error}
+      {record && !('error' in record)
+        ? renderRecord(record, versions)
+        : record?.error}
     </div>
   );
 }

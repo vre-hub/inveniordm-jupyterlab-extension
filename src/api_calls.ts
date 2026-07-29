@@ -444,7 +444,30 @@ export function useZenodoRecordPermission(
   }, [id, serverSettings]);
 
   return userPermission;
-} // TODO check if these fields exist/ if they are always present
+}
+
+export function useZenodoRecordVersions(
+  recordId: string,
+  includeDrafts: boolean
+): ZenodoRecordVersion[] {
+  const serverSettings = useServerSettings();
+  const [versions, setVersions] = React.useState<ZenodoRecordVersion[]>([]);
+
+  React.useEffect(() => {
+    void listZenodoRecordVersions(serverSettings, recordId, includeDrafts).then(
+      (versions: ZenodoRecordVersion[]) => {
+        const sortedVersions = versions.sort(
+          (a, b) => a.versions.index - b.versions.index
+        );
+        setVersions(sortedVersions);
+      }
+    );
+  }, [includeDrafts, recordId, serverSettings]);
+
+  return versions;
+}
+
+// TODO check if these fields exist/ if they are always present
 
 export type ZenodoFile = {
   key: string;
@@ -472,5 +495,8 @@ export type ZenodoRecordData = {
   files?: { entries?: Record<string, ZenodoFile> };
   links: {
     self_html: string;
+  };
+  versions: {
+    is_latest: boolean;
   };
 };
