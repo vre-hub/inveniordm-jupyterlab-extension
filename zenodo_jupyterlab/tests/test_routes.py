@@ -8,6 +8,7 @@ from zenodo_jupyterlab.routes import (
     ZenodoRecordVersionCollectionHandler,
 )
 from zenodo_jupyterlab.util.sse import EventBus
+from zenodo_jupyterlab.zenodo_file_identifier import ZenodoFileIdentifier
 
 
 async def test_hello(jp_fetch):
@@ -119,8 +120,7 @@ def test_import_cell_constructs_download_location_without_metadata_lookup(tmp_pa
 
     zenodo_requests.get_zenodo_record_file.assert_not_called()
     download_manager.get_download_location.assert_called_once_with(
-        record_id="123",
-        file_key="example.csv",
+        file_id=ZenodoFileIdentifier(record_id="123", file_key="example.csv"),
     )
     assert len(responses) == 1
     assert json.loads(responses[0])["metadata_zenodo_jupyterlab"] == {

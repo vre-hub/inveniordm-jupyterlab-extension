@@ -10,6 +10,7 @@ from zenodo_jupyterlab.zenodo_requests.zenodo_helpers import (
 
 from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
 from ..util.progress_reporting_reader import ProgressReportingReader
+from ..zenodo_file_identifier import ZenodoFileIdentifier
 from .zenodo import (
     ZenodoFileResponse,
     ZenodoPermission,
@@ -307,16 +308,15 @@ class ZenodoRequests:
     def delete_zenodo_record_file(
         self,
         *,
-        record_id: int | str,
-        file_key: str,
+        file_id: ZenodoFileIdentifier,
     ) -> dict[str, Any]:
         """Delete a file from the editable draft of a record."""
-        draft = self._get_editable_record_draft(record_id)
+        draft = self._get_editable_record_draft(file_id.record_id)
         files_url = draft.get("links", {}).get("files")
         if not files_url:
             raise ValueError("Record draft does not provide a files link")
 
-        self.delete_zenodo_draft_file(files_url=files_url, file_key=file_key)
+        self.delete_zenodo_draft_file(files_url=files_url, file_key=file_id.file_key)
         return draft
 
     def upload_zenodo_record_files(
@@ -466,12 +466,10 @@ class ZenodoRequests:
     def get_zenodo_record_file(
         self,
         *,
-        record_id: int | str,
-        file_key: str,
+        file_id: ZenodoFileIdentifier,
     ) -> dict[str, Any]:
         return get_zenodo_record_file(
-            record_id,
-            file_key,
+            file_id,
             base_url=self.url,
             headers=self.headers,
         )

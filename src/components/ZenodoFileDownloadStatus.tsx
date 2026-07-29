@@ -3,7 +3,8 @@ import React from 'react';
 import {
   deleteZenodoFileDownload,
   getZenodoFileDownloadStatus,
-  ZenodoFileDownloadStatusResponse
+  ZenodoFileDownloadStatusResponse,
+  ZenodoFileIdentifier
 } from '../api_calls';
 import { useEventListener } from '../sse';
 import { useServerSettings } from '../store';
@@ -15,38 +16,35 @@ function encodeTopicPart(value: string): string {
   );
 }
 
-function downloadStatusChangedTopic(recordId: string, fileKey: string): string {
+function downloadStatusChangedTopic(fileId: ZenodoFileIdentifier): string {
   return [
     'file.download-status.changed',
-    encodeTopicPart(String(recordId)),
-    encodeTopicPart(fileKey)
+    encodeTopicPart(fileId.record_id),
+    encodeTopicPart(fileId.file_key)
   ].join('.');
 }
 
 export const ZenodoFileDownloadStatus: React.FC<{
-  recordId: string;
-  fileKey: string;
-}> = ({ recordId, fileKey }) => {
+  fileId: ZenodoFileIdentifier;
+}> = ({ fileId }) => {
   const serverSettings = useServerSettings();
   const [status, setStatus] =
     React.useState<ZenodoFileDownloadStatusResponse | null>(null);
 
   const reloadStatus = React.useCallback(async (): Promise<void> => {
-    setStatus(
-      await getZenodoFileDownloadStatus(serverSettings, recordId, fileKey)
-    );
-  }, [recordId, fileKey, serverSettings]);
+    setStatus(await getZenodoFileDownloadStatus(serverSettings, fileId));
+  }, [fileId, serverSettings]);
 
   React.useEffect(() => {
     void reloadStatus();
   }, [reloadStatus]);
 
-  useEventListener(downloadStatusChangedTopic(recordId, fileKey), () => {
+  useEventListener(downloadStatusChangedTopic(fileId), () => {
     void reloadStatus();
   });
 
   const deleteDownload = async (): Promise<void> => {
-    await deleteZenodoFileDownload(serverSettings, recordId, fileKey);
+    await deleteZenodoFileDownload(serverSettings, fileId);
   };
 
   if (status === null) {

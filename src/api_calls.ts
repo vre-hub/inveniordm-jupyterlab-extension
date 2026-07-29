@@ -224,22 +224,37 @@ export type FindJobsResponse = {
   job_ids: string[];
 };
 
+export type ZenodoFileIdentifier = {
+  record_id: string;
+  file_key: string;
+};
+
+type ActiveJobIdentifier =
+  | {
+      jobType: 'upload';
+      recordId: string;
+    }
+  | {
+      jobType: 'download';
+      fileId: ZenodoFileIdentifier;
+    };
+
 export async function getLatestActiveJobId(
   serverSettings: ServerConnection.ISettings,
-  options: {
-    jobType: 'upload' | 'download';
-    recordId: string;
-    fileKey?: string;
-  }
+  identifier: ActiveJobIdentifier
 ): Promise<string | null> {
+  const recordId =
+    identifier.jobType === 'download'
+      ? identifier.fileId.record_id
+      : identifier.recordId;
   const params = new URLSearchParams({
-    job_type: options.jobType,
-    record_id: String(options.recordId),
+    job_type: identifier.jobType,
+    record_id: recordId,
     status: 'active',
     latest: 'true'
   });
-  if (options.fileKey !== undefined) {
-    params.set('file_key', options.fileKey);
+  if (identifier.jobType === 'download') {
+    params.set('file_key', identifier.fileId.file_key);
   }
 
   const response = await requestAPI<FindJobsResponse>(
@@ -287,16 +302,15 @@ export type DeleteZenodoRecordFileResponse = {
 
 export async function deleteZenodoRecordFile(
   serverSettings: ServerConnection.ISettings,
-  recordId: string,
-  fileKey: string
+  fileId: ZenodoFileIdentifier
 ): Promise<DeleteZenodoRecordFileResponse> {
   return await requestAPI<DeleteZenodoRecordFileResponse>(
-    `user/records/${encodeURIComponent(recordId)}/files`,
+    `user/records/${encodeURIComponent(fileId.record_id)}/files`,
     serverSettings,
     {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: fileKey })
+      body: JSON.stringify(fileId)
     }
   );
 }
@@ -338,20 +352,18 @@ export type DeleteZenodoFileDownloadResponse = {
 
 export async function downloadZenodoFile(
   serverSettings: ServerConnection.ISettings,
-  recordId: string,
-  fileKey: string
+  fileId: ZenodoFileIdentifier
 ): Promise<StartJobResponse> {
   return await requestAPI<StartJobResponse>('files/download', serverSettings, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ record_id: recordId, file_key: fileKey })
+    body: JSON.stringify(fileId)
   });
 }
 
 export async function getZenodoFileDownloadStatus(
   serverSettings: ServerConnection.ISettings,
-  recordId: string,
-  fileKey: string
+  fileId: ZenodoFileIdentifier
 ): Promise<ZenodoFileDownloadStatusResponse> {
   return await requestAPI<ZenodoFileDownloadStatusResponse>(
     'files/status',
@@ -359,15 +371,14 @@ export async function getZenodoFileDownloadStatus(
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ record_id: recordId, file_key: fileKey })
+      body: JSON.stringify(fileId)
     }
   );
 }
 
 export async function deleteZenodoFileDownload(
   serverSettings: ServerConnection.ISettings,
-  recordId: string,
-  fileKey: string
+  fileId: ZenodoFileIdentifier
 ): Promise<DeleteZenodoFileDownloadResponse> {
   return await requestAPI<DeleteZenodoFileDownloadResponse>(
     'files/download',
@@ -375,15 +386,14 @@ export async function deleteZenodoFileDownload(
     {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ record_id: recordId, file_key: fileKey })
+      body: JSON.stringify(fileId)
     }
   );
 }
 
 export async function getZenodoFileImportCell(
   serverSettings: ServerConnection.ISettings,
-  recordId: string,
-  fileKey: string
+  fileId: ZenodoFileIdentifier
 ): Promise<InsertZenodoCellAction> {
   return await requestAPI<InsertZenodoCellAction>(
     'files/import-cell',
@@ -391,10 +401,7 @@ export async function getZenodoFileImportCell(
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        record_id: recordId,
-        file_key: fileKey
-      })
+      body: JSON.stringify(fileId)
     }
   );
 }

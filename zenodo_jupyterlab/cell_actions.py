@@ -2,6 +2,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .zenodo_file_identifier import ZenodoFileIdentifier
+
 
 def _make_file_variable_name(*, record_id: int | str, path: Path) -> str:
     name = f"{path.stem}_{record_id}"
@@ -31,12 +33,11 @@ def _file_comment_name(
 def make_zenodo_import_cell_action(
     *,
     path: Path,
-    record_id: int | str,
-    file_key: str,
+    file_id: ZenodoFileIdentifier,
     file_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     path_literal = repr(str(path))
-    variable_name = _make_file_variable_name(record_id=record_id, path=path)
+    variable_name = _make_file_variable_name(record_id=file_id.record_id, path=path)
     comment_name = _file_comment_name(path=path, file_metadata=file_metadata)
     source = "\n".join(
         [
@@ -51,8 +52,8 @@ def make_zenodo_import_cell_action(
         "metadata_zenodo_jupyterlab": {
             "kind": "import-cell",
             "version": 1,
-            "record_id": str(record_id),
-            "file_key": file_key,
+            "record_id": str(file_id.record_id),
+            "file_key": file_id.file_key,
             "path": str(path),
         },
     }

@@ -3,6 +3,7 @@ import requests as requests_library
 
 from zenodo_auth.token_store import BoundedTokenStore, FileTokenStore
 from zenodo_jupyterlab.util.job_types import JobCancelled
+from zenodo_jupyterlab.zenodo_file_identifier import ZenodoFileIdentifier
 from zenodo_jupyterlab.zenodo_requests import zenodo as zenodo_module
 from zenodo_jupyterlab.zenodo_requests import zenodo_requests as zenodo_requests_module
 from zenodo_jupyterlab.zenodo_requests.local_zenodo_requests_factory import (
@@ -1023,8 +1024,7 @@ def test_get_record_file_falls_back_to_published_file(monkeypatch, draft_status)
     )
 
     result = zenodo_module.get_zenodo_record_file(
-        "565160",
-        "Devoir 2.docx",
+        ZenodoFileIdentifier(record_id="565160", file_key="Devoir 2.docx"),
         base_url="https://sandbox.zenodo.org",
         headers={"Authorization": "x"},
     )

@@ -3,6 +3,7 @@ from pathlib import Path
 from .util.job_manager import JobContext, JobManager, ProgressListener
 from .util.job_types import JobProgress
 from .zenodo_downloads import ZenodoDownloads, ZenodoFileSource
+from .zenodo_file_identifier import ZenodoFileIdentifier
 
 
 class ZenodoDownloadManager:
@@ -23,15 +24,13 @@ class ZenodoDownloadManager:
         self,
         zenodo_requests: ZenodoFileSource,
         *,
-        record_id: int | str,
-        file_key: str,
+        file_id: ZenodoFileIdentifier,
         on_progress_changed: ProgressListener | None = None,
     ) -> str:
         def download(context: JobContext) -> dict[str, object]:
             destination = self.zenodo_downloads.download_file(
                 zenodo_requests,
-                record_id=record_id,
-                file_key=file_key,
+                file_id=file_id,
                 on_progress=lambda bytes_downloaded, total_bytes: context.update(
                     completed_bytes=bytes_downloaded,
                     total_bytes=total_bytes,
@@ -45,8 +44,8 @@ class ZenodoDownloadManager:
             progress=JobProgress(
                 job_type="download",
                 metadata={
-                    "record_id": str(record_id),
-                    "file_key": file_key,
+                    "record_id": str(file_id.record_id),
+                    "file_key": file_id.file_key,
                 },
             ),
             on_progress_changed=on_progress_changed,
@@ -62,32 +61,26 @@ class ZenodoDownloadManager:
     def get_download_status(
         self,
         *,
-        record_id: int | str,
-        file_key: str,
+        file_id: ZenodoFileIdentifier,
     ) -> dict[str, object]:
         return self.zenodo_downloads.get_download_status(
-            record_id=record_id,
-            file_key=file_key,
+            file_id=file_id,
         )
 
     def delete_download(
         self,
         *,
-        record_id: int | str,
-        file_key: str,
+        file_id: ZenodoFileIdentifier,
     ) -> dict[str, object]:
         return self.zenodo_downloads.delete_download(
-            record_id=record_id,
-            file_key=file_key,
+            file_id=file_id,
         )
 
     def get_download_location(
         self,
         *,
-        record_id: int | str,
-        file_key: str,
+        file_id: ZenodoFileIdentifier,
     ) -> Path:
         return self.zenodo_downloads.get_download_location(
-            record_id=record_id,
-            file_key=file_key,
+            file_id=file_id,
         )

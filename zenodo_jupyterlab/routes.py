@@ -21,6 +21,10 @@ from .cell_actions import make_zenodo_import_cell_action
 from .util.sse import EventBus, stream_user_events
 from .zenodo_auth.auth_controller import ZenodoAuthController
 from .zenodo_download_manager import ZenodoDownloadManager
+from .zenodo_file_identifier import (
+    ZenodoFileIdentifier,
+    _zenodo_file_identifier,
+)
 from .zenodo_requests.zenodo_requests import ZenodoRequests
 from .zenodo_requests.zenodo_requests_factory import ZenodoRequestsFactory
 from .zenodo_requests.zenodo_requests_factory_create import (
@@ -73,11 +77,11 @@ def _default_downloads_dir() -> Path:
     return Path(jupyter_data_dir()) / "zenodo_jupyterlab" / "downloads"
 
 
-def _download_status_changed_topic(record_id: int | str, file_key: str) -> str:
+def _download_status_changed_topic(file_id: ZenodoFileIdentifier) -> str:
     return (
         "file.download-status.changed."
-        f"{quote(str(record_id), safe='')}."
-        f"{quote(file_key, safe='')}"
+        f"{quote(str(file_id.record_id), safe='')}."
+        f"{quote(file_id.file_key, safe='')}"
     )
 
 
@@ -558,18 +562,20 @@ class ZenodoRecordFileCollectionHandler(APIHandler):
     @tornado.web.authenticated
     def delete(self, record_id: str):
         data = self.get_json_body() or {}
-        file_key = data.get("key")
+        file_id = _zenodo_file_identifier(
+            data.get("record_id"),
+            data.get("file_key"),
+        )
 
-        if not isinstance(file_key, str) or not file_key:
+        if file_id is None or str(file_id.record_id) != record_id:
             self.set_status(400)
-            self.finish(json.dumps({"message": "Missing key"}))
+            self.finish(json.dumps({"message": "Invalid file identifier"}))
             return
 
         try:
             zenodo_requests = self.get_zenodo_requests(self)
             draft = zenodo_requests.delete_zenodo_record_file(
-                record_id=record_id,
-                file_key=file_key,
+                file_id=file_id,
             )
         except ValueError as error:
             self.set_status(400)
@@ -584,7 +590,7 @@ class ZenodoRecordFileCollectionHandler(APIHandler):
             get_user_id(self),
             _record_changed_topic(record_id),
         )
-        self.finish(json.dumps({"draft": draft, "deleted_key": file_key}))
+        self.finish(json.dumps({"draft": draft, "deleted_key": file_id.file_key}))
 
 
 class JobsHandler(APIHandler):
@@ -703,7 +709,8 @@ class ZenodoFileDownloadHandler(APIHandler):
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
         file_key = data.get("file_key")
-        if record_id is None or not file_key:
+        file_id = _zenodo_file_identifier(record_id, file_key)
+        if file_id is None:
             self.set_status(400)
             self.finish(json.dumps({"message": "Missing record_id or file_key"}))
             return
@@ -723,13 +730,12 @@ class ZenodoFileDownloadHandler(APIHandler):
             if progress.get("status") == "done":
                 self.event_bus.publish(
                     user_id,
-                    _download_status_changed_topic(record_id, file_key),
+                    _download_status_changed_topic(file_id),
                 )
 
         job_id = self.get_zenodo_download_manager(self).start_download(
             zenodo_requests,
-            record_id=record_id,
-            file_key=file_key,
+            file_id=file_id,
             on_progress_changed=publish_job_progress,
         )
         self.finish(json.dumps({"job_id": job_id}))
@@ -739,15 +745,15 @@ class ZenodoFileDownloadHandler(APIHandler):
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
         file_key = data.get("file_key")
-        if record_id is None or not file_key:
+        file_id = _zenodo_file_identifier(record_id, file_key)
+        if file_id is None:
             self.set_status(400)
             self.finish(json.dumps({"message": "Missing record_id or file_key"}))
             return
 
         try:
             result = self.get_zenodo_download_manager(self).delete_download(
-                record_id=record_id,
-                file_key=file_key,
+                file_id=file_id,
             )
         except ValueError as error:
             self.set_status(400)
@@ -761,7 +767,7 @@ class ZenodoFileDownloadHandler(APIHandler):
         if result.get("deleted"):
             self.event_bus.publish(
                 get_user_id(self),
-                _download_status_changed_topic(record_id, file_key),
+                _download_status_changed_topic(file_id),
             )
 
         self.finish(json.dumps(result))
@@ -781,15 +787,15 @@ class ZenodoFileDownloadStatusHandler(APIHandler):
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
         file_key = data.get("file_key")
-        if record_id is None or not file_key:
+        file_id = _zenodo_file_identifier(record_id, file_key)
+        if file_id is None:
             self.set_status(400)
             self.finish(json.dumps({"message": "Missing record_id or file_key"}))
             return
 
         try:
             status = self.get_zenodo_download_manager(self).get_download_status(
-                record_id=record_id,
-                file_key=file_key,
+                file_id=file_id,
             )
         except ValueError as error:
             self.set_status(400)
@@ -817,7 +823,8 @@ class ZenodoFileImportCellHandler(APIHandler):
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
         file_key = data.get("file_key")
-        if record_id is None or not file_key:
+        file_id = _zenodo_file_identifier(record_id, file_key)
+        if file_id is None:
             self.set_status(400)
             self.finish(json.dumps({"message": "Missing record_id or file_key"}))
             return
@@ -826,15 +833,13 @@ class ZenodoFileImportCellHandler(APIHandler):
             destination = self.get_zenodo_download_manager(
                 self
             ).get_download_location(
-                record_id=record_id,
-                file_key=file_key,
+                file_id=file_id,
             )
             if not destination.exists():
                 raise ValueError("Zenodo file has not been downloaded yet")
             action = make_zenodo_import_cell_action(
                 path=destination,
-                record_id=record_id,
-                file_key=file_key,
+                file_id=file_id,
             )
         except ValueError as error:
             self.set_status(400)

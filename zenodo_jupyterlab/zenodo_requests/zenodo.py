@@ -10,6 +10,8 @@ from urllib.parse import quote, urljoin, urlparse, urlunparse
 
 import requests
 
+from ..zenodo_file_identifier import ZenodoFileIdentifier
+
 ZenodoPermission = Literal[
     "manage", "edit", "preview", "view"
 ]  # "preview" means "preview drafts", "view" means "view restricted files"
@@ -209,8 +211,7 @@ def list_zenodo_record_files(
 
 
 def get_zenodo_record_file(
-    record_id: int | str,
-    file_key: str,
+    file_id: ZenodoFileIdentifier,
     *,
     base_url: str,
     headers: dict[str, str] | None = None,
@@ -219,8 +220,8 @@ def get_zenodo_record_file(
     Fetch one file for a Zenodo record.
     Works for files in both draft and published records.
     """
-    record_id = quote(str(record_id), safe="")
-    filename = quote(file_key, safe="")
+    record_id = quote(str(file_id.record_id), safe="")
+    filename = quote(file_id.file_key, safe="")
     response = requests.get(
         (
             f"{_normalize_base_url(base_url)}/api/records/{record_id}"
