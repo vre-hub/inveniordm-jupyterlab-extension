@@ -232,7 +232,8 @@ The background job then:
 3. If it is published, rejects the edit; callers must first create a draft
    explicitly with `POST /records/:id/versions`.
 4. For each new file on a draft, performs initialize, content upload, and
-   commit against the editable draft, as described for the draft-with-files route.
+   commit against `/api/records/:id/draft/files`, as described for the
+   draft-with-files route.
 
 User records are required to determine whether the supplied ID is a draft or a
 published record in the user's working view. A published record cannot be
@@ -244,10 +245,10 @@ automatically.
 1. Resolve the editable draft in the same way as the upload route: fetch the
    user record, use it directly if it is a draft, or reject the request if it
    is published.
-2. Read `links.files` from that draft and send `DELETE links.files/:file-key`.
+2. Read the draft record ID and send
+   `DELETE /api/records/:id/draft/files/:file-key`.
 
-The lookup is required because only a draft's file collection is mutable. The
-final request removes the named draft file.
+The lookup is required because only a draft's file collection is mutable.
 
 ## Details of other Routes
 
@@ -295,9 +296,11 @@ This starts a background upload job:
 
 1. Send `POST /api/records` with `{"files": {"enabled": true}}` to create an
    empty, file-enabled draft.
-2. Read the returned `links.files` value.
+2. Read the returned draft record ID and construct
+   `/api/records/:id/draft/files`.
 3. For each selected local file:
-   1. Send `POST links.files` with the file key to initialize its entry.
+   1. Send `POST /api/records/:id/draft/files` with the file key to initialize
+      its entry.
    2. Send `PUT` to the returned `links.content` URL to stream the bytes.
    3. Send `POST` to the returned `links.commit` URL to finalize the file.
 

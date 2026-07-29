@@ -380,7 +380,7 @@ def create_zenodo_record_draft(
 
 
 def upload_zenodo_draft_file(
-    files_url: str,
+    record_id: int | str,
     *,
     base_url: str,
     headers: dict[str, str] | None,
@@ -388,12 +388,15 @@ def upload_zenodo_draft_file(
     content: bytes | BinaryReader,
 ) -> dict[str, Any]:
     """
-    Initialize, upload, and commit one InvenioRDM draft file.
+    Initialize, upload, and commit one InvenioRDM draft file by record ID.
     """
 
     # Initialize the file in the draft's file collection
     # which returns the content and commit links for the file upload.
-    files_url = _rebase_zenodo_url(files_url, base_url=base_url)
+    encoded_record_id = quote(str(record_id), safe="")
+    files_url = (
+        f"{_normalize_base_url(base_url)}/api/records/{encoded_record_id}/draft/files"
+    )
     initialize_response = requests.post(
         files_url,
         json=[{"key": filename}],
@@ -433,18 +436,23 @@ def upload_zenodo_draft_file(
 
 
 def delete_zenodo_draft_file(
-    files_url: str,
+    record_id: int | str,
     *,
     base_url: str,
     headers: dict[str, str] | None,
     file_key: str,
 ) -> None:
     """
-    Delete one file from an InvenioRDM draft by its object key.
+    Delete one file from an InvenioRDM draft by record ID and object key.
     """
-    delete_url = f"{files_url.rstrip('/')}/{quote(file_key, safe='')}"
+    encoded_record_id = quote(str(record_id), safe="")
+    encoded_file_key = quote(file_key, safe="")
+    delete_url = (
+        f"{_normalize_base_url(base_url)}/api/records/{encoded_record_id}"
+        f"/draft/files/{encoded_file_key}"
+    )
     response = requests.delete(
-        _rebase_zenodo_url(delete_url, base_url=base_url),
+        delete_url,
         headers=_headers(headers),
         timeout=10,
     )

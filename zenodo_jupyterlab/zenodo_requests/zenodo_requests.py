@@ -311,11 +311,11 @@ class ZenodoRequests:
     ) -> dict[str, Any]:
         """Delete a file from the editable draft of a record."""
         draft = self._get_editable_record_draft(file_id.record_id)
-        files_url = draft.get("links", {}).get("files")
-        if not files_url:
-            raise ValueError("Record draft does not provide a files link")
 
-        self.delete_zenodo_draft_file(files_url=files_url, file_key=file_id.file_key)
+        self.delete_zenodo_draft_file(
+            record_id=draft["id"],
+            file_key=file_id.file_key,
+        )
         return draft
 
     def upload_zenodo_record_files(
@@ -328,13 +328,10 @@ class ZenodoRequests:
     ) -> dict[str, Any]:
         """Upload files to the editable draft of a record."""
         draft = self._get_editable_record_draft(record_id)
-        files_url = draft.get("links", {}).get("files")
-        if not files_url:
-            raise ValueError("Record draft does not provide a files link")
 
         self.upload_zenodo_draft_files(
             file_paths=file_paths,
-            files_url=files_url,
+            record_id=draft["id"],
             on_upload_progress=on_upload_progress,
             should_cancel=should_cancel,
         )
@@ -343,7 +340,7 @@ class ZenodoRequests:
     def delete_zenodo_draft_file(
         self,
         *,
-        files_url: str,
+        record_id: int | str,
         file_key: str,
     ) -> None:
         """
@@ -353,7 +350,7 @@ class ZenodoRequests:
             raise ValueError("Missing Zenodo request authentication headers")
 
         delete_zenodo_draft_file(
-            files_url,
+            record_id,
             base_url=self.url,
             headers=self.headers,
             file_key=file_key,
@@ -362,7 +359,7 @@ class ZenodoRequests:
     def upload_zenodo_draft_files(
         self,
         file_paths: list[Path],
-        files_url: str,
+        record_id: int | str,
         on_upload_progress: UploadProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
     ):
@@ -402,7 +399,7 @@ class ZenodoRequests:
 
                 try:
                     upload_zenodo_draft_file(
-                        files_url,
+                        record_id,
                         base_url=self.url,
                         headers=self.headers,
                         filename=path.name,
@@ -417,7 +414,7 @@ class ZenodoRequests:
                     # before the content is streamed. Remove that empty entry
                     # when streaming is canceled.
                     self.delete_zenodo_draft_file(
-                        files_url=files_url,
+                        record_id=record_id,
                         file_key=path.name,
                     )
                     raise
@@ -441,11 +438,9 @@ class ZenodoRequests:
         )
         if should_cancel is not None and should_cancel():
             raise JobCancelled("Upload canceled")
-        files_url = draft["links"]["files"]
-
         self.upload_zenodo_draft_files(
             file_paths=file_paths,
-            files_url=files_url,
+            record_id=draft["id"],
             on_upload_progress=on_upload_progress,
             should_cancel=should_cancel,
         )
