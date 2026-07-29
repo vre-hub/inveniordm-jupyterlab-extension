@@ -90,6 +90,29 @@ def test_delete_record_file_passes_file_identifier(monkeypatch):
     ]
 
 
+def test_delete_record_draft_uses_authenticated_request(monkeypatch):
+    requests = ZenodoRequests(
+        "https://sandbox.zenodo.org", {"Authorization": "Bearer token"}
+    )
+    calls = []
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "delete_zenodo_record_draft",
+        lambda *args, **kwargs: calls.append((args, kwargs)),
+    )
+
+    assert requests.delete_zenodo_record_draft("draft-1") is None
+    assert calls == [
+        (
+            ("draft-1",),
+            {
+                "base_url": "https://sandbox.zenodo.org",
+                "headers": {"Authorization": "Bearer token"},
+            },
+        )
+    ]
+
+
 def test_create_draft_with_files_passes_only_created_record_id(monkeypatch):
     draft = {"id": "draft-1", "is_published": False}
     requests = ZenodoRequests("https://sandbox.zenodo.org", {"Authorization": "x"})
@@ -1006,3 +1029,31 @@ def test_delete_zenodo_draft_file_uses_draft_files_key(monkeypatch):
     assert calls[0][0] == (
         "https://sandbox.zenodo.org/api/records/draft-1/draft/files/results%202026.csv",
     )
+
+
+def test_delete_zenodo_record_draft_uses_draft_endpoint(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        zenodo_module.requests,
+        "delete",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or Response(status_code=204),
+    )
+
+    zenodo_module.delete_zenodo_record_draft(
+        "draft / 1",
+        base_url="https://sandbox.zenodo.org/",
+        headers={"Authorization": "Bearer token"},
+    )
+
+    assert calls == [
+        (
+            ("https://sandbox.zenodo.org/api/records/draft%20%2F%201/draft",),
+            {
+                "headers": {
+                    "Accept": "application/vnd.inveniordm.v1+json",
+                    "Authorization": "Bearer token",
+                },
+                "timeout": 10,
+            },
+        )
+    ]

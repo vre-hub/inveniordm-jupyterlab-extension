@@ -271,8 +271,13 @@ class ZenodoUserRecordCollectionHandler(APIHandler):
 
 
 class ZenodoUserRecordItemHandler(APIHandler):
-    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+    def initialize(
+        self,
+        get_zenodo_requests: GetZenodoRequests,
+        event_bus: EventBus,
+    ):
         self.get_zenodo_requests = get_zenodo_requests
+        self.event_bus = event_bus
 
     @tornado.web.authenticated
     def get(self, record_id: str):
@@ -288,6 +293,27 @@ class ZenodoUserRecordItemHandler(APIHandler):
             return
 
         self.finish(json.dumps(record))
+
+    @tornado.web.authenticated
+    def delete(self, record_id: str):
+        try:
+            self.get_zenodo_requests(self).delete_zenodo_record_draft(record_id)
+        except ValueError as error:
+            self.set_status(401)
+            self.finish(json.dumps({"message": str(error)}))
+            return
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.event_bus.publish(
+            get_user_id(self),
+            _record_changed_topic(record_id),
+            {"type": "draft_discarded"},
+        )
+        self.set_status(204)
+        self.finish()
 
 
 class ZenodoRecordPermissionHandler(APIHandler):
@@ -1038,7 +1064,10 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "user", "records", r"([^/]+)"),
             ZenodoUserRecordItemHandler,
-            {"get_zenodo_requests": get_zenodo_requests},
+            {
+                "get_zenodo_requests": get_zenodo_requests,
+                "event_bus": event_bus,
+            },
         ),
         (
             url_path_join(

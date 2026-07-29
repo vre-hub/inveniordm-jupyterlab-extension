@@ -378,6 +378,24 @@ def create_zenodo_record_version(
     return draft
 
 
+def delete_zenodo_record_draft(
+    record_id: int | str,
+    *,
+    base_url: str,
+    headers: dict[str, str] | None,
+) -> None:
+    """Delete/discard an InvenioRDM record draft."""
+    response = requests.delete(
+        (
+            f"{_normalize_base_url(base_url)}/api/records/"
+            f"{quote(str(record_id), safe='')}/draft"
+        ),
+        headers=_headers(headers, accept_invenio=True),
+        timeout=10,
+    )
+    response.raise_for_status()
+
+
 def create_zenodo_record_draft(
     *,
     base_url: str,

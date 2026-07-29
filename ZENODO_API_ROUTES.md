@@ -78,6 +78,7 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 | `GET /events`                                   | `subscribeToEvents`                | None; local server-sent event stream                                                                  |
 | `GET /user/records`                             | `listZenodoUserRecords`            | `GET /api/user/records`, optionally followed by one linked files request per draft or restricted hit  |
 | `GET /user/records/:id`                         | `getZenodoUserRecord`              | User-record search, followed by its linked files request if it is a draft or its files are restricted |
+| `DELETE /user/records/:id`                      | `deleteZenodoRecordDraft`          | `DELETE /api/records/:id/draft`                                                                       |
 | `GET /records/:id/permission`                   | `getZenodoRecordPermission`        | Direct draft or published record lookup, optionally followed by an edit-permission user-record query  |
 | `GET /records/:id/versions?include_drafts=true` | `listZenodoRecordVersions`         | General versions request, optionally supplemented with a user-record lookup for drafts                |
 | `POST /records/:id/versions`                    | `createZenodoRecordVersion`        | Create a new-version draft, then import the previous files                                            |
@@ -147,6 +148,14 @@ file lists are not included in the user-record search result. The underlying
 request helper accepts `include_files=false` for callers that only need record
 metadata; this route keeps the default value of `true` because its frontend
 response includes files.
+
+### `DELETE /user/records/:id`
+
+Send `DELETE /api/records/:id/draft` to discard the selected draft. InvenioRDM
+only allows this operation for authenticated users with edit access to the
+draft and returns an empty `204 No Content` response on success. The extension
+then publishes `record.changed.<id>` with type `draft_discarded`; the record
+details listener responds by attempting to reload the discarded record.
 
 ### `GET /records/:id/permission?record_status=:status`
 

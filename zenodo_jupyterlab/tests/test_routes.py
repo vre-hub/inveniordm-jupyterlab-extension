@@ -7,6 +7,7 @@ from zenodo_jupyterlab.routes import (
     ZenodoRecordCollectionHandler,
     ZenodoRecordPermissionHandler,
     ZenodoRecordVersionCollectionHandler,
+    ZenodoUserRecordItemHandler,
 )
 from zenodo_jupyterlab.util.sse import EventBus
 from zenodo_jupyterlab.zenodo_file_identifier import ZenodoFileIdentifier
@@ -115,6 +116,30 @@ async def test_record_permission_rejects_missing_record_status():
         "message": "record_status must be 'draft' or 'published'"
     }
     zenodo_requests.get_zenodo_record_permission.assert_not_called()
+
+
+def test_delete_user_record_discards_draft():
+    zenodo_requests = Mock()
+    event_bus = EventBus()
+    events = event_bus.subscribe("alice")
+    responses = []
+    statuses = []
+    handler = SimpleNamespace(
+        current_user=SimpleNamespace(username="alice"),
+        event_bus=event_bus,
+        get_zenodo_requests=lambda _: zenodo_requests,
+        set_status=statuses.append,
+        finish=lambda value=None: responses.append(value),
+    )
+
+    ZenodoUserRecordItemHandler.delete.__wrapped__(handler, "draft-1")
+
+    zenodo_requests.delete_zenodo_record_draft.assert_called_once_with("draft-1")
+    event = events.get_nowait()
+    assert event.topic == "record.changed.draft-1"
+    assert event.data == {"type": "draft_discarded"}
+    assert statuses == [204]
+    assert responses == [None]
 
 
 def test_search_records_passes_include_files():

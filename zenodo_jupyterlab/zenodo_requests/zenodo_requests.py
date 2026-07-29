@@ -17,6 +17,7 @@ from .zenodo import (
     check_user_record_permission_workaround,
     create_zenodo_record_draft,
     create_zenodo_record_version,
+    delete_zenodo_record_draft,
     delete_zenodo_draft_file,
     get_zenodo_me,
     get_zenodo_record,
@@ -306,6 +307,17 @@ class ZenodoRequests:
             base_url=self.url,
             headers=self.headers,
             file_key=file_id.file_key,
+        )
+
+    def delete_zenodo_record_draft(self, record_id: int | str) -> None:
+        """Discard an editable record draft."""
+        if not self.headers:
+            raise ValueError("Missing Zenodo request authentication headers")
+
+        delete_zenodo_record_draft(
+            record_id,
+            base_url=self.url,
+            headers=self.headers,
         )
 
     def upload_zenodo_record_files(

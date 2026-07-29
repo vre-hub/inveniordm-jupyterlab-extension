@@ -157,6 +157,17 @@ export async function getZenodoUserRecord(
   );
 }
 
+export async function deleteZenodoRecordDraft(
+  serverSettings: ServerConnection.ISettings,
+  recordId: string
+): Promise<void> {
+  await requestAPI<void>(
+    `user/records/${encodeURIComponent(recordId)}`,
+    serverSettings,
+    { method: 'DELETE' }
+  );
+}
+
 //TODO check if this is just ZenodoRecordData or if it is different
 export type ZenodoRecordVersion = {
   id: string;

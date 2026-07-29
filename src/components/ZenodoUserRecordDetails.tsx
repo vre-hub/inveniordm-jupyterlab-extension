@@ -5,6 +5,7 @@ import {
   useZenodoRecordPermission
 } from '../api_calls';
 import { CreateNewVersionButton } from './CreateNewVersionButton';
+import { DiscardDraftButton } from './DiscardDraftButton';
 import { ZenodoRecordDetails } from './ZenodoRecordDetails';
 import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
 
@@ -33,6 +34,12 @@ export const ZenodoUserRecordDetails: React.FC<{
         versions={versions}
         allowedToCreateNewVersion={hasEditingRights}
       />
+      {isDraft && (
+        <DiscardDraftButton
+          id={record.id}
+          allowedToDiscardDraft={hasEditingRights}
+        />
+      )}
       {editable && (
         <>
           <ZenodoRecordFileUpload recordId={record.id} />
