@@ -151,7 +151,7 @@ def test_record_with_grants_has_manage_permission_without_workaround(monkeypatch
     calls = []
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_record",
+        "get_zenodo_record_public_or_draft",
         lambda record_id, **kwargs: (
             calls.append((record_id, kwargs))
             or {
@@ -195,7 +195,7 @@ def test_record_without_grants_uses_edit_permission_workaround(
     )
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_record",
+        "get_zenodo_record_public_or_draft",
         lambda record_id, **kwargs: {
             "id": record_id,
             "parent": {"access": {}},
@@ -224,7 +224,7 @@ def test_record_permission_requires_cached_user_id(monkeypatch):
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_record",
+        "get_zenodo_record_public_or_draft",
         lambda *args, **kwargs: pytest.fail("record should not be fetched"),
     )
 
@@ -456,7 +456,7 @@ def test_get_zenodo_record_uses_invenio_response_format(monkeypatch):
     ]
 
 
-def test_get_zenodo_record_uses_draft_endpoint(monkeypatch):
+def test_get_zenodo_record_public_or_draft_uses_draft_endpoint(monkeypatch):
     calls = []
     draft = {"id": "draft-123", "is_draft": True}
     monkeypatch.setattr(
@@ -465,7 +465,7 @@ def test_get_zenodo_record_uses_draft_endpoint(monkeypatch):
         lambda *args, **kwargs: calls.append((args, kwargs)) or Response(draft),
     )
 
-    result = zenodo_module.get_zenodo_record(
+    result = zenodo_module.get_zenodo_record_public_or_draft(
         "draft-123",
         record_status="draft",
         base_url="https://zenodo.org",
