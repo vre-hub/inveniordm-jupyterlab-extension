@@ -8,6 +8,7 @@ import {
 } from '../api_calls';
 import { useEventListener } from '../sse';
 import { useServerSettings } from '../store';
+import { ZenodoFileImportCellButton } from './ZenodoFileImportCell';
 
 function encodeTopicPart(value: string): string {
   return encodeURIComponent(value).replace(
@@ -61,6 +62,7 @@ export const ZenodoFileDownloadStatus: React.FC<{
           Delete download
         </button>
       ) : null}
+      {status.downloaded && <ZenodoFileImportCellButton fileId={fileId} />}
     </div>
   );
 };

@@ -3,10 +3,9 @@ import React from 'react';
 import {
   deleteZenodoRecordFile,
   downloadZenodoFile,
-  getLatestActiveJobId,
-  getZenodoFileImportCell
+  getLatestActiveJobId
 } from '../api_calls';
-import { useInsertZenodoCell, useServerSettings } from '../store';
+import { useServerSettings } from '../store';
 import { JobProgress } from './JobProgress';
 import { ZenodoFileDownloadStatus } from './ZenodoFileDownloadStatus';
 import type { ZenodoFile, ZenodoFileIdentifier } from '../api_calls';
@@ -38,7 +37,6 @@ export const ZenodoFileInfo: React.FC<{
     >
       <ZenodoFileDetails filename={fileKey} size={file.size} />
       <ZenodoFileDownload fileId={fileId} />
-      <ZenodoFileImportCellButton fileId={fileId} />
       {editable && <ZenodoFileDeleteButton fileId={fileId} />}
     </div>
   );
@@ -93,23 +91,6 @@ const ZenodoFileDownload: React.FC<{
       <ZenodoFileDownloadStatus fileId={fileId} />
       {downloadId ? <JobProgress jobId={downloadId} /> : null}
     </>
-  );
-};
-
-const ZenodoFileImportCellButton: React.FC<{
-  fileId: ZenodoFileIdentifier;
-}> = ({ fileId }) => {
-  const serverSettings = useServerSettings();
-  const insertZenodoCell = useInsertZenodoCell();
-
-  const insertImportCell = async (): Promise<void> => {
-    insertZenodoCell(await getZenodoFileImportCell(serverSettings, fileId));
-  };
-
-  return (
-    <button onClick={insertImportCell} type="button">
-      Insert import cell
-    </button>
   );
 };
 
