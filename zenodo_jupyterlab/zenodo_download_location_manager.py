@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Protocol
 
 from .zenodo_file_identifier import ZenodoFileIdentifier
 from .zenodo_requests.zenodo import ZenodoFileResponse
@@ -8,16 +8,12 @@ from .zenodo_requests.zenodo import ZenodoFileResponse
 class ZenodoFileSource(Protocol):
     """
     Implemented by ZenodoRequests.
-    Contains functionality for downloading files and reading file metadata from Zenodo.
+    Contains functionality for downloading files from Zenodo.
     """
 
-    def open_zenodo_file(self, *, file_url: str) -> ZenodoFileResponse: ...
-
-    def get_zenodo_record_file(
-        self,
-        *,
-        file_id: ZenodoFileIdentifier,
-    ) -> dict[str, Any]: ...
+    def open_zenodo_file(
+        self, *, file_id: ZenodoFileIdentifier
+    ) -> ZenodoFileResponse: ...
 
 
 class ZenodoDownloadLocationManager:

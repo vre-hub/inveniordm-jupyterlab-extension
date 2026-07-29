@@ -95,10 +95,6 @@ def _rebase_zenodo_url(url: str, *, base_url: str) -> str:
     )
 
 
-def _is_api_url(url: str) -> bool:
-    return urlparse(url).path.startswith("/api/")
-
-
 def check_zenodo_authentication(
     *,
     base_url: str,
@@ -210,41 +206,25 @@ def list_zenodo_record_files(
     return response.json()
 
 
-def get_zenodo_record_file(
-    file_id: ZenodoFileIdentifier,
-    *,
-    base_url: str,
-    headers: dict[str, str] | None = None,
-) -> dict[str, Any]:
-    """
-    Fetch one file from the selected draft or published record variant.
-    """
-    record_id = quote(str(file_id.record_id), safe="")
-    filename = quote(file_id.file_key, safe="")
-    variant_path = "draft/files" if file_id.record_status == "draft" else "files"
-    response = requests.get(
-        f"{_normalize_base_url(base_url)}/api/records/{record_id}/{variant_path}/{filename}",
-        headers=_headers(headers),
-        timeout=10,
-    )
-    response.raise_for_status()
-    return response.json()
-
-
 def open_zenodo_file(
-    file_url: str,
+    file_id: ZenodoFileIdentifier,
     *,
     base_url: str,
     headers: dict[str, str] | None = None,
 ) -> ZenodoFileResponse:
     """
-    Open a streaming response for a Zenodo file URL.
+    Open a streaming response for a draft or published Zenodo file.
     """
-    if not _is_api_url(file_url):
-        raise ValueError("File URL must be an API URL")
+    record_id = quote(str(file_id.record_id), safe="")
+    filename = quote(file_id.file_key, safe="")
+    variant_path = "draft/files" if file_id.record_status == "draft" else "files"
+    file_url = (
+        f"{_normalize_base_url(base_url)}/api/records/{record_id}/"
+        f"{variant_path}/{filename}/content"
+    )
 
     response = requests.get(
-        _rebase_zenodo_url(file_url, base_url=base_url),
+        file_url,
         headers=_headers(headers),
         stream=True,
         timeout=30,

@@ -987,7 +987,13 @@ def test_cancelled_upload_deletes_initialized_file(monkeypatch, tmp_path):
     ]
 
 
-def test_open_zenodo_file_uses_streaming_response(monkeypatch):
+@pytest.mark.parametrize(
+    ("record_status", "variant_path"),
+    [("draft", "draft/files"), ("published", "files")],
+)
+def test_open_zenodo_file_uses_direct_content_endpoint(
+    monkeypatch, record_status, variant_path
+):
     calls = []
     response = Response()
     response.headers = {}
@@ -998,45 +1004,21 @@ def test_open_zenodo_file_uses_streaming_response(monkeypatch):
     )
 
     result = zenodo_module.open_zenodo_file(
-        "/api/records/record-1/files/results.csv/content",
-        base_url="https://zenodo.org",
-        headers={"Authorization": "x"},
-    )
-
-    assert result.response is response
-    assert calls[0][1]["stream"] is True
-    assert calls[0][1]["timeout"] == 30
-
-
-@pytest.mark.parametrize(
-    ("record_status", "variant_path"),
-    [("draft", "draft/files"), ("published", "files")],
-)
-def test_get_record_file_uses_selected_record_variant(
-    monkeypatch, record_status, variant_path
-):
-    calls = []
-    monkeypatch.setattr(
-        zenodo_module.requests,
-        "get",
-        lambda *args, **kwargs: calls.append((args, kwargs))
-        or Response({"key": "Devoir 2.docx"}),
-    )
-
-    result = zenodo_module.get_zenodo_record_file(
         ZenodoFileIdentifier(
             record_id="565160",
             record_status=record_status,
             file_key="Devoir 2.docx",
         ),
-        base_url="https://sandbox.zenodo.org",
+        base_url="https://zenodo.org",
         headers={"Authorization": "x"},
     )
 
-    assert result == {"key": "Devoir 2.docx"}
-    assert [call[0][0] for call in calls] == [
-        f"https://sandbox.zenodo.org/api/records/565160/{variant_path}/Devoir%202.docx"
-    ]
+    assert result.response is response
+    assert calls[0][0] == (
+        f"https://zenodo.org/api/records/565160/{variant_path}/Devoir%202.docx/content",
+    )
+    assert calls[0][1]["stream"] is True
+    assert calls[0][1]["timeout"] == 30
 
 
 def test_delete_zenodo_draft_file_uses_draft_files_key(monkeypatch):

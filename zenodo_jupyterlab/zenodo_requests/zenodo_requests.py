@@ -20,7 +20,6 @@ from .zenodo import (
     delete_zenodo_draft_file,
     get_zenodo_me,
     get_zenodo_record,
-    get_zenodo_record_file,
     get_zenodo_user_record,
     list_zenodo_record_versions,
     list_zenodo_user_records,
@@ -455,20 +454,9 @@ class ZenodoRequests:
     def open_zenodo_file(
         self,
         *,
-        file_url: str,
+        file_id: ZenodoFileIdentifier,
     ) -> ZenodoFileResponse:
         return open_zenodo_file(
-            file_url,
-            base_url=self.url,
-            headers=self.headers,
-        )
-
-    def get_zenodo_record_file(
-        self,
-        *,
-        file_id: ZenodoFileIdentifier,
-    ) -> dict[str, Any]:
-        return get_zenodo_record_file(
             file_id,
             base_url=self.url,
             headers=self.headers,

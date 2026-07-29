@@ -66,19 +66,11 @@ class ZenodoDownloads:
         on_progress: DownloadProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
     ) -> Path:
-        file_metadata = zenodo_requests.get_zenodo_record_file(
-            file_id=file_id,
-        )
-        file_url = file_metadata.get("links", {}).get("download") or file_metadata.get(
-            "links", {}
-        ).get("content")
-        if not file_url:
-            raise ValueError("Missing file download metadata")
         destination = self.location_manager.download_location(
             file_id=file_id,
         )
 
-        response = zenodo_requests.open_zenodo_file(file_url=file_url)
+        response = zenodo_requests.open_zenodo_file(file_id=file_id)
         try:
             return self._save_response(
                 response,

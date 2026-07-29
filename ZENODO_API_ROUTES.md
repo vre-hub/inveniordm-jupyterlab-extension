@@ -87,7 +87,7 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 | `GET /jobs`                                     | `getLatestActiveJobId`             | None                                                                                                  |
 | `GET /jobs/:id`                                 | `getJobProgress`                   | None                                                                                                  |
 | `POST /jobs/:id/cancel`                         | `cancelJob`                        | None directly; cancellation cleanup can delete an initialized draft file                              |
-| `POST /files/download`                          | `downloadZenodoFile`               | In the background: status-specific file metadata lookup and a streaming request to its link           |
+| `POST /files/download`                          | `downloadZenodoFile`               | In the background: streaming `GET` to the hard-coded published or draft file-content endpoint         |
 | `DELETE /files/download`                        | `deleteZenodoFileDownload`         | None                                                                                                  |
 | `POST /files/status`                            | `getZenodoFileDownloadStatus`      | None                                                                                                  |
 | `POST /files/import-cell`                       | `getZenodoFileImportCell`          | None                                                                                                  |
@@ -322,15 +322,14 @@ deletes that entry from the draft.
 
 The background download job:
 
-1. For a draft identifier, sends
-   `GET /api/records/:id/draft/files/:file-key`; for a published identifier,
-   sends `GET /api/records/:id/files/:file-key`.
-2. Reads `links.download`, or `links.content` as a fallback, from the metadata.
-3. Sends a streaming `GET` to that returned link and writes the bytes locally.
+1. For a draft identifier, sends a streaming `GET` directly to
+   `/api/records/:id/draft/files/:file-key/content`.
+2. For a published identifier, sends a streaming `GET` directly to
+   `/api/records/:id/files/:file-key/content`.
+3. Writes the returned bytes locally.
 
-File metadata supplies Zenodo's canonical download URL. The local destination
-is `<downloads>/<record-id>/<draft|published>/<file-key>`. The streaming request
-is the call that transfers the actual file contents.
+The local destination is
+`<downloads>/<record-id>/<draft|published>/<file-key>`.
 
 ### `DELETE /files/download`
 
