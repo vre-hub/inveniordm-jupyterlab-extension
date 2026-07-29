@@ -280,9 +280,12 @@ def get_zenodo_user_record(
     """
     TODO this is a workaround because it allows us to get a record independent of if it is a draft or published version, do this properly.
     The Zenodo API does not have a single endpoint for this, so we have to search the user's records and filter by ID.
-    This is not ideal because the search is not fast/ up to date.
+    This is not ideal because the search is not fast/ up to date
+    and can lead to race conditions where a record is created but not yet visible in the search results.
+    E.g. if a new version draft is created and we would immediately try to fetch it, it would not be there.
+
     We should consider
-    A) adding a unified endpoint that returns a record by ID regardless of draft/published status,
+    A) adding a unified inveniordm endpoint that returns a record by ID regardless of draft/published status,
     or B) removing this and requiring the caller to know if the record is a draft or published version and call the appropriate endpoint.
     B requires a lot of caching and state management on the client side, so A is probably the better option.
     """
