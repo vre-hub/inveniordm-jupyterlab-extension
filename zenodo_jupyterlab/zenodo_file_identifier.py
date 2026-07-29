@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
-
+from typing import Literal, cast
 
 ZenodoRecordStatus = Literal["draft", "published"]
 
@@ -14,7 +13,7 @@ class ZenodoFileIdentifier:
     file_key: str
 
 
-def _zenodo_file_identifier(
+def zenodo_file_identifier(
     record_id: object,
     record_status: object,
     file_key: object,
@@ -30,6 +29,6 @@ def _zenodo_file_identifier(
         return None
     return ZenodoFileIdentifier(
         record_id=record_id,
-        record_status=record_status,
+        record_status=cast(ZenodoRecordStatus, record_status),
         file_key=file_key,
     )

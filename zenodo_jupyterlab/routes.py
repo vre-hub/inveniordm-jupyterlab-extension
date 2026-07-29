@@ -24,7 +24,7 @@ from .zenodo_download_manager import ZenodoDownloadManager
 from .zenodo_file_identifier import (
     ZenodoFileIdentifier,
     ZenodoRecordStatus,
-    _zenodo_file_identifier,
+    zenodo_file_identifier,
 )
 from .zenodo_requests.zenodo_requests import ZenodoRequests
 from .zenodo_requests.zenodo_requests_factory import ZenodoRequestsFactory
@@ -574,7 +574,7 @@ class ZenodoRecordFileCollectionHandler(APIHandler):
     @tornado.web.authenticated
     def delete(self, record_id: str):
         data = self.get_json_body() or {}
-        file_id = _zenodo_file_identifier(
+        file_id = zenodo_file_identifier(
             data.get("record_id"),
             data.get("record_status"),
             data.get("file_key"),
@@ -726,7 +726,7 @@ class ZenodoFileDownloadHandler(APIHandler):
         record_id = data.get("record_id")
         record_status = data.get("record_status")
         file_key = data.get("file_key")
-        file_id = _zenodo_file_identifier(record_id, record_status, file_key)
+        file_id = zenodo_file_identifier(record_id, record_status, file_key)
         if file_id is None:
             self.set_status(400)
             self.finish(json.dumps({"message": "Invalid file identifier"}))
@@ -763,7 +763,7 @@ class ZenodoFileDownloadHandler(APIHandler):
         record_id = data.get("record_id")
         record_status = data.get("record_status")
         file_key = data.get("file_key")
-        file_id = _zenodo_file_identifier(record_id, record_status, file_key)
+        file_id = zenodo_file_identifier(record_id, record_status, file_key)
         if file_id is None:
             self.set_status(400)
             self.finish(json.dumps({"message": "Invalid file identifier"}))
@@ -806,7 +806,7 @@ class ZenodoFileDownloadStatusHandler(APIHandler):
         record_id = data.get("record_id")
         record_status = data.get("record_status")
         file_key = data.get("file_key")
-        file_id = _zenodo_file_identifier(record_id, record_status, file_key)
+        file_id = zenodo_file_identifier(record_id, record_status, file_key)
         if file_id is None:
             self.set_status(400)
             self.finish(json.dumps({"message": "Invalid file identifier"}))
@@ -843,7 +843,7 @@ class ZenodoFileImportCellHandler(APIHandler):
         record_id = data.get("record_id")
         record_status = data.get("record_status")
         file_key = data.get("file_key")
-        file_id = _zenodo_file_identifier(record_id, record_status, file_key)
+        file_id = zenodo_file_identifier(record_id, record_status, file_key)
         if file_id is None:
             self.set_status(400)
             self.finish(json.dumps({"message": "Invalid file identifier"}))

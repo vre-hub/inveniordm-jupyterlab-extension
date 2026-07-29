@@ -3,7 +3,7 @@ from zenodo_jupyterlab.zenodo_download_location_manager import (
 )
 from zenodo_jupyterlab.zenodo_file_identifier import (
     ZenodoFileIdentifier,
-    _zenodo_file_identifier,
+    zenodo_file_identifier,
 )
 
 
@@ -29,9 +29,9 @@ def test_draft_and_published_downloads_have_distinct_locations(tmp_path):
 
 
 def test_file_identifier_requires_known_record_status():
-    assert _zenodo_file_identifier("123", None, "data.csv") is None
-    assert _zenodo_file_identifier("123", "unknown", "data.csv") is None
-    assert _zenodo_file_identifier("123", "draft", "data.csv") == (
+    assert zenodo_file_identifier("123", None, "data.csv") is None
+    assert zenodo_file_identifier("123", "unknown", "data.csv") is None
+    assert zenodo_file_identifier("123", "draft", "data.csv") == (
         ZenodoFileIdentifier(
             record_id="123",
             record_status="draft",
