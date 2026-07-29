@@ -344,26 +344,6 @@ def test_search_zenodo_records_optionally_includes_files(monkeypatch, include_fi
     )
 
 
-def test_list_zenodo_access_grants_follows_record_link(monkeypatch):
-    calls = []
-    monkeypatch.setattr(
-        zenodo_module.requests,
-        "get",
-        lambda *args, **kwargs: (
-            calls.append((args, kwargs)) or Response({"hits": {"hits": []}})
-        ),
-    )
-
-    result = zenodo_module.list_zenodo_access_grants(
-        "https://zenodo.org/api/records/123/access/grants",
-        base_url="https://sandbox.zenodo.org",
-        headers={"Authorization": "x"},
-    )
-
-    assert result == {"hits": {"hits": []}}
-    assert calls[0][0] == ("https://sandbox.zenodo.org/api/records/123/access/grants",)
-
-
 def test_search_zenodo_records_uses_invenio_response_format(monkeypatch):
     calls = []
     response_data = {"hits": {"hits": [{"id": "record-1"}]}}

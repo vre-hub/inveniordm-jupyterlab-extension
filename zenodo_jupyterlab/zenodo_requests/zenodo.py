@@ -141,22 +141,6 @@ def get_zenodo_me(
     }
 
 
-def list_zenodo_access_grants(
-    access_grants_url: str,
-    *,
-    base_url: str,
-    headers: dict[str, str],
-) -> dict[str, Any]:
-    """Fetch the access grants linked from a Zenodo record response."""
-    response = requests.get(
-        _rebase_zenodo_url(access_grants_url, base_url=base_url),
-        headers=_headers(headers),
-        timeout=10,
-    )
-    response.raise_for_status()
-    return response.json()
-
-
 def search_zenodo_records(
     query: str,
     *,
