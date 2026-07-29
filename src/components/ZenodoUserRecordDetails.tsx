@@ -24,12 +24,7 @@ export const ZenodoUserRecordDetails: React.FC<{
       {canCreateNewVersion && <CreateNewVersionButton id={record.id} />}
       {editable && (
         <>
-          <ZenodoRecordFileUpload
-            recordId={record.id}
-            onDone={() => {
-              // TODO refresh the resource data after upload or other edits
-            }}
-          />
+          <ZenodoRecordFileUpload recordId={record.id} />
         </>
       )}
       <p>Access Rights: {userPermission}</p>

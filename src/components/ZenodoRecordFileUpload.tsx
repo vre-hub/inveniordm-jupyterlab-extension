@@ -1,17 +1,13 @@
 import React from 'react';
 
-import {
-  getLatestActiveJobId,
-  uploadZenodoRecordFiles
-} from '../api_calls';
+import { getLatestActiveJobId, uploadZenodoRecordFiles } from '../api_calls';
 import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 
 export const ZenodoRecordFileUpload: React.FC<{
   recordId: string;
-  onDone: () => void;
-}> = ({ recordId, onDone }) => {
+}> = ({ recordId }) => {
   const serverSettings = useServerSettings();
   const [uploadId, setUploadId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -55,8 +51,7 @@ export const ZenodoRecordFileUpload: React.FC<{
   const completeUpload = React.useCallback((): void => {
     setUploadId(null);
     setMessage('Files uploaded.');
-    onDone();
-  }, [onDone]);
+  }, []);
 
   const failUpload = React.useCallback((reason: string): void => {
     setUploadId(null);
