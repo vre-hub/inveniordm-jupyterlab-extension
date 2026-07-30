@@ -173,6 +173,9 @@ export type ZenodoRecordVersion = {
   id: string;
   status: ZenodoRecordStatus;
   is_draft: boolean;
+  parent?: {
+    id?: string | null;
+  };
   versions: {
     index: number;
   };
@@ -463,6 +466,15 @@ export function useZenodoRecordPermission(
 
   return userPermission;
 }
+
+export type ZenodoRecordVersionsChangedEventData = {
+  type: 'version_created' | 'draft_discarded';
+  record_id: string;
+  discarded_draft_id?: string;
+  parent_id?: string | null;
+  record?: ZenodoRecordData;
+  versions: ZenodoRecordVersion[];
+};
 
 export function useZenodoRecordVersions(
   recordId: string,

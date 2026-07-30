@@ -120,6 +120,13 @@ async def test_record_permission_rejects_missing_record_status():
 
 def test_delete_user_record_discards_draft():
     zenodo_requests = Mock()
+    zenodo_requests.get_zenodo_user_record.return_value = {
+        "id": "draft-1",
+        "parent": {"id": "parent-1"},
+    }
+    published = {"id": "record-1", "versions": {"index": 1}}
+    draft = {"id": "draft-1", "versions": {"index": 2}}
+    zenodo_requests.list_zenodo_record_versions.return_value = [published, draft]
     event_bus = EventBus()
     events = event_bus.subscribe("alice")
     responses = []
@@ -134,12 +141,56 @@ def test_delete_user_record_discards_draft():
 
     ZenodoUserRecordItemHandler.delete.__wrapped__(handler, "draft-1")
 
+    zenodo_requests.get_zenodo_user_record.assert_called_once_with(
+        "draft-1", include_files=False
+    )
+    zenodo_requests.list_zenodo_record_versions.assert_called_once_with(
+        "draft-1", include_drafts=True
+    )
     zenodo_requests.delete_zenodo_record_draft.assert_called_once_with("draft-1")
     event = events.get_nowait()
-    assert event.topic == "record.changed.draft-1"
-    assert event.data == {"type": "draft_discarded"}
+    assert event.topic == "record.versions.changed"
+    assert event.data == {
+        "type": "draft_discarded",
+        "record_id": "draft-1",
+        "discarded_draft_id": "draft-1",
+        "parent_id": "parent-1",
+        "versions": [published],
+    }
     assert statuses == [204]
     assert responses == [None]
+
+
+def test_delete_initial_draft_publishes_versions_event_without_parent():
+    zenodo_requests = Mock()
+    zenodo_requests.get_zenodo_user_record.return_value = {
+        "id": "draft-1",
+        "parent": {"id": ""},
+    }
+    zenodo_requests.list_zenodo_record_versions.return_value = [
+        {"id": "draft-1", "versions": {"index": 1}}
+    ]
+    event_bus = EventBus()
+    events = event_bus.subscribe("alice")
+    handler = SimpleNamespace(
+        current_user=SimpleNamespace(username="alice"),
+        event_bus=event_bus,
+        get_zenodo_requests=lambda _: zenodo_requests,
+        set_status=lambda _: None,
+        finish=lambda value=None: None,
+    )
+
+    ZenodoUserRecordItemHandler.delete.__wrapped__(handler, "draft-1")
+
+    event = events.get_nowait()
+    assert event.topic == "record.versions.changed"
+    assert event.data == {
+        "type": "draft_discarded",
+        "record_id": "draft-1",
+        "discarded_draft_id": "draft-1",
+        "parent_id": None,
+        "versions": [],
+    }
 
 
 def test_search_records_passes_include_files():
@@ -207,12 +258,16 @@ def test_import_cell_constructs_download_location_without_metadata_lookup(tmp_pa
 
 
 def test_create_version_event_contains_new_draft():
+    published = {"id": "record-1", "versions": {"index": 1}}
     draft = {
         "id": "draft-2",
         "status": "new_version_draft",
+        "parent": {"id": "parent-1"},
+        "versions": {"index": 2},
         "files": {"entries": [{"key": "data.csv"}]},
     }
     zenodo_requests = Mock()
+    zenodo_requests.list_zenodo_record_versions.return_value = [published]
     zenodo_requests.create_zenodo_record_version.return_value = draft
     event_bus = EventBus()
     events = event_bus.subscribe("alice")
@@ -226,10 +281,17 @@ def test_create_version_event_contains_new_draft():
 
     ZenodoRecordVersionCollectionHandler.post.__wrapped__(handler, "record-1")
 
+    zenodo_requests.list_zenodo_record_versions.assert_called_once_with(
+        "record-1", include_drafts=True
+    )
+    zenodo_requests.create_zenodo_record_version.assert_called_once_with("record-1")
     event = events.get_nowait()
-    assert event.topic == "record.changed.record-1"
+    assert event.topic == "record.versions.changed"
     assert event.data == {
         "type": "version_created",
+        "record_id": "record-1",
+        "parent_id": "parent-1",
         "record": draft,
+        "versions": [published, draft],
     }
     assert json.loads(responses[0]) == {"draft": draft}

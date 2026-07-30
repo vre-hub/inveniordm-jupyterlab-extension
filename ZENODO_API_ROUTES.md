@@ -154,8 +154,11 @@ response includes files.
 Send `DELETE /api/records/:id/draft` to discard the selected draft. InvenioRDM
 only allows this operation for authenticated users with edit access to the
 draft and returns an empty `204 No Content` response on success. The extension
-then publishes `record.changed.<id>` with type `draft_discarded`; the record
-details listener responds by attempting to reload the discarded record.
+then publishes `record.versions.changed` with `record_id`,
+`discarded_draft_id`, the nullable `parent_id`, and the corrected version list.
+The list is loaded before deletion and the discarded draft is removed before
+the event is published, so it does not depend on Zenodo's search index having
+observed the deletion yet.
 
 ### `GET /records/:id/permission?record_status=:status`
 
@@ -283,6 +286,11 @@ ID cached during authentication instead, as does upload-job scoping.
    draft.
 2. Read the returned draft ID and send
    `POST /api/records/:draft-id/draft/actions/files-import`.
+
+The extension then publishes `record.versions.changed` with the created draft
+and a corrected version list. The list is loaded before creation and the new
+draft is appended before publishing, so it does not depend on Zenodo's search
+index having observed the creation yet.
 
 Zenodo creates the version draft without files. The second call copies the
 previous version's files so the new draft starts as a faithful editable version

@@ -297,7 +297,18 @@ class ZenodoUserRecordItemHandler(APIHandler):
     @tornado.web.authenticated
     def delete(self, record_id: str):
         try:
-            self.get_zenodo_requests(self).delete_zenodo_record_draft(record_id)
+            zenodo_requests = self.get_zenodo_requests(self)
+            record = zenodo_requests.get_zenodo_user_record(
+                record_id, include_files=False
+            )
+            # to get the parent id for the sse event, we need to make another api call
+            # TODO check if we even need this api call and remove if we dont
+            parent_id_value = (record.get("parent") or {}).get("id")
+            parent_id = str(parent_id_value) if parent_id_value else None
+            versions = zenodo_requests.list_zenodo_record_versions(
+                record_id, include_drafts=True
+            )
+            zenodo_requests.delete_zenodo_record_draft(record_id)
         except ValueError as error:
             self.set_status(401)
             self.finish(json.dumps({"message": str(error)}))
@@ -309,8 +320,18 @@ class ZenodoUserRecordItemHandler(APIHandler):
 
         self.event_bus.publish(
             get_user_id(self),
-            _record_changed_topic(record_id),
-            {"type": "draft_discarded"},
+            "record.versions.changed",
+            {
+                "type": "draft_discarded",
+                "record_id": record_id,
+                "discarded_draft_id": record_id,
+                "parent_id": parent_id,
+                "versions": [
+                    version
+                    for version in versions
+                    if str(version.get("id")) != str(record_id)
+                ],
+            },
         )
         self.set_status(204)
         self.finish()
@@ -388,9 +409,11 @@ class ZenodoRecordVersionCollectionHandler(APIHandler):
     @tornado.web.authenticated
     def post(self, record_id: str):
         try:
-            draft = self.get_zenodo_requests(self).create_zenodo_record_version(
-                record_id
+            zenodo_requests = self.get_zenodo_requests(self)
+            versions = zenodo_requests.list_zenodo_record_versions(
+                record_id, include_drafts=True
             )
+            draft = zenodo_requests.create_zenodo_record_version(record_id)
         except ValueError as error:
             self.set_status(400)
             self.finish(json.dumps({"message": str(error)}))
@@ -400,13 +423,22 @@ class ZenodoRecordVersionCollectionHandler(APIHandler):
             self.finish(json.dumps({"message": str(error)}))
             return
 
-        draft_id = draft.get("id")
-        event_data = {}
-        if draft_id is not None:
-            event_data["type"] = "version_created"
-            event_data["record"] = draft
+        draft_id = str(draft.get("id"))
+        corrected_versions = [
+            version for version in versions if str(version.get("id")) != draft_id
+        ]
+        corrected_versions.append(draft)
+        parent_id_value = (draft.get("parent") or {}).get("id")
         self.event_bus.publish(
-            get_user_id(self), _record_changed_topic(record_id), event_data
+            get_user_id(self),
+            "record.versions.changed",
+            {
+                "type": "version_created",
+                "record_id": record_id,
+                "parent_id": (str(parent_id_value) if parent_id_value else None),
+                "record": draft,
+                "versions": corrected_versions,
+            },
         )
         self.finish(json.dumps({"draft": draft}))
 
