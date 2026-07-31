@@ -125,6 +125,19 @@ export async function getZenodoRecord(
   );
 }
 
+export async function getZenodoRecordVariant(
+  serverSettings: ServerConnection.ISettings,
+  identifier: ZenodoRecordIdentifier
+): Promise<ZenodoRecordData> {
+  const params = new URLSearchParams({
+    record_status: identifier.record_status
+  });
+  return await requestAPI<ZenodoRecordData>(
+    `record-variants/${encodeURIComponent(identifier.record_id)}?${params.toString()}`,
+    serverSettings
+  );
+}
+
 export async function listZenodoUserRecords(
   serverSettings: ServerConnection.ISettings
 ): Promise<unknown> {
@@ -238,9 +251,12 @@ export type FindJobsResponse = {
   job_ids: string[];
 };
 
-export type ZenodoFileIdentifier = {
+export type ZenodoRecordIdentifier = {
   record_id: string;
   record_status: 'draft' | 'published';
+};
+
+export type ZenodoFileIdentifier = ZenodoRecordIdentifier & {
   file_key: string;
 };
 

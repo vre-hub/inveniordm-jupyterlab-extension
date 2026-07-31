@@ -10,7 +10,8 @@ from zenodo_jupyterlab.zenodo_requests.zenodo_helpers import (
 
 from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
 from ..util.progress_reporting_reader import ProgressReportingReader
-from ..zenodo_file_identifier import ZenodoFileIdentifier, ZenodoRecordStatus
+from ..zenodo_file_identifier import ZenodoFileIdentifier
+from ..zenodo_record_identifier import ZenodoRecordIdentifier, ZenodoRecordStatus
 from .zenodo import (
     ZenodoFileResponse,
     ZenodoPermission,
@@ -233,9 +234,22 @@ class ZenodoRequests:
         self,
         record_id: int | str,
     ) -> dict[str, Any]:
-        """Return a public Zenodo record, optionally expanding its linked files."""
+        """Return a published Zenodo record."""
         record = get_zenodo_record(
             record_id,
+            base_url=self.url,
+            headers=self.headers,
+        )
+        return record
+
+    def get_zenodo_record_variant(
+        self,
+        record_identifier: ZenodoRecordIdentifier,
+    ) -> dict[str, Any]:
+        """Return the requested draft or published Zenodo record."""
+        record = get_zenodo_record_public_or_draft(
+            record_identifier.record_id,
+            record_status=record_identifier.record_status,
             base_url=self.url,
             headers=self.headers,
         )

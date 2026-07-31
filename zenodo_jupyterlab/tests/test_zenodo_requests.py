@@ -4,6 +4,7 @@ import requests as requests_library
 from zenodo_auth.token_store import BoundedTokenStore, FileTokenStore
 from zenodo_jupyterlab.util.job_types import JobCancelled
 from zenodo_jupyterlab.zenodo_file_identifier import ZenodoFileIdentifier
+from zenodo_jupyterlab.zenodo_record_identifier import ZenodoRecordIdentifier
 from zenodo_jupyterlab.zenodo_requests import zenodo as zenodo_module
 from zenodo_jupyterlab.zenodo_requests import zenodo_requests as zenodo_requests_module
 from zenodo_jupyterlab.zenodo_requests.local_zenodo_requests_factory import (
@@ -54,9 +55,10 @@ def test_upload_record_files_passes_record_id(monkeypatch, tmp_path):
         lambda *args, **kwargs: calls.append((args, kwargs)),
     )
 
-    assert requests.upload_zenodo_record_files(
-        record_id="draft-1", file_paths=[file_path]
-    ) is None
+    assert (
+        requests.upload_zenodo_record_files(record_id="draft-1", file_paths=[file_path])
+        is None
+    )
     assert calls[0][0] == ("draft-1",)
     assert calls[0][1]["base_url"] == "https://sandbox.zenodo.org"
     assert calls[0][1]["headers"] == {"Authorization": "x"}
@@ -231,7 +233,9 @@ def test_record_without_grants_uses_edit_permission_workaround(
         lambda **kwargs: workaround_calls.append(kwargs) or has_edit,
     )
 
-    assert requests.get_zenodo_record_permission("123", "published") == expected_permission
+    assert (
+        requests.get_zenodo_record_permission("123", "published") == expected_permission
+    )
     assert workaround_calls == [
         {
             "record_id": "123",
@@ -314,6 +318,48 @@ def test_get_zenodo_record_uses_files_from_public_record_response(monkeypatch):
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
 
     assert requests.get_zenodo_record("public-123") is record
+    assert include_files_calls == []
+
+
+def test_get_zenodo_record_variant_fetches_requested_record_status(monkeypatch):
+    record = {
+        "id": "public-123",
+        "links": {"files": "https://zenodo.org/api/records/public-123/files"},
+    }
+    calls = []
+    include_files_calls = []
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "get_zenodo_record_public_or_draft",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or record,
+    )
+    monkeypatch.setattr(
+        zenodo_requests_module,
+        "include_zenodo_file_if_draft_or_restricted",
+        lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
+    )
+
+    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
+
+    assert (
+        requests.get_zenodo_record_variant(
+            ZenodoRecordIdentifier(
+                record_id="public-123",
+                record_status="draft",
+            )
+        )
+        is record
+    )
+    assert calls == [
+        (
+            ("public-123",),
+            {
+                "record_status": "draft",
+                "base_url": "https://zenodo.org",
+                "headers": {"Authorization": "x"},
+            },
+        )
+    ]
     assert include_files_calls == []
 
 
@@ -1036,7 +1082,9 @@ def test_delete_zenodo_record_draft_uses_draft_endpoint(monkeypatch):
     monkeypatch.setattr(
         zenodo_module.requests,
         "delete",
-        lambda *args, **kwargs: calls.append((args, kwargs)) or Response(status_code=204),
+        lambda *args, **kwargs: (
+            calls.append((args, kwargs)) or Response(status_code=204)
+        ),
     )
 
     zenodo_module.delete_zenodo_record_draft(

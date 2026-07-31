@@ -23,9 +23,9 @@ from .zenodo_auth.auth_controller import ZenodoAuthController
 from .zenodo_download_manager import ZenodoDownloadManager
 from .zenodo_file_identifier import (
     ZenodoFileIdentifier,
-    ZenodoRecordStatus,
     zenodo_file_identifier,
 )
+from .zenodo_record_identifier import ZenodoRecordStatus, zenodo_record_identifier
 from .zenodo_requests.zenodo_requests import ZenodoRequests
 from .zenodo_requests.zenodo_requests_factory import ZenodoRequestsFactory
 from .zenodo_requests.zenodo_requests_factory_create import (
@@ -187,6 +187,35 @@ class ZenodoRecordItemHandler(APIHandler):
     def get(self, record_id: str):
         try:
             record = self.get_zenodo_requests(self).get_zenodo_record(record_id)
+        except requests.RequestException as error:
+            self.set_status(getattr(error.response, "status_code", 502))
+            self.finish(json.dumps({"message": str(error)}))
+            return
+
+        self.finish(json.dumps(record))
+
+
+class ZenodoRecordVariantItemHandler(APIHandler):
+    def initialize(self, get_zenodo_requests: GetZenodoRequests):
+        self.get_zenodo_requests = get_zenodo_requests
+
+    @tornado.web.authenticated
+    def get(self, record_id: str):
+        record_identifier = zenodo_record_identifier(
+            record_id,
+            self.get_query_argument("record_status", None),
+        )
+        if record_identifier is None:
+            self.set_status(400)
+            self.finish(
+                json.dumps({"message": "record_status must be 'draft' or 'published'"})
+            )
+            return
+
+        try:
+            record = self.get_zenodo_requests(self).get_zenodo_record_variant(
+                record_identifier
+            )
         except requests.RequestException as error:
             self.set_status(getattr(error.response, "status_code", 502))
             self.finish(json.dumps({"message": str(error)}))
@@ -1039,6 +1068,11 @@ def setup_route_handlers(web_app):
         (
             url_path_join(zenodo_base_url, "records", r"([^/]+)"),
             ZenodoRecordItemHandler,
+            {"get_zenodo_requests": get_zenodo_requests},
+        ),
+        (
+            url_path_join(zenodo_base_url, "record-variants", r"([^/]+)"),
+            ZenodoRecordVariantItemHandler,
             {"get_zenodo_requests": get_zenodo_requests},
         ),
         (

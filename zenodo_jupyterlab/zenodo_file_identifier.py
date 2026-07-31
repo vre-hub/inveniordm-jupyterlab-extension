@@ -1,15 +1,15 @@
 from dataclasses import dataclass
-from typing import Literal, cast
 
-ZenodoRecordStatus = Literal["draft", "published"]
+from .zenodo_record_identifier import (
+    ZenodoRecordIdentifier,
+    zenodo_record_identifier,
+)
 
 
 @dataclass(frozen=True)
-class ZenodoFileIdentifier:
+class ZenodoFileIdentifier(ZenodoRecordIdentifier):
     """Identifies one file within a Zenodo record."""
 
-    record_id: int | str
-    record_status: ZenodoRecordStatus
     file_key: str
 
 
@@ -18,17 +18,11 @@ def zenodo_file_identifier(
     record_status: object,
     file_key: object,
 ) -> ZenodoFileIdentifier | None:
-    if (
-        not isinstance(record_id, (int, str))
-        or isinstance(record_id, bool)
-        or record_id == ""
-        or record_status not in {"draft", "published"}
-        or not isinstance(file_key, str)
-        or not file_key
-    ):
+    record_identifier = zenodo_record_identifier(record_id, record_status)
+    if record_identifier is None or not isinstance(file_key, str) or not file_key:
         return None
     return ZenodoFileIdentifier(
-        record_id=record_id,
-        record_status=cast(ZenodoRecordStatus, record_status),
+        record_id=record_identifier.record_id,
+        record_status=record_identifier.record_status,
         file_key=file_key,
     )

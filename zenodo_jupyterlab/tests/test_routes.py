@@ -2,15 +2,20 @@ import json
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import pytest
+
 from zenodo_jupyterlab.routes import (
     ZenodoFileImportCellHandler,
     ZenodoRecordCollectionHandler,
+    ZenodoRecordItemHandler,
     ZenodoRecordPermissionHandler,
+    ZenodoRecordVariantItemHandler,
     ZenodoRecordVersionCollectionHandler,
     ZenodoUserRecordItemHandler,
 )
 from zenodo_jupyterlab.util.sse import EventBus
 from zenodo_jupyterlab.zenodo_file_identifier import ZenodoFileIdentifier
+from zenodo_jupyterlab.zenodo_record_identifier import ZenodoRecordIdentifier
 
 
 async def test_hello(jp_fetch):
@@ -78,6 +83,60 @@ async def test_list_record_versions_passes_include_drafts():
         "record-1", include_drafts=False
     )
     assert json.loads(responses[0]) == []
+
+
+def test_get_record_passes_record_id():
+    zenodo_requests = Mock()
+    zenodo_requests.get_zenodo_record.return_value = {"id": "record-1"}
+    responses = []
+    handler = SimpleNamespace(
+        get_zenodo_requests=lambda _: zenodo_requests,
+        finish=responses.append,
+    )
+
+    ZenodoRecordItemHandler.get.__wrapped__(handler, "record-1")
+
+    zenodo_requests.get_zenodo_record.assert_called_once_with("record-1")
+    assert json.loads(responses[0]) == {"id": "record-1"}
+
+
+def test_get_record_variant_passes_record_identifier():
+    zenodo_requests = Mock()
+    zenodo_requests.get_zenodo_record_variant.return_value = {"id": "record-1"}
+    responses = []
+    handler = SimpleNamespace(
+        get_query_argument=lambda name, default: "draft",
+        get_zenodo_requests=lambda _: zenodo_requests,
+        finish=responses.append,
+    )
+
+    ZenodoRecordVariantItemHandler.get.__wrapped__(handler, "record-1")
+
+    zenodo_requests.get_zenodo_record_variant.assert_called_once_with(
+        ZenodoRecordIdentifier(record_id="record-1", record_status="draft")
+    )
+    assert json.loads(responses[0]) == {"id": "record-1"}
+
+
+@pytest.mark.parametrize("record_status", [None, "unknown"])
+def test_get_record_variant_requires_known_record_status(record_status):
+    zenodo_requests = Mock()
+    responses = []
+    statuses = []
+    handler = SimpleNamespace(
+        get_query_argument=lambda name, default: record_status,
+        get_zenodo_requests=lambda _: zenodo_requests,
+        set_status=statuses.append,
+        finish=responses.append,
+    )
+
+    ZenodoRecordVariantItemHandler.get.__wrapped__(handler, "record-1")
+
+    assert statuses == [400]
+    assert json.loads(responses[0]) == {
+        "message": "record_status must be 'draft' or 'published'"
+    }
+    zenodo_requests.get_zenodo_record_variant.assert_not_called()
 
 
 async def test_record_permission_passes_record_status():

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {
-  getZenodoRecord,
+  getZenodoRecordVariant,
   searchZenodoRecords,
   ZenodoRecordData
 } from '../api_calls';
@@ -68,7 +68,10 @@ export const ZenodoRecordSearch: React.FC = () => {
           initialRecordValue={result}
           include_drafts_in_version_dropdown={false}
           fetchRecord={async (id: string): Promise<ZenodoRecordData> => {
-            return await getZenodoRecord(serverSettings, id);
+            return await getZenodoRecordVariant(serverSettings, {
+              record_id: id,
+              record_status: 'published'
+            });
           }}
           renderRecord={record => (
             <ZenodoRecordDetails record={record} editable={false} />

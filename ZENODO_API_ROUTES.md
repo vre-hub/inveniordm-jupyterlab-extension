@@ -65,36 +65,37 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 
 ## Route summary
 
-| Extension route                                 | Frontend call                      | Zenodo traffic                                                                                        |
-| ----------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `GET /hello`                                    | —                                  | None                                                                                                  |
-| `GET /access-token`                             | `useAccessTokenStatus`             | `GET /api/me` only when a stored token is present                                                     |
-| `GET /auth/login`                               | `constructZenodoAuthUrl`           | Browser redirect to `/oauth/authorize`; no server-to-server API call                                  |
-| `GET /auth/callback`                            | —                                  | `POST /oauth/token`                                                                                   |
-| `GET /auth/logout`                              | `constructZenodoAuthUrl`           | None; removes the locally stored token                                                                |
-| `GET /records`                                  | `searchZenodoRecords`              | `GET /api/records`                                                                                    |
-| `GET /records/:id`                              | `getZenodoRecord`                  | `GET /api/records/:id`                                                                                |
-| `GET /me`                                       | `getZenodoMe`                      | `GET /api/me`                                                                                         |
-| `GET /events`                                   | `subscribeToEvents`                | None; local server-sent event stream                                                                  |
-| `GET /user/records`                             | `listZenodoUserRecords`            | `GET /api/user/records`, optionally followed by one linked files request per draft or restricted hit  |
-| `GET /user/records/:id`                         | `getZenodoUserRecord`              | User-record search, followed by its linked files request if it is a draft or its files are restricted |
-| `DELETE /user/records/:id`                      | `deleteZenodoRecordDraft`          | `DELETE /api/records/:id/draft`                                                                       |
-| `GET /records/:id/permission`                   | `getZenodoRecordPermission`        | Direct draft or published record lookup, optionally followed by an edit-permission user-record query  |
-| `GET /records/:id/versions?include_drafts=true` | `listZenodoRecordVersions`         | General versions request, optionally supplemented with a user-record lookup for drafts                |
-| `POST /records/:id/versions`                    | `createZenodoRecordVersion`        | Create a new-version draft, then import the previous files                                            |
-| `POST /user/records/draft-with-files`           | `createZenodoRecordDraftWithFiles` | Create a draft, then initialize, upload, and commit every file                                        |
-| `POST /user/records/:id/files`                  | `uploadZenodoRecordFiles`          | Require an editable draft, then upload every file                                                     |
-| `DELETE /user/records/:id/files`                | `deleteZenodoRecordFile`           | Require an editable draft, then delete the named draft file                                           |
-| `GET /jobs`                                     | `getLatestActiveJobId`             | None                                                                                                  |
-| `GET /jobs/:id`                                 | `getJobProgress`                   | None                                                                                                  |
-| `POST /jobs/:id/cancel`                         | `cancelJob`                        | None directly; cancellation cleanup can delete an initialized draft file                              |
-| `POST /files/download`                          | `downloadZenodoFile`               | In the background: streaming `GET` to the hard-coded published or draft file-content endpoint         |
-| `DELETE /files/download`                        | `deleteZenodoFileDownload`         | None                                                                                                  |
-| `POST /files/status`                            | `getZenodoFileDownloadStatus`      | None                                                                                                  |
-| `POST /files/import-cell`                       | `getZenodoFileImportCell`          | None                                                                                                  |
-| `GET /settings/downloads-directory`             | —                                  | None                                                                                                  |
-| `POST /settings/downloads-directory`            | `setZenodoDownloadDirectory`       | None                                                                                                  |
-| `DELETE /settings/downloads-directory`          | `unsetZenodoDownloadDirectory`     | None                                                                                                  |
+| Extension route                                  | Frontend call                      | Zenodo traffic                                                                                        |
+| ------------------------------------------------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `GET /hello`                                     | —                                  | None                                                                                                  |
+| `GET /access-token`                              | `useAccessTokenStatus`             | `GET /api/me` only when a stored token is present                                                     |
+| `GET /auth/login`                                | `constructZenodoAuthUrl`           | Browser redirect to `/oauth/authorize`; no server-to-server API call                                  |
+| `GET /auth/callback`                             | —                                  | `POST /oauth/token`                                                                                   |
+| `GET /auth/logout`                               | `constructZenodoAuthUrl`           | None; removes the locally stored token                                                                |
+| `GET /records`                                   | `searchZenodoRecords`              | `GET /api/records`                                                                                    |
+| `GET /records/:id`                               | `getZenodoRecord`                  | `GET /api/records/:id`                                                                                |
+| `GET /record-variants/:id?record_status=:status` | `getZenodoRecordVariant`           | `GET /api/records/:id` or `GET /api/records/:id/draft`                                                |
+| `GET /me`                                        | `getZenodoMe`                      | `GET /api/me`                                                                                         |
+| `GET /events`                                    | `subscribeToEvents`                | None; local server-sent event stream                                                                  |
+| `GET /user/records`                              | `listZenodoUserRecords`            | `GET /api/user/records`, optionally followed by one linked files request per draft or restricted hit  |
+| `GET /user/records/:id`                          | `getZenodoUserRecord`              | User-record search, followed by its linked files request if it is a draft or its files are restricted |
+| `DELETE /user/records/:id`                       | `deleteZenodoRecordDraft`          | `DELETE /api/records/:id/draft`                                                                       |
+| `GET /records/:id/permission`                    | `getZenodoRecordPermission`        | Direct draft or published record lookup, optionally followed by an edit-permission user-record query  |
+| `GET /records/:id/versions?include_drafts=true`  | `listZenodoRecordVersions`         | General versions request, optionally supplemented with a user-record lookup for drafts                |
+| `POST /records/:id/versions`                     | `createZenodoRecordVersion`        | Create a new-version draft, then import the previous files                                            |
+| `POST /user/records/draft-with-files`            | `createZenodoRecordDraftWithFiles` | Create a draft, then initialize, upload, and commit every file                                        |
+| `POST /user/records/:id/files`                   | `uploadZenodoRecordFiles`          | Require an editable draft, then upload every file                                                     |
+| `DELETE /user/records/:id/files`                 | `deleteZenodoRecordFile`           | Require an editable draft, then delete the named draft file                                           |
+| `GET /jobs`                                      | `getLatestActiveJobId`             | None                                                                                                  |
+| `GET /jobs/:id`                                  | `getJobProgress`                   | None                                                                                                  |
+| `POST /jobs/:id/cancel`                          | `cancelJob`                        | None directly; cancellation cleanup can delete an initialized draft file                              |
+| `POST /files/download`                           | `downloadZenodoFile`               | In the background: streaming `GET` to the hard-coded published or draft file-content endpoint         |
+| `DELETE /files/download`                         | `deleteZenodoFileDownload`         | None                                                                                                  |
+| `POST /files/status`                             | `getZenodoFileDownloadStatus`      | None                                                                                                  |
+| `POST /files/import-cell`                        | `getZenodoFileImportCell`          | None                                                                                                  |
+| `GET /settings/downloads-directory`              | —                                  | None                                                                                                  |
+| `POST /settings/downloads-directory`             | `setZenodoDownloadDirectory`       | None                                                                                                  |
+| `DELETE /settings/downloads-directory`           | `unsetZenodoDownloadDirectory`     | None                                                                                                  |
 
 ## Details of the most problematic Routes
 
@@ -115,12 +116,17 @@ are not included in the search response and add the result as `files`.
 
 ### `GET /records/:id`
 
-Send `GET /api/records/:id` for general record details. Published record
-details already contain the file collection, so no linked files request is
-needed.
+Send `GET /api/records/:id` for published record details. This route retains
+the published-only behavior of the general-record view.
 
-This route deliberately does not inspect `/api/user/records`; it represents the
-general-record view.
+### `GET /record-variants/:id?record_status=:status`
+
+The required `record_status` query parameter must be `draft` or `published`;
+any other or missing value returns HTTP 400. Send `GET /api/records/:id` for a
+published record or `GET /api/records/:id/draft` for a draft.
+
+This route deliberately does not inspect `/api/user/records`; the caller
+identifies the exact representation to fetch.
 
 ### `GET /user/records`
 

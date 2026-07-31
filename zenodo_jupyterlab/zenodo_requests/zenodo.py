@@ -10,7 +10,8 @@ from urllib.parse import quote, urljoin, urlparse, urlunparse
 
 import requests
 
-from ..zenodo_file_identifier import ZenodoFileIdentifier, ZenodoRecordStatus
+from ..zenodo_file_identifier import ZenodoFileIdentifier
+from ..zenodo_record_identifier import ZenodoRecordStatus
 
 ZenodoPermission = Literal[
     "manage", "edit", "preview", "view"
