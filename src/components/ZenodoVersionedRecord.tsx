@@ -1,5 +1,9 @@
 import React from 'react';
-import { ZenodoRecordData, ZenodoRecordVersion } from '../api_calls';
+import {
+  ZenodoRecordData,
+  ZenodoRecordIdentifier,
+  ZenodoRecordVersion
+} from '../api_calls';
 import { VersionDropdown } from './VersionDropdown';
 import { useZenodoVersionedRecord } from './useZenodoVersionedRecord';
 
@@ -8,31 +12,33 @@ import { useZenodoVersionedRecord } from './useZenodoVersionedRecord';
  * Pass an initialRecordValue to avoid an additional API call if the record data is already available.
  */
 export function ZenodoVersionedRecord({
-  initialRecordId,
+  initialRecordIdentifier,
   initialRecordValue,
   include_drafts_in_version_dropdown,
   fetchRecord,
   renderRecord
 }: {
-  initialRecordId: string;
+  initialRecordIdentifier: ZenodoRecordIdentifier;
   initialRecordValue?: ZenodoRecordData;
   include_drafts_in_version_dropdown: boolean;
-  fetchRecord: (id: string) => Promise<ZenodoRecordData>;
+  fetchRecord: (
+    identifier: ZenodoRecordIdentifier
+  ) => Promise<ZenodoRecordData>;
   renderRecord: (
     record: ZenodoRecordData,
     versions: ZenodoRecordVersion[] // TODO we pass this versions array around a lot, think about better component structure
   ) => JSX.Element;
 }): JSX.Element {
   const {
-    recordId,
-    setRecordId,
+    recordIdentifier,
+    setRecordIdentifier,
     record,
     isLoading,
     loadRecord,
     recordDeleted,
     versions
   } = useZenodoVersionedRecord({
-    initialRecordId,
+    initialRecordIdentifier,
     initialRecordValue,
     include_drafts_in_version_dropdown,
     fetchRecord
@@ -57,10 +63,10 @@ export function ZenodoVersionedRecord({
       {isLoading && <p>Loading...</p>}
       <VersionDropdown
         versions={versions}
-        recordId={recordId}
-        onChange={id => {
-          setRecordId(id);
-          void loadRecord(id);
+        recordIdentifier={recordIdentifier}
+        onChange={identifier => {
+          setRecordIdentifier(identifier);
+          void loadRecord(identifier);
         }}
       />
       {record && !('error' in record)

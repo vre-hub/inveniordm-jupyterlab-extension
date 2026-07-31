@@ -2,7 +2,11 @@ import React from 'react';
 
 import { getZenodoUserRecord, listZenodoUserRecords } from '../api_calls';
 import { useServerSettings } from '../store';
-import { ZenodoRecordData } from '../api_calls';
+import {
+  ZenodoRecordData,
+  ZenodoRecordIdentifier,
+  zenodoRecordIdentifierFromRecord
+} from '../api_calls';
 import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
 import { ZenodoUserRecordDetails } from './ZenodoUserRecordDetails';
 
@@ -39,7 +43,9 @@ export const ZenodoUserRecordList: React.FC = () => {
         ? records.map(record => (
             <React.Fragment key={record.id}>
               <ZenodoUserRecord
-                initialRecordId={record.id}
+                initialRecordIdentifier={zenodoRecordIdentifierFromRecord(
+                  record
+                )}
                 initialRecordValue={record}
               />
             </React.Fragment>
@@ -50,21 +56,26 @@ export const ZenodoUserRecordList: React.FC = () => {
 };
 
 function ZenodoUserRecord({
-  initialRecordId,
+  initialRecordIdentifier,
   initialRecordValue
 }: {
-  initialRecordId: string;
+  initialRecordIdentifier: ZenodoRecordIdentifier;
   initialRecordValue?: ZenodoRecordData;
 }): JSX.Element {
   const serverSettings = useServerSettings();
   return (
     <div>
       <ZenodoVersionedRecord
-        initialRecordId={initialRecordId}
+        initialRecordIdentifier={initialRecordIdentifier}
         initialRecordValue={initialRecordValue}
         include_drafts_in_version_dropdown={true}
-        fetchRecord={async (id: string): Promise<ZenodoRecordData> => {
-          return await getZenodoUserRecord(serverSettings, id);
+        fetchRecord={async (
+          identifier: ZenodoRecordIdentifier
+        ): Promise<ZenodoRecordData> => {
+          return await getZenodoUserRecord(
+            serverSettings,
+            identifier.record_id
+          );
         }}
         renderRecord={(record, versions) => (
           <ZenodoUserRecordDetails record={record} versions={versions} />

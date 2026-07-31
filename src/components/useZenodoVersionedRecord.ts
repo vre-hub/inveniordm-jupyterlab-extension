@@ -2,8 +2,10 @@ import React from 'react';
 import {
   listZenodoRecordVersions,
   ZenodoRecordData,
+  ZenodoRecordIdentifier,
   ZenodoRecordVersion,
-  ZenodoRecordVersionsChangedEventData
+  ZenodoRecordVersionsChangedEventData,
+  zenodoRecordIdentifierFromRecord
 } from '../api_calls';
 import { useEventListener } from '../sse';
 import { useServerSettings } from '../store';
@@ -13,40 +15,49 @@ function sortVersions(versions: ZenodoRecordVersion[]): ZenodoRecordVersion[] {
 }
 
 export function useZenodoVersionedRecord({
-  initialRecordId,
+  initialRecordIdentifier,
   initialRecordValue,
   include_drafts_in_version_dropdown,
   fetchRecord
 }: {
-  initialRecordId: string;
+  initialRecordIdentifier: ZenodoRecordIdentifier;
   initialRecordValue?: ZenodoRecordData;
   include_drafts_in_version_dropdown: boolean;
-  fetchRecord: (id: string) => Promise<ZenodoRecordData>;
+  fetchRecord: (
+    identifier: ZenodoRecordIdentifier
+  ) => Promise<ZenodoRecordData>;
 }) {
   /**
-   * State for the currently displayed record ID.
+   * State for the currently displayed record identifier.
    * This can change when the user selects a different version.
-   * Use setRecordId to change the currently displayed record ID.
-   * recordDeleted is set to true when the currently displayed record has been deleted.s
+   * Use setRecordIdentifier to change the currently displayed record.
+   * recordDeleted is set to true when the currently displayed record has been deleted.
    */
-  const [recordId, setRecordId] = React.useState<string>(initialRecordId);
+  const [recordIdentifier, setRecordIdentifier] =
+    React.useState<ZenodoRecordIdentifier>(initialRecordIdentifier);
 
   const [record, setRecord] = React.useState<
     ZenodoRecordData | { error: string } | null
   >(initialRecordValue ?? null);
   const [isLoading, setIsLoading] = React.useState(false);
+  const fetchRecordRef = React.useRef(fetchRecord);
+  React.useEffect(() => {
+    fetchRecordRef.current = fetchRecord;
+  }, [fetchRecord]);
 
   const loadRecord = React.useCallback(
-    async (id: string = recordId): Promise<void> => {
+    async (
+      identifier: ZenodoRecordIdentifier = recordIdentifier
+    ): Promise<void> => {
       try {
-        const record = await fetchRecord(id);
+        const record = await fetchRecordRef.current(identifier);
         setRecord(record);
         console.log('Loaded record', record);
       } catch (reason) {
         setRecord({ error: String(reason) });
       }
     },
-    [recordId]
+    [recordIdentifier]
   );
 
   // If no initial record value is provided, load the record data from the API.
@@ -59,9 +70,12 @@ export function useZenodoVersionedRecord({
   }, [loadRecord]);
 
   // Listen for changes to the currently displayed record.
-  useEventListener(`record.changed.${encodeURIComponent(recordId)}`, () => {
-    void loadRecord();
-  });
+  useEventListener(
+    `record.changed.${encodeURIComponent(recordIdentifier.record_id)}`,
+    () => {
+      void loadRecord();
+    }
+  );
 
   const [recordDeleted, setRecordDeleted] = React.useState(false);
 
@@ -73,7 +87,7 @@ export function useZenodoVersionedRecord({
     let isMounted = true;
     void listZenodoRecordVersions(
       serverSettings,
-      initialRecordId,
+      initialRecordIdentifier.record_id,
       includeDrafts
     ).then(versions => {
       if (isMounted) {
@@ -83,7 +97,7 @@ export function useZenodoVersionedRecord({
     return () => {
       isMounted = false;
     };
-  }, [includeDrafts, initialRecordId, serverSettings]);
+  }, [includeDrafts, initialRecordIdentifier.record_id, serverSettings]);
 
   const parentId = versions.find(version => version.parent?.id)?.parent?.id;
   useEventListener('record.versions.changed', event => {
@@ -92,7 +106,7 @@ export function useZenodoVersionedRecord({
 
     if (
       !eventData ||
-      (eventData.record_id !== recordId &&
+      (eventData.record_id !== recordIdentifier.record_id &&
         (!parentId || eventData.parent_id !== parentId))
     ) {
       return;
@@ -103,21 +117,22 @@ export function useZenodoVersionedRecord({
 
     if (
       eventData.type === 'version_created' &&
-      eventData.record_id === recordId &&
+      eventData.record_id === recordIdentifier.record_id &&
       eventData.record
     ) {
-      setRecordId(eventData.record.id);
+      setRecordIdentifier(zenodoRecordIdentifierFromRecord(eventData.record));
       setRecord(eventData.record);
       return;
     }
 
     if (
       eventData.type === 'draft_discarded' &&
-      eventData.discarded_draft_id === recordId
+      recordIdentifier.record_status === 'draft' &&
+      eventData.discarded_draft_id === recordIdentifier.record_id
     ) {
       const latestVersion = [...correctedVersions].reverse()[0];
       if (latestVersion) {
-        setRecordId(latestVersion.id);
+        setRecordIdentifier(zenodoRecordIdentifierFromRecord(latestVersion));
         console.log(
           'Record discarded, switching to latest version:',
           latestVersion
@@ -132,8 +147,8 @@ export function useZenodoVersionedRecord({
   });
 
   return {
-    recordId,
-    setRecordId,
+    recordIdentifier,
+    setRecordIdentifier,
     record,
     isLoading,
     loadRecord,

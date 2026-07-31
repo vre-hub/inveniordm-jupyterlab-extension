@@ -256,6 +256,17 @@ export type ZenodoRecordIdentifier = {
   record_status: 'draft' | 'published';
 };
 
+/** Derive the identifier for a record's draft or published representation. */
+export function zenodoRecordIdentifierFromRecord(record: {
+  id: string;
+  is_draft: boolean;
+}): ZenodoRecordIdentifier {
+  return {
+    record_id: record.id,
+    record_status: record.is_draft ? 'draft' : 'published'
+  };
+}
+
 export type ZenodoFileIdentifier = ZenodoRecordIdentifier & {
   file_key: string;
 };
