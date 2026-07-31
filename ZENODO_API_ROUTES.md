@@ -181,8 +181,8 @@ published versions from Zenodo's general versions endpoint.
 4. Send
    `GET /api/user/records?q=parent.id:<parent-id>&page=1&size=25&allversions=true`.
 5. Keep all records whose `is_draft` field is true and whose parent ID matches.
-6. Append those drafts to the published versions and deduplicate by record ID,
-   preferring the draft representation when a published hit has the same ID.
+6. Append those drafts to the published versions. Preserve both representations
+   when a draft and published record have the same ID.
 
 The general versions call is the authoritative list of published versions but
 does not include drafts. The direct draft lookup handles a first-version draft,

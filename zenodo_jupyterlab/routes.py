@@ -333,7 +333,10 @@ class ZenodoUserRecordItemHandler(APIHandler):
                 "versions": [
                     version
                     for version in versions
-                    if str(version.get("id")) != str(record_id)
+                    if not (
+                        str(version.get("id")) == str(record_id)
+                        and version.get("is_draft", False) is True
+                    )
                 ],
             },
         )
@@ -429,7 +432,12 @@ class ZenodoRecordVersionCollectionHandler(APIHandler):
 
         draft_id = str(draft.get("id"))
         corrected_versions = [
-            version for version in versions if str(version.get("id")) != draft_id
+            version
+            for version in versions
+            if not (
+                str(version.get("id")) == draft_id
+                and version.get("is_draft", False) is True
+            )
         ]
         corrected_versions.append(draft)
         parent_id_value = (draft.get("parent") or {}).get("id")

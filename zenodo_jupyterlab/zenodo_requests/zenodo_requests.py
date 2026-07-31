@@ -194,17 +194,9 @@ class ZenodoRequests:
         if not drafts:
             return versions
 
-        # New version drafts are not included in the public versions endpoint,
-        # so we need to query the user records endpoint to find it if it exists.
-        # Also, drafts may represent published versions that are being edited, in
-        # which case the public versions endpoint already returned a record with the same ID,
-        # but we want to return the draft because we assume the user is interested in editing it.
-        # Therefore, add every draft after the published versions
-        # so that it replaces the published representation during deduplication (if present).
-        versions_by_id = {
-            str(version.get("id")): version for version in [*versions, *drafts]
-        }
-        return list(versions_by_id.values())
+        # Drafts and published records are distinct representations even when
+        # they have the same record ID, so preserve both in the version list.
+        return [*versions, *drafts]
 
     def get_zenodo_record_variant(
         self,

@@ -517,6 +517,7 @@ def test_record_versions_returns_initial_draft(monkeypatch):
     calls = []
     draft = {
         "id": "draft-1",
+        "is_draft": True,
         "parent": {"id": "parent-1"},
         "status": "draft",
         "versions": {"index": 1},
@@ -596,7 +597,7 @@ def test_empty_record_versions_propagate_other_draft_errors(monkeypatch):
     assert raised.value is error
 
 
-def test_record_versions_extracts_all_drafts_and_prefers_them(monkeypatch):
+def test_record_versions_preserves_published_and_draft_variants(monkeypatch):
     calls = []
     versions = [
         {
@@ -654,9 +655,10 @@ def test_record_versions_extracts_all_drafts_and_prefers_them(monkeypatch):
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
 
     assert requests.list_zenodo_record_versions("518963") == [
-        edited_version_draft,
+        versions[0],
         versions[1],
         new_version_draft,
+        edited_version_draft,
     ]
     assert calls == [
         (

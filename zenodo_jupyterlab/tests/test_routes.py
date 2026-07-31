@@ -190,8 +190,12 @@ def test_delete_user_record_discards_draft():
         "id": "draft-1",
         "parent": {"id": "parent-1"},
     }
-    published = {"id": "record-1", "versions": {"index": 1}}
-    draft = {"id": "draft-1", "versions": {"index": 2}}
+    published = {
+        "id": "draft-1",
+        "is_draft": False,
+        "versions": {"index": 1},
+    }
+    draft = {"id": "draft-1", "is_draft": True, "versions": {"index": 1}}
     zenodo_requests.list_zenodo_record_versions.return_value = [published, draft]
     event_bus = EventBus()
     events = event_bus.subscribe("alice")
@@ -234,7 +238,7 @@ def test_delete_initial_draft_publishes_versions_event_without_parent():
         "parent": {"id": ""},
     }
     zenodo_requests.list_zenodo_record_versions.return_value = [
-        {"id": "draft-1", "versions": {"index": 1}}
+        {"id": "draft-1", "is_draft": True, "versions": {"index": 1}}
     ]
     event_bus = EventBus()
     events = event_bus.subscribe("alice")
@@ -324,16 +328,29 @@ def test_import_cell_constructs_download_location_without_metadata_lookup(tmp_pa
 
 
 def test_create_version_event_contains_new_draft():
-    published = {"id": "record-1", "versions": {"index": 1}}
+    published = {
+        "id": "draft-2",
+        "is_draft": False,
+        "versions": {"index": 2},
+    }
+    stale_draft = {
+        "id": "draft-2",
+        "is_draft": True,
+        "versions": {"index": 2},
+    }
     draft = {
         "id": "draft-2",
+        "is_draft": True,
         "status": "new_version_draft",
         "parent": {"id": "parent-1"},
         "versions": {"index": 2},
         "files": {"entries": [{"key": "data.csv"}]},
     }
     zenodo_requests = Mock()
-    zenodo_requests.list_zenodo_record_versions.return_value = [published]
+    zenodo_requests.list_zenodo_record_versions.return_value = [
+        published,
+        stale_draft,
+    ]
     zenodo_requests.create_zenodo_record_version.return_value = draft
     event_bus = EventBus()
     events = event_bus.subscribe("alice")

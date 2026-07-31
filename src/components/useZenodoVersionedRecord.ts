@@ -12,7 +12,23 @@ import { useEventListener } from '../sse';
 import { useServerSettings } from '../store';
 
 function sortVersions(versions: ZenodoRecordVersion[]): ZenodoRecordVersion[] {
-  return [...versions].sort((a, b) => a.versions.index - b.versions.index);
+  return [...versions].sort(
+    (a, b) =>
+      a.versions.index - b.versions.index ||
+      Number(a.is_draft) - Number(b.is_draft)
+  );
+}
+
+/** Choose the record representation to display after a draft is discarded. */
+export function selectVersionAfterDraftDiscard(
+  versions: ZenodoRecordVersion[],
+  discardedDraftId: string
+): ZenodoRecordVersion | undefined {
+  return (
+    versions.find(
+      version => version.id === discardedDraftId && !version.is_draft
+    ) ?? [...versions].reverse()[0]
+  );
 }
 
 export function useZenodoVersionedRecord({
@@ -123,14 +139,18 @@ export function useZenodoVersionedRecord({
       recordIdentifier.record_status === 'draft' &&
       eventData.discarded_draft_id === recordIdentifier.record_id
     ) {
-      const latestVersion = [...correctedVersions].reverse()[0];
-      if (latestVersion) {
-        setRecordIdentifier(zenodoRecordIdentifierFromRecord(latestVersion));
+      const nextVersion = selectVersionAfterDraftDiscard(
+        correctedVersions,
+        eventData.discarded_draft_id
+      );
+      if (nextVersion) {
+        const nextIdentifier = zenodoRecordIdentifierFromRecord(nextVersion);
+        setRecordIdentifier(nextIdentifier);
         console.log(
-          'Record discarded, switching to latest version:',
-          latestVersion
+          'Record discarded, switching record representation:',
+          nextVersion
         );
-        setRecord(latestVersion as unknown as ZenodoRecordData); // TODO check if this is actually correct
+        void loadRecord(nextIdentifier);
       } else {
         setVersions([]);
         setRecordDeleted(true);
