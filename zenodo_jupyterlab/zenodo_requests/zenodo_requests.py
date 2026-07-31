@@ -23,7 +23,6 @@ from .zenodo import (
     get_zenodo_me,
     get_zenodo_record,
     get_zenodo_record_public_or_draft,
-    get_zenodo_user_record,
     list_zenodo_record_versions,
     list_zenodo_user_records,
     open_zenodo_file,
@@ -137,8 +136,9 @@ class ZenodoRequests:
         if not versions:
             try:
                 return [
-                    get_zenodo_user_record(
+                    get_zenodo_record_public_or_draft(
                         record_id,
+                        record_status="draft",
                         base_url=self.url,
                         headers=self.headers,
                     )
@@ -206,29 +206,6 @@ class ZenodoRequests:
             str(version.get("id")): version for version in [*versions, *drafts]
         }
         return list(versions_by_id.values())
-
-    def get_zenodo_user_record(
-        self,
-        record_id: int | str,
-        *,
-        include_files: bool = True,
-    ) -> dict[str, Any]:
-        """Return a user record, optionally expanding its linked files."""
-        user_record = get_zenodo_user_record(
-            record_id,
-            base_url=self.url,
-            headers=self.headers,
-        )
-
-        if include_files:
-            # For user records that are drafts, the files are not included here,
-            # so fetch them separately when the caller needs them.
-            include_zenodo_file_if_draft_or_restricted(
-                user_record,
-                base_url=self.url,
-                headers=self.headers,
-            )
-        return user_record
 
     def get_zenodo_record(
         self,

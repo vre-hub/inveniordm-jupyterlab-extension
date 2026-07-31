@@ -327,18 +327,11 @@ def test_get_zenodo_record_variant_fetches_requested_record_status(monkeypatch):
         "links": {"files": "https://zenodo.org/api/records/public-123/files"},
     }
     calls = []
-    include_files_calls = []
     monkeypatch.setattr(
         zenodo_requests_module,
         "get_zenodo_record_public_or_draft",
         lambda *args, **kwargs: calls.append((args, kwargs)) or record,
     )
-    monkeypatch.setattr(
-        zenodo_requests_module,
-        "include_zenodo_file_if_draft_or_restricted",
-        lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
-    )
-
     requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
 
     assert (
@@ -360,35 +353,6 @@ def test_get_zenodo_record_variant_fetches_requested_record_status(monkeypatch):
             },
         )
     ]
-    assert include_files_calls == []
-
-
-@pytest.mark.parametrize("include_files", [True, False])
-def test_get_zenodo_user_record_optionally_includes_files(monkeypatch, include_files):
-    record = {
-        "id": "draft-123",
-        "is_draft": True,
-        "links": {"files": "https://zenodo.org/api/records/draft-123/draft/files"},
-    }
-    include_files_calls = []
-    monkeypatch.setattr(
-        zenodo_requests_module,
-        "get_zenodo_user_record",
-        lambda *args, **kwargs: record,
-    )
-    monkeypatch.setattr(
-        zenodo_requests_module,
-        "include_zenodo_file_if_draft_or_restricted",
-        lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
-    )
-
-    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
-
-    assert (
-        requests.get_zenodo_user_record("draft-123", include_files=include_files)
-        is record
-    )
-    assert bool(include_files_calls) is include_files
 
 
 @pytest.mark.parametrize("include_files", [True, False])
@@ -545,46 +509,6 @@ def test_get_zenodo_record_public_or_draft_uses_draft_endpoint(monkeypatch):
     assert calls[0][0] == ("https://zenodo.org/api/records/draft-123/draft",)
 
 
-def test_get_zenodo_record_uses_user_records_to_resolve_state(monkeypatch):
-    calls = []
-    draft = {"id": "draft-1", "is_published": False}
-    monkeypatch.setattr(
-        zenodo_module.requests,
-        "get",
-        lambda *args, **kwargs: (
-            calls.append((args, kwargs))
-            or Response(
-                {
-                    "hits": {
-                        "hits": [
-                            {"id": "another-record", "is_published": True},
-                            draft,
-                        ]
-                    }
-                }
-            )
-        ),
-    )
-
-    result = zenodo_module.get_zenodo_user_record(
-        "draft-1",
-        base_url="https://zenodo.org",
-        headers={"Authorization": "x"},
-    )
-
-    assert result is draft
-    assert calls[0][0] == ("https://zenodo.org/api/user/records",)
-    assert calls[0][1]["params"] == {
-        "q": "id:draft-1",
-        "size": 10,
-        "allversions": True,
-    }
-    assert calls[0][1]["headers"] == {
-        "Accept": "application/vnd.inveniordm.v1+json",
-        "Authorization": "x",
-    }
-
-
 def test_list_zenodo_user_records_uses_user_records(monkeypatch):
     calls = []
     monkeypatch.setattr(
@@ -657,7 +581,7 @@ def test_record_versions_returns_initial_draft(monkeypatch):
     )
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_user_record",
+        "get_zenodo_record_public_or_draft",
         lambda *args, **kwargs: calls.append((args, kwargs)) or draft,
     )
     monkeypatch.setattr(
@@ -673,6 +597,7 @@ def test_record_versions_returns_initial_draft(monkeypatch):
         (
             ("draft-1",),
             {
+                "record_status": "draft",
                 "base_url": "https://zenodo.org",
                 "headers": {"Authorization": "x"},
             },
@@ -692,7 +617,7 @@ def test_empty_record_versions_ignore_missing_draft(monkeypatch, status_code):
     )
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_user_record",
+        "get_zenodo_record_public_or_draft",
         lambda *args, **kwargs: (_ for _ in ()).throw(error),
     )
 
@@ -712,7 +637,7 @@ def test_empty_record_versions_propagate_other_draft_errors(monkeypatch):
     )
     monkeypatch.setattr(
         zenodo_requests_module,
-        "get_zenodo_user_record",
+        "get_zenodo_record_public_or_draft",
         lambda *args, **kwargs: (_ for _ in ()).throw(error),
     )
 

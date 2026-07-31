@@ -191,7 +191,7 @@ async def test_record_permission_rejects_missing_record_status():
 
 def test_delete_user_record_discards_draft():
     zenodo_requests = Mock()
-    zenodo_requests.get_zenodo_user_record.return_value = {
+    zenodo_requests.get_zenodo_record_variant.return_value = {
         "id": "draft-1",
         "parent": {"id": "parent-1"},
     }
@@ -212,8 +212,8 @@ def test_delete_user_record_discards_draft():
 
     ZenodoUserRecordItemHandler.delete.__wrapped__(handler, "draft-1")
 
-    zenodo_requests.get_zenodo_user_record.assert_called_once_with(
-        "draft-1", include_files=False
+    zenodo_requests.get_zenodo_record_variant.assert_called_once_with(
+        ZenodoRecordIdentifier(record_id="draft-1", record_status="draft")
     )
     zenodo_requests.list_zenodo_record_versions.assert_called_once_with(
         "draft-1", include_drafts=True
@@ -234,7 +234,7 @@ def test_delete_user_record_discards_draft():
 
 def test_delete_initial_draft_publishes_versions_event_without_parent():
     zenodo_requests = Mock()
-    zenodo_requests.get_zenodo_user_record.return_value = {
+    zenodo_requests.get_zenodo_record_variant.return_value = {
         "id": "draft-1",
         "parent": {"id": ""},
     }

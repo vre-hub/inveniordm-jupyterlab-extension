@@ -179,10 +179,9 @@ versions. The parameter defaults to `true`; pass `false` to return only the
 published versions from Zenodo's general versions endpoint.
 
 1. Send `GET /api/records/:id/versions` and take its published hits.
-2. If there are no published hits, search
-   `GET /api/user/records?q=id:<id>&size=10&allversions=true` and return the
-   exact matching user record as the only version. Treat `401`, `403`, or `404`
-   as no accessible record and return an empty list.
+2. If there are no published hits, send `GET /api/records/:id/draft` and return
+   that initial draft as the only version. Treat `401`, `403`, or `404` as no
+   accessible draft and return an empty list.
 3. Otherwise, obtain the published hits' parent ID, which identifies the
    version family.
 4. Send
@@ -192,9 +191,9 @@ published versions from Zenodo's general versions endpoint.
    preferring the draft representation when a published hit has the same ID.
 
 The general versions call is the authoritative list of published versions but
-does not include drafts. The targeted user-record lookup handles a first-version
-draft, for which there is no published hit from which to derive the parent ID.
-The user-record listing supplies accessible drafts from the version family when
+does not include drafts. The direct draft lookup handles a first-version draft,
+for which there is no published hit from which to derive the parent ID. The
+user-record listing supplies accessible drafts from the version family when
 published versions already exist. A `401` or `403` from the user-record listing
 is ignored, so callers without user-record access still get the published
 versions. Other errors are propagated.
@@ -212,29 +211,19 @@ belonging to a different account without making another Zenodo API request.
 
 The background job then:
 
-1. Resolves the record through `/api/user/records` without expanding its files.
-   Only `is_published` is needed to choose the edit target.
-2. If the record is already a draft, uses it as the edit target.
-3. If it is published, rejects the edit; callers must first create a draft
-   explicitly with `POST /records/:id/versions`.
-4. For each new file on a draft, performs initialize, content upload, and
+1. Uses the supplied ID as a draft ID; the route is intrinsically draft-only.
+2. For each new file, performs initialize, content upload, and
    commit against `/api/records/:id/draft/files`, as described for the
    draft-with-files route.
 
-User records are required to determine whether the supplied ID is a draft or a
-published record in the user's working view. A published record cannot be
-modified in place and file-editing routes do not create a new version
-automatically.
+A published record cannot be modified in place and file-editing routes do not
+create a new version automatically. Zenodo rejects an ID without an editable
+draft.
 
 ### `DELETE /user/records/:id/files`
 
-1. Resolve the editable draft in the same way as the upload route: fetch the
-   user record, use it directly if it is a draft, or reject the request if it
-   is published.
-2. Read the draft record ID and send
-   `DELETE /api/records/:id/draft/files/:file-key`.
-
-The lookup is required because only a draft's file collection is mutable.
+Send `DELETE /api/records/:id/draft/files/:file-key`. The route is
+intrinsically draft-only, so it does not need a record status lookup.
 
 ## Details of other Routes
 

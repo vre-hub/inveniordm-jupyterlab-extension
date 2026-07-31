@@ -269,44 +269,6 @@ def list_zenodo_record_versions(
     return response.json()
 
 
-def get_zenodo_user_record(
-    record_id: int | str,
-    *,
-    base_url: str,
-    headers: dict[str, str] | None,
-) -> dict[str, Any]:
-    """
-    Fetch a record owned by the authenticated user.
-    """
-    """
-    TODO this is a workaround because it allows us to get a record independent of if it is a draft or published version, do this properly.
-    The Zenodo API does not have a single endpoint for this, so we have to search the user's records and filter by ID.
-    This is not ideal because the search is not fast/ up to date
-    and can lead to race conditions where a record is created but not yet visible in the search results.
-    E.g. if a new version draft is created and we would immediately try to fetch it, it would not be there.
-
-    We should consider
-    A) adding a unified inveniordm endpoint that returns a record by ID regardless of draft/published status,
-    or B) removing this and requiring the caller to know if the record is a draft or published version and call the appropriate endpoint.
-    B requires a lot of caching and state management on the client side, so A is probably the better option.
-    """
-    response = requests.get(
-        f"{_normalize_base_url(base_url)}/api/user/records",
-        params={"q": f"id:{record_id}", "size": 10, "allversions": True},
-        headers=_headers(headers, accept_invenio=True),
-        timeout=10,
-    )
-    response.raise_for_status()
-    hits = response.json().get("hits", {}).get("hits", [])
-    record = next(
-        (item for item in hits if str(item.get("id")) == str(record_id)),
-        None,
-    )
-    if record is None:
-        raise ValueError(f"Record not found: {record_id}")
-    return record
-
-
 def get_zenodo_record(
     record_id: int | str,
     *,

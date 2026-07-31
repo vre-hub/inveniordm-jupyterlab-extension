@@ -25,7 +25,11 @@ from .zenodo_file_identifier import (
     ZenodoFileIdentifier,
     zenodo_file_identifier,
 )
-from .zenodo_record_identifier import ZenodoRecordStatus, zenodo_record_identifier
+from .zenodo_record_identifier import (
+    ZenodoRecordIdentifier,
+    ZenodoRecordStatus,
+    zenodo_record_identifier,
+)
 from .zenodo_requests.zenodo_requests import ZenodoRequests
 from .zenodo_requests.zenodo_requests_factory import ZenodoRequestsFactory
 from .zenodo_requests.zenodo_requests_factory_create import (
@@ -312,11 +316,13 @@ class ZenodoUserRecordItemHandler(APIHandler):
     def delete(self, record_id: str):
         try:
             zenodo_requests = self.get_zenodo_requests(self)
-            record = zenodo_requests.get_zenodo_user_record(
-                record_id, include_files=False
-            )
-            # to get the parent id for the sse event, we need to make another api call
             # TODO check if we even need this api call and remove if we dont
+            record = zenodo_requests.get_zenodo_record_variant(
+                ZenodoRecordIdentifier(
+                    record_id=record_id,
+                    record_status="draft",
+                )
+            )
             parent_id_value = (record.get("parent") or {}).get("id")
             parent_id = str(parent_id_value) if parent_id_value else None
             versions = zenodo_requests.list_zenodo_record_versions(
