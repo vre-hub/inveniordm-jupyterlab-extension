@@ -309,21 +309,6 @@ class ZenodoUserRecordItemHandler(APIHandler):
         self.event_bus = event_bus
 
     @tornado.web.authenticated
-    def get(self, record_id: str):
-        try:
-            record = self.get_zenodo_requests(self).get_zenodo_user_record(record_id)
-        except ValueError as error:
-            self.set_status(404)
-            self.finish(json.dumps({"message": str(error)}))
-            return
-        except requests.RequestException as error:
-            self.set_status(getattr(error.response, "status_code", 502))
-            self.finish(json.dumps({"message": str(error)}))
-            return
-
-        self.finish(json.dumps(record))
-
-    @tornado.web.authenticated
     def delete(self, record_id: str):
         try:
             zenodo_requests = self.get_zenodo_requests(self)

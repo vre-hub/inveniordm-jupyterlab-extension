@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { getZenodoUserRecord, listZenodoUserRecords } from '../api_calls';
+import { listZenodoUserRecords } from '../api_calls';
 import { useServerSettings } from '../store';
 import {
   ZenodoRecordData,
@@ -62,21 +62,12 @@ function ZenodoUserRecord({
   initialRecordIdentifier: ZenodoRecordIdentifier;
   initialRecordValue?: ZenodoRecordData;
 }): JSX.Element {
-  const serverSettings = useServerSettings();
   return (
     <div>
       <ZenodoVersionedRecord
         initialRecordIdentifier={initialRecordIdentifier}
         initialRecordValue={initialRecordValue}
         include_drafts_in_version_dropdown={true}
-        fetchRecord={async (
-          identifier: ZenodoRecordIdentifier
-        ): Promise<ZenodoRecordData> => {
-          return await getZenodoUserRecord(
-            serverSettings,
-            identifier.record_id
-          );
-        }}
         renderRecord={(record, versions) => (
           <ZenodoUserRecordDetails record={record} versions={versions} />
         )}

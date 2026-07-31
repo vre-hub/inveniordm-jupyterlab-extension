@@ -15,15 +15,11 @@ export function ZenodoVersionedRecord({
   initialRecordIdentifier,
   initialRecordValue,
   include_drafts_in_version_dropdown,
-  fetchRecord,
   renderRecord
 }: {
   initialRecordIdentifier: ZenodoRecordIdentifier;
   initialRecordValue?: ZenodoRecordData;
   include_drafts_in_version_dropdown: boolean;
-  fetchRecord: (
-    identifier: ZenodoRecordIdentifier
-  ) => Promise<ZenodoRecordData>;
   renderRecord: (
     record: ZenodoRecordData,
     versions: ZenodoRecordVersion[] // TODO we pass this versions array around a lot, think about better component structure
@@ -40,8 +36,7 @@ export function ZenodoVersionedRecord({
   } = useZenodoVersionedRecord({
     initialRecordIdentifier,
     initialRecordValue,
-    include_drafts_in_version_dropdown,
-    fetchRecord
+    include_drafts_in_version_dropdown
   });
 
   if (recordDeleted) {

@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  getZenodoRecordVariant,
   listZenodoRecordVersions,
   ZenodoRecordData,
   ZenodoRecordIdentifier,
@@ -17,15 +18,11 @@ function sortVersions(versions: ZenodoRecordVersion[]): ZenodoRecordVersion[] {
 export function useZenodoVersionedRecord({
   initialRecordIdentifier,
   initialRecordValue,
-  include_drafts_in_version_dropdown,
-  fetchRecord
+  include_drafts_in_version_dropdown
 }: {
   initialRecordIdentifier: ZenodoRecordIdentifier;
   initialRecordValue?: ZenodoRecordData;
   include_drafts_in_version_dropdown: boolean;
-  fetchRecord: (
-    identifier: ZenodoRecordIdentifier
-  ) => Promise<ZenodoRecordData>;
 }) {
   /**
    * State for the currently displayed record identifier.
@@ -40,24 +37,21 @@ export function useZenodoVersionedRecord({
     ZenodoRecordData | { error: string } | null
   >(initialRecordValue ?? null);
   const [isLoading, setIsLoading] = React.useState(false);
-  const fetchRecordRef = React.useRef(fetchRecord);
-  React.useEffect(() => {
-    fetchRecordRef.current = fetchRecord;
-  }, [fetchRecord]);
+  const serverSettings = useServerSettings();
 
   const loadRecord = React.useCallback(
     async (
       identifier: ZenodoRecordIdentifier = recordIdentifier
     ): Promise<void> => {
       try {
-        const record = await fetchRecordRef.current(identifier);
+        const record = await getZenodoRecordVariant(serverSettings, identifier);
         setRecord(record);
         console.log('Loaded record', record);
       } catch (reason) {
         setRecord({ error: String(reason) });
       }
     },
-    [recordIdentifier]
+    [recordIdentifier, serverSettings]
   );
 
   // If no initial record value is provided, load the record data from the API.
@@ -81,7 +75,6 @@ export function useZenodoVersionedRecord({
 
   const [versions, setVersions] = React.useState<ZenodoRecordVersion[]>([]);
   const includeDrafts = include_drafts_in_version_dropdown;
-  const serverSettings = useServerSettings();
 
   React.useEffect(() => {
     let isMounted = true;

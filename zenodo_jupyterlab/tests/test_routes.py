@@ -67,6 +67,18 @@ async def test_find_active_download_jobs(jp_fetch):
     assert json.loads(response.body) == {"job_ids": []}
 
 
+async def test_get_user_record_is_not_supported(jp_fetch):
+    response = await jp_fetch(
+        "zenodo-jupyterlab",
+        "user",
+        "records",
+        "record-1",
+        raise_error=False,
+    )
+
+    assert response.code == 405
+
+
 async def test_list_record_versions_passes_include_drafts():
     zenodo_requests = Mock()
     zenodo_requests.list_zenodo_record_versions.return_value = []

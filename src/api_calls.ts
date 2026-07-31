@@ -160,16 +160,6 @@ export type ZenodoRecordDraftResponse = {
   is_published?: boolean;
 };
 
-export async function getZenodoUserRecord(
-  serverSettings: ServerConnection.ISettings,
-  recordId: string
-): Promise<ZenodoRecordData> {
-  return await requestAPI<ZenodoRecordData>(
-    `user/records/${encodeURIComponent(recordId)}`,
-    serverSettings
-  );
-}
-
 export async function deleteZenodoRecordDraft(
   serverSettings: ServerConnection.ISettings,
   recordId: string
