@@ -115,16 +115,6 @@ export async function searchZenodoRecords(
   return await requestAPI(`records?${params.toString()}`, serverSettings);
 }
 
-export async function getZenodoRecord(
-  serverSettings: ServerConnection.ISettings,
-  recordId: string
-): Promise<ZenodoRecordData> {
-  return await requestAPI<ZenodoRecordData>(
-    `records/${encodeURIComponent(recordId)}`,
-    serverSettings
-  );
-}
-
 export async function getZenodoRecordVariant(
   serverSettings: ServerConnection.ISettings,
   identifier: ZenodoRecordIdentifier

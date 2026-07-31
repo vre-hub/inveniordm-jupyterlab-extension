@@ -51,8 +51,8 @@ so the two variants can be downloaded without overwriting one another.
 Every Zenodo-facing operation uses the same verb, domain, resource, and
 qualifier vocabulary across layers. Python uses `snake_case`, TypeScript uses
 `camelCase`, and route handlers describe the REST resource and cardinality.
-For example, `get_zenodo_record`, `getZenodoRecord`, and
-`ZenodoRecordItemHandler` all describe the same operation.
+For example, `get_zenodo_record_variant`, `getZenodoRecordVariant`, and
+`ZenodoRecordVariantItemHandler` all describe the same operation.
 
 The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 `open`, and `check`.
@@ -67,7 +67,6 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 | `GET /auth/callback`                             | —                                  | `POST /oauth/token`                                                                                  |
 | `GET /auth/logout`                               | `constructZenodoAuthUrl`           | None; removes the locally stored token                                                               |
 | `GET /records`                                   | `searchZenodoRecords`              | `GET /api/records`                                                                                   |
-| `GET /records/:id`                               | `getZenodoRecord`                  | `GET /api/records/:id`                                                                               |
 | `GET /record-variants/:id?record_status=:status` | `getZenodoRecordVariant`           | `GET /api/records/:id` or `GET /api/records/:id/draft`                                               |
 | `GET /me`                                        | `getZenodoMe`                      | `GET /api/me`                                                                                        |
 | `GET /events`                                    | `subscribeToEvents`                | None; local server-sent event stream                                                                 |
@@ -107,11 +106,6 @@ The request searches the general published record space. Results from
 `/api/records` contain their file collections, but not if the files are restricted. If
 `include_files=true`, follow `links.files` for restricted results whose files
 are not included in the search response and add the result as `files`.
-
-### `GET /records/:id`
-
-Send `GET /api/records/:id` for published record details. This route retains
-the published-only behavior of the general-record view.
 
 ### `GET /record-variants/:id?record_status=:status`
 

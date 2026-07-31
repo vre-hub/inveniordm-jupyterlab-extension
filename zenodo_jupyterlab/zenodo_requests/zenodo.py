@@ -269,21 +269,6 @@ def list_zenodo_record_versions(
     return response.json()
 
 
-def get_zenodo_record(
-    record_id: int | str,
-    *,
-    base_url: str,
-    headers: dict[str, str] | None,
-) -> dict[str, Any]:
-    """Fetch a public record directly from the records API."""
-    return get_zenodo_record_public_or_draft(
-        record_id,
-        record_status="published",
-        base_url=base_url,
-        headers=headers,
-    )
-
-
 def get_zenodo_record_public_or_draft(
     record_id: int | str,
     *,

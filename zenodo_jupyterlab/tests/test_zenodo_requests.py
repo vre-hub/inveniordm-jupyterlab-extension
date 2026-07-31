@@ -298,29 +298,6 @@ def test_check_user_record_permission_workaround_queries_encoded_grant_token(
     ]
 
 
-def test_get_zenodo_record_uses_files_from_public_record_response(monkeypatch):
-    record = {
-        "id": "public-123",
-        "links": {"files": "https://zenodo.org/api/records/public-123/files"},
-    }
-    include_files_calls = []
-    monkeypatch.setattr(
-        zenodo_requests_module,
-        "get_zenodo_record",
-        lambda *args, **kwargs: record,
-    )
-    monkeypatch.setattr(
-        zenodo_requests_module,
-        "include_zenodo_file_if_draft_or_restricted",
-        lambda *args, **kwargs: include_files_calls.append((args, kwargs)),
-    )
-
-    requests = ZenodoRequests("https://zenodo.org", {"Authorization": "x"})
-
-    assert requests.get_zenodo_record("public-123") is record
-    assert include_files_calls == []
-
-
 def test_get_zenodo_record_variant_fetches_requested_record_status(monkeypatch):
     record = {
         "id": "public-123",
@@ -449,36 +426,6 @@ def test_search_zenodo_records_uses_invenio_response_format(monkeypatch):
                     "sort": "newest",
                     "allversions": True,
                 },
-                "headers": {
-                    "Accept": "application/vnd.inveniordm.v1+json",
-                    "Authorization": "x",
-                },
-                "timeout": 10,
-            },
-        )
-    ]
-
-
-def test_get_zenodo_record_uses_invenio_response_format(monkeypatch):
-    calls = []
-    response_data = {"id": "record-1", "files": {"enabled": True}}
-    monkeypatch.setattr(
-        zenodo_module.requests,
-        "get",
-        lambda *args, **kwargs: calls.append((args, kwargs)) or Response(response_data),
-    )
-
-    result = zenodo_module.get_zenodo_record(
-        "record/1",
-        base_url="https://zenodo.org",
-        headers={"Authorization": "x"},
-    )
-
-    assert result is response_data
-    assert calls == [
-        (
-            ("https://zenodo.org/api/records/record%2F1",),
-            {
                 "headers": {
                     "Accept": "application/vnd.inveniordm.v1+json",
                     "Authorization": "x",

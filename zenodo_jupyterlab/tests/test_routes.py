@@ -7,7 +7,6 @@ import pytest
 from zenodo_jupyterlab.routes import (
     ZenodoFileImportCellHandler,
     ZenodoRecordCollectionHandler,
-    ZenodoRecordItemHandler,
     ZenodoRecordPermissionHandler,
     ZenodoRecordVariantItemHandler,
     ZenodoRecordVersionCollectionHandler,
@@ -79,6 +78,17 @@ async def test_get_user_record_is_not_supported(jp_fetch):
     assert response.code == 405
 
 
+async def test_get_record_item_route_is_not_registered(jp_fetch):
+    response = await jp_fetch(
+        "zenodo-jupyterlab",
+        "records",
+        "record-1",
+        raise_error=False,
+    )
+
+    assert response.code == 404
+
+
 async def test_list_record_versions_passes_include_drafts():
     zenodo_requests = Mock()
     zenodo_requests.list_zenodo_record_versions.return_value = []
@@ -95,21 +105,6 @@ async def test_list_record_versions_passes_include_drafts():
         "record-1", include_drafts=False
     )
     assert json.loads(responses[0]) == []
-
-
-def test_get_record_passes_record_id():
-    zenodo_requests = Mock()
-    zenodo_requests.get_zenodo_record.return_value = {"id": "record-1"}
-    responses = []
-    handler = SimpleNamespace(
-        get_zenodo_requests=lambda _: zenodo_requests,
-        finish=responses.append,
-    )
-
-    ZenodoRecordItemHandler.get.__wrapped__(handler, "record-1")
-
-    zenodo_requests.get_zenodo_record.assert_called_once_with("record-1")
-    assert json.loads(responses[0]) == {"id": "record-1"}
 
 
 def test_get_record_variant_passes_record_identifier():

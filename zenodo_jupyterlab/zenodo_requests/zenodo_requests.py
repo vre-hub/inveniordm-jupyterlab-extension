@@ -21,7 +21,6 @@ from .zenodo import (
     delete_zenodo_record_draft,
     delete_zenodo_draft_file,
     get_zenodo_me,
-    get_zenodo_record,
     get_zenodo_record_public_or_draft,
     list_zenodo_record_versions,
     list_zenodo_user_records,
@@ -206,18 +205,6 @@ class ZenodoRequests:
             str(version.get("id")): version for version in [*versions, *drafts]
         }
         return list(versions_by_id.values())
-
-    def get_zenodo_record(
-        self,
-        record_id: int | str,
-    ) -> dict[str, Any]:
-        """Return a published Zenodo record."""
-        record = get_zenodo_record(
-            record_id,
-            base_url=self.url,
-            headers=self.headers,
-        )
-        return record
 
     def get_zenodo_record_variant(
         self,
