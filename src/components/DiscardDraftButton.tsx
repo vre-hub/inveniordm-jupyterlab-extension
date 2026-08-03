@@ -10,6 +10,27 @@ export function DiscardDraftButton({
   id: string;
   allowedToDiscardDraft: boolean;
 }): JSX.Element {
+  const { discardDraft, isLoading, error, hint } = useDiscardDraft(
+    id,
+    allowedToDiscardDraft
+  );
+
+  return (
+    <>
+      <button
+        disabled={!allowedToDiscardDraft || isLoading}
+        onClick={() => void discardDraft()}
+        type="button"
+        title={hint}
+      >
+        {isLoading ? 'Discarding...' : 'Discard Draft'}
+      </button>
+      {error ? <span>{error}</span> : null}
+    </>
+  );
+}
+
+function useDiscardDraft(id: string, allowedToDiscardDraft: boolean) {
   const serverSettings = useServerSettings();
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -30,17 +51,5 @@ export function DiscardDraftButton({
     }
   };
 
-  return (
-    <>
-      <button
-        disabled={!allowedToDiscardDraft || isLoading}
-        onClick={() => void discardDraft()}
-        type="button"
-        title={hint}
-      >
-        {isLoading ? 'Discarding...' : 'Discard Draft'}
-      </button>
-      {error ? <span>{error}</span> : null}
-    </>
-  );
+  return { discardDraft, isLoading, error, hint };
 }

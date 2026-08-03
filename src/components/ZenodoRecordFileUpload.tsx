@@ -5,9 +5,7 @@ import { useServerSettings } from '../store';
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 
-export const ZenodoRecordFileUpload: React.FC<{
-  recordId: string;
-}> = ({ recordId }) => {
+function useZenodoRecordFileUpload(recordId: string) {
   const serverSettings = useServerSettings();
   const [uploadId, setUploadId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -62,6 +60,30 @@ export const ZenodoRecordFileUpload: React.FC<{
     setUploadId(null);
     setMessage(reason);
   }, []);
+
+  return {
+    uploadId,
+    error,
+    message,
+    uploadFiles,
+    completeUpload,
+    failUpload,
+    cancelUpload
+  };
+}
+
+export const ZenodoRecordFileUpload: React.FC<{
+  recordId: string;
+}> = ({ recordId }) => {
+  const {
+    uploadId,
+    error,
+    message,
+    uploadFiles,
+    completeUpload,
+    failUpload,
+    cancelUpload
+  } = useZenodoRecordFileUpload(recordId);
 
   return (
     <div>

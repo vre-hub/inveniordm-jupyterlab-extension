@@ -10,22 +10,28 @@ import { JobProgress } from './JobProgress';
 import { ZenodoFileDownloadStatus } from './ZenodoFileDownloadStatus';
 import type { ZenodoFile, ZenodoFileIdentifier } from '../api_calls';
 
+function useZenodoFileIdentifierFromProps(
+  file: ZenodoFile,
+  recordId: string,
+  isDraft: boolean
+): ZenodoFileIdentifier {
+  return React.useMemo<ZenodoFileIdentifier>(
+    () => ({
+      file_key: file.key,
+      record_id: recordId,
+      record_status: isDraft ? 'draft' : 'published'
+    }),
+    [file.key, isDraft, recordId]
+  );
+}
+
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;
   recordId: string;
   isDraft: boolean;
   editable: boolean;
 }> = ({ file, recordId, isDraft, editable }) => {
-  const fileKey = file.key;
-
-  const fileId = React.useMemo<ZenodoFileIdentifier>(
-    () => ({
-      file_key: fileKey,
-      record_id: recordId,
-      record_status: isDraft ? 'draft' : 'published'
-    }),
-    [fileKey, isDraft, recordId]
-  );
+  const fileId = useZenodoFileIdentifierFromProps(file, recordId, isDraft);
 
   return (
     <div
@@ -35,7 +41,7 @@ export const ZenodoFileInfo: React.FC<{
         marginBottom: '2px'
       }}
     >
-      <ZenodoFileDetails filename={fileKey} size={file.size} />
+      <ZenodoFileDetails file={file} />
       <ZenodoFileDownload fileId={fileId} />
       {editable && <ZenodoFileDeleteButton fileId={fileId} />}
     </div>
@@ -43,13 +49,12 @@ export const ZenodoFileInfo: React.FC<{
 };
 
 const ZenodoFileDetails: React.FC<{
-  filename: string;
-  size?: number;
-}> = ({ filename, size }) => (
+  file: ZenodoFile;
+}> = ({ file }) => (
   <div>
-    {filename}
+    {file.key}
     {/* TODO display file size in a reasonable unit */}
-    {size ? ` (${(size / 1024 / 1024).toFixed(2)} MB)` : null}
+    {file.size ? ` (${(file.size / 1024 / 1024).toFixed(2)} MB)` : null}
   </div>
 );
 
@@ -94,31 +99,28 @@ const ZenodoFileDownload: React.FC<{
   );
 };
 
-const ZenodoFileDeleteButton: React.FC<{
-  fileId: ZenodoFileIdentifier;
-}> = ({ fileId }) => {
+function useDeleteZenodoFile(fileId: ZenodoFileIdentifier) {
   const serverSettings = useServerSettings();
   const [isDeleting, setIsDeleting] = React.useState(false);
-  const [isDeleted, setIsDeleted] = React.useState(false);
 
   const deleteFile = async (): Promise<void> => {
     setIsDeleting(true);
     try {
       await deleteZenodoRecordFile(serverSettings, fileId);
-      setIsDeleted(true);
     } finally {
       setIsDeleting(false);
     }
   };
+  return { deleteFile, isDeleting };
+}
 
+const ZenodoFileDeleteButton: React.FC<{
+  fileId: ZenodoFileIdentifier;
+}> = ({ fileId }) => {
+  const { deleteFile, isDeleting } = useDeleteZenodoFile(fileId);
   return (
     <>
-      {isDeleted ? <div>Deleted from draft</div> : null}
-      <button
-        disabled={isDeleting || isDeleted}
-        onClick={deleteFile}
-        type="button"
-      >
+      <button disabled={isDeleting} onClick={deleteFile} type="button">
         {isDeleting ? 'Deleting…' : 'Delete from Zenodo'}
       </button>
     </>

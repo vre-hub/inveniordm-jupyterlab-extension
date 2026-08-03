@@ -10,12 +10,47 @@ import { useServerSettings } from '../store';
 
 const TERMINAL_STATUSES = new Set(['done', 'error', 'canceled']);
 
-export const JobProgress: React.FC<{
+type JobProgressProps = {
   jobId: string;
   onDone?: (progress: JobProgressResponse) => void;
   onCanceled?: (message: string) => void;
   onError?: (message: string) => void;
-}> = ({ jobId, onDone, onCanceled, onError }) => {
+};
+
+export const JobProgress: React.FC<JobProgressProps> = props => {
+  const { progress, progressLabel, canCancel, cancel, loadingProgress } =
+    useJobProgressUpdates(props);
+
+  if (loadingProgress || !progress) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div>
+      {canCancel ? (
+        <button onClick={cancel} type="button">
+          Cancel job
+        </button>
+      ) : null}
+      <progress
+        value={progress.completed_bytes}
+        max={progress.total_bytes ?? undefined}
+      />
+      <span>
+        {progress.status} {progressLabel}
+        {progress.current_item ? ` - ${progress.current_item}` : ''}
+      </span>
+      {progress.message ? <div>{progress.message}</div> : null}
+    </div>
+  );
+};
+
+function useJobProgressUpdates({
+  jobId,
+  onDone,
+  onCanceled,
+  onError
+}: JobProgressProps) {
   const serverSettings = useServerSettings();
   const eventProgress = useJobProgress(jobId);
   const [progress, setProgress] = React.useState<JobProgressResponse | null>(
@@ -89,18 +124,27 @@ export const JobProgress: React.FC<{
     }
   }, [jobId, onCanceled, onDone, onError, progress]);
 
-  if (!progress || progress.job_id !== jobId) {
-    return <p>Loading...</p>;
-  }
+  const progressLabel = React.useMemo(() => {
+    if (!progress) {
+      return '';
+    }
+    if (progress.total_bytes !== null && progress.total_bytes > 0) {
+      return `${Math.round(
+        (progress.completed_bytes / progress.total_bytes) * 100
+      )}%`;
+    } else {
+      return `${progress.completed_bytes} bytes`;
+    }
+  }, [progress, progress?.completed_bytes, progress?.total_bytes]);
 
-  const progressLabel =
-    progress.total_bytes !== null && progress.total_bytes > 0
-      ? `${Math.round(
-          (progress.completed_bytes / progress.total_bytes) * 100
-        )}%`
-      : `${progress.completed_bytes} bytes`;
-  const canCancel =
-    progress.status === 'pending' || progress.status === 'running';
+  const canCancel = React.useMemo(() => {
+    if (!progress) {
+      return false;
+    }
+    return (
+      !TERMINAL_STATUSES.has(progress.status) && progress.status !== 'canceling'
+    );
+  }, [progress, progress?.status]);
 
   const cancel = async (): Promise<void> => {
     try {
@@ -110,22 +154,13 @@ export const JobProgress: React.FC<{
     }
   };
 
-  return (
-    <div>
-      {canCancel ? (
-        <button onClick={cancel} type="button">
-          Cancel job
-        </button>
-      ) : null}
-      <progress
-        value={progress.completed_bytes}
-        max={progress.total_bytes ?? undefined}
-      />
-      <span>
-        {progress.status} {progressLabel}
-        {progress.current_item ? ` - ${progress.current_item}` : ''}
-      </span>
-      {progress.message ? <div>{progress.message}</div> : null}
-    </div>
-  );
-};
+  const loadingProgress = !progress || progress.job_id !== jobId;
+
+  return {
+    progress,
+    progressLabel,
+    canCancel,
+    cancel,
+    loadingProgress
+  };
+}

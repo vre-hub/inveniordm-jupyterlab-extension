@@ -17,42 +17,14 @@ export function OpenRecordButton({
   text: string;
 }): JSX.Element {
   const url = record.links.self_html;
-  return <OpenLinkButton url={url} text={text} />;
+  return <button onClick={() => openLinkInNewTab(url)}>{text}</button>;
 }
 
-function OpenLinkButton({
-  url,
-  text
-}: {
-  url: string;
-  text: string;
-}): JSX.Element {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const openLink = async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      window.open(url, '_blank');
-    } catch (reason) {
-      setError(String(reason));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <button
-        disabled={isLoading}
-        onClick={() => void openLink()}
-        type="button"
-      >
-        {isLoading ? 'Opening...' : text}
-      </button>
-      {error ? <span>{error}</span> : null}
-    </>
-  );
+function openLinkInNewTab(url: string): void {
+  const newTab = window.open(url, '_blank');
+  if (newTab) {
+    newTab.focus();
+  } else {
+    console.error('Failed to open new tab for URL:', url);
+  }
 }

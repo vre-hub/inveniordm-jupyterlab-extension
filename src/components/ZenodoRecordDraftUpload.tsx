@@ -9,7 +9,7 @@ import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 import { OpenRecordButton } from './OpenRecordButton';
 
-export const ZenodoRecordDraftUpload: React.FC = () => {
+function useZenodoRecordDraftUpload() {
   const serverSettings = useServerSettings();
   const [isCreatingDraft, setIsCreatingDraft] = React.useState(false);
   const [uploadId, setUploadId] = React.useState<string | null>(null);
@@ -62,6 +62,32 @@ export const ZenodoRecordDraftUpload: React.FC = () => {
     setIsCreatingDraft(false);
     setUploadId(null);
   }, []);
+
+  return {
+    isCreatingDraft,
+    uploadId,
+    result,
+    error,
+    message,
+    uploadFiles,
+    completeUpload,
+    failUpload,
+    cancelUploadJob
+  };
+}
+
+export const ZenodoRecordDraftUpload: React.FC = () => {
+  const {
+    isCreatingDraft,
+    uploadId,
+    result,
+    error,
+    message,
+    uploadFiles,
+    completeUpload,
+    failUpload,
+    cancelUploadJob
+  } = useZenodoRecordDraftUpload(); // TODO maybe unify this with useZenodoRecordFileUpload
 
   return (
     <div>

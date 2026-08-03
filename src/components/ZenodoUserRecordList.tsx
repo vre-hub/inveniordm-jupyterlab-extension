@@ -10,7 +10,7 @@ import {
 import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
 import { ZenodoUserRecordDetails } from './ZenodoUserRecordDetails';
 
-export const ZenodoUserRecordList: React.FC = () => {
+function useZenodoUserRecords() {
   const serverSettings = useServerSettings();
   const [records, setRecords] = React.useState<
     ZenodoRecordData[] | { error: string } | null
@@ -34,6 +34,12 @@ export const ZenodoUserRecordList: React.FC = () => {
   React.useEffect(() => {
     void loadRecords();
   }, [loadRecords]);
+
+  return { records, isLoading };
+}
+
+export const ZenodoUserRecordList: React.FC = () => {
+  const { records, isLoading } = useZenodoUserRecords();
 
   return (
     <div>

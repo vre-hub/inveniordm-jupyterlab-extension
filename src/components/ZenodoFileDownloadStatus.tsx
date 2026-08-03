@@ -26,9 +26,7 @@ function downloadStatusChangedTopic(fileId: ZenodoFileIdentifier): string {
   ].join('.');
 }
 
-export const ZenodoFileDownloadStatus: React.FC<{
-  fileId: ZenodoFileIdentifier;
-}> = ({ fileId }) => {
+function useDownloadStatus(fileId: ZenodoFileIdentifier) {
   const serverSettings = useServerSettings();
   const [status, setStatus] =
     React.useState<ZenodoFileDownloadStatusResponse | null>(null);
@@ -45,9 +43,22 @@ export const ZenodoFileDownloadStatus: React.FC<{
     void reloadStatus();
   });
 
+  return { status };
+}
+
+function useDeleteDownload(fileId: ZenodoFileIdentifier) {
+  const serverSettings = useServerSettings();
   const deleteDownload = async (): Promise<void> => {
     await deleteZenodoFileDownload(serverSettings, fileId);
   };
+  return { deleteDownload };
+}
+
+export const ZenodoFileDownloadStatus: React.FC<{
+  fileId: ZenodoFileIdentifier;
+}> = ({ fileId }) => {
+  const { status } = useDownloadStatus(fileId);
+  const { deleteDownload } = useDeleteDownload(fileId);
 
   if (status === null) {
     return <div>Checking download status...</div>;

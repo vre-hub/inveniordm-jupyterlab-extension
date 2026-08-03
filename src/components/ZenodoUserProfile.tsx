@@ -7,17 +7,17 @@ import {
 } from '../api_calls';
 import { useServerSettings } from '../store';
 
-export const ZenodoUserProfile: React.FC = () => {
+function useZenodoUserProfile() {
   const serverSettings = useServerSettings();
   const [profile, setProfile] = React.useState<ZenodoMeResponse | null>(null);
-  const [message, setMessage] = React.useState('');
+  const [error, setError] = React.useState('');
 
   async function loadProfile(): Promise<void> {
     try {
       setProfile(await getZenodoMe(serverSettings));
     } catch (reason) {
       setProfile(null);
-      setMessage(String(reason));
+      setError(String(reason));
     } finally {
     }
   }
@@ -32,8 +32,14 @@ export const ZenodoUserProfile: React.FC = () => {
     loadProfile();
   });
 
+  return { profile, error };
+}
+
+export const ZenodoUserProfile: React.FC = () => {
+  const { profile, error } = useZenodoUserProfile();
+
   if (profile === null) {
-    return <div>{message ? <p>{message}</p> : null}</div>;
+    return <div>{error ? <p>{error}</p> : null}</div>;
   }
 
   return (

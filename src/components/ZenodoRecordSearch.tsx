@@ -11,9 +11,8 @@ type ZenodoRecordSearchResponse = {
   };
 };
 
-export const ZenodoRecordSearch: React.FC = () => {
+function useZenodoRecordSearch() {
   const serverSettings = useServerSettings();
-  const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<
     ZenodoRecordSearchResponse | { error: string } | null
   >(null);
@@ -22,10 +21,7 @@ export const ZenodoRecordSearch: React.FC = () => {
   const hits =
     results && !('error' in results) ? (results.hits?.hits ?? []) : [];
 
-  const submitSearch = async (
-    event: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
-    event.preventDefault();
+  const search = async (query: string): Promise<void> => {
     setIsSearching(true);
 
     try {
@@ -40,6 +36,19 @@ export const ZenodoRecordSearch: React.FC = () => {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  return { isSearching, error, hits, search };
+}
+
+export const ZenodoRecordSearch: React.FC = () => {
+  const [query, setQuery] = React.useState('');
+
+  const { isSearching, error, hits, search } = useZenodoRecordSearch();
+
+  const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    search(query);
   };
 
   return (
