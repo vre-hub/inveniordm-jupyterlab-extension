@@ -48,7 +48,6 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
         />
         <ZenodoRecordDetails record={record} editable={editable} />
         <CreateNewVersionButton
-          id={record.id}
           versions={versions}
           allowedToCreateNewVersion={hasEditingRights}
         />

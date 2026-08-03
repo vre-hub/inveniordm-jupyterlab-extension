@@ -4,22 +4,50 @@ import { createZenodoRecordVersion, ZenodoRecordVersion } from '../api_calls';
 import { useServerSettings } from '../store';
 
 export function CreateNewVersionButton({
-  id,
-  onCreated,
   versions,
   allowedToCreateNewVersion
 }: {
-  id: string;
-  onCreated?: () => void | Promise<void>;
   versions: ZenodoRecordVersion[];
   allowedToCreateNewVersion: boolean;
 }): JSX.Element {
+  const { createVersion, isLoading, error, disable, hint } =
+    useCreateNewVersion(versions, allowedToCreateNewVersion);
+
+  return (
+    <>
+      <button
+        disabled={disable}
+        onClick={() => void createVersion()}
+        type="button"
+        title={hint}
+      >
+        {isLoading ? 'Creating...' : 'Create New Version'}
+      </button>
+      {error ? <span>{error}</span> : null}
+    </>
+  );
+}
+
+/**
+ * Custom hook to create a new version of a Zenodo record.
+ *
+ * @param versions - The list of versions of the record.
+ * @param allowedToCreateNewVersion - Whether the user is allowed to create a new version.
+ * @returns An object containing the createVersion function, loading state, error state, disable state, and hint message.
+ */
+function useCreateNewVersion(
+  versions: ZenodoRecordVersion[],
+  allowedToCreateNewVersion: boolean
+) {
   // check if the latest version is a draft or not. If it is, disable button
-  const latestVersion = [...versions].sort(
-    (a, b) =>
-      b.versions.index - a.versions.index ||
-      Number(b.is_draft) - Number(a.is_draft)
-  )?.[0];
+  const latestVersion =
+    versions.length > 0
+      ? [...versions].sort(
+          (a, b) =>
+            b.versions.index - a.versions.index ||
+            Number(b.is_draft) - Number(a.is_draft)
+        )[0]
+      : null;
 
   const noNewVersionDraftExists = latestVersion?.is_draft === false;
 
@@ -39,8 +67,12 @@ export function CreateNewVersionButton({
     setError(null);
 
     try {
-      await createZenodoRecordVersion(serverSettings, latestVersion?.id ?? id);
-      await onCreated?.();
+      if (!latestVersion) {
+        throw new Error(
+          'No record versions available to create a new version from.'
+        );
+      }
+      await createZenodoRecordVersion(serverSettings, latestVersion.id);
     } catch (reason) {
       setError(String(reason));
     } finally {
@@ -48,17 +80,11 @@ export function CreateNewVersionButton({
     }
   };
 
-  return (
-    <>
-      <button
-        disabled={disable}
-        onClick={() => void createVersion()}
-        type="button"
-        title={hint}
-      >
-        {isLoading ? 'Creating...' : 'Create New Version'}
-      </button>
-      {error ? <span>{error}</span> : null}
-    </>
-  );
+  return {
+    createVersion,
+    isLoading,
+    error,
+    disable,
+    hint
+  };
 }
