@@ -159,12 +159,19 @@ export function useZenodoVersionedRecord({
     }
   });
 
+  const selectRecord = React.useCallback(
+    (identifier: ZenodoRecordIdentifier) => {
+      setRecordIdentifier(identifier);
+      void loadRecord(identifier);
+    },
+    [loadRecord]
+  );
+
   return {
     recordIdentifier,
-    setRecordIdentifier,
     record,
     isLoading,
-    loadRecord,
+    selectRecord,
     recordDeleted,
     versions
   };

@@ -27,10 +27,9 @@ export function ZenodoVersionedRecord({
 }): JSX.Element {
   const {
     recordIdentifier,
-    setRecordIdentifier,
+    selectRecord,
     record,
     isLoading,
-    loadRecord,
     recordDeleted,
     versions
   } = useZenodoVersionedRecord({
@@ -60,8 +59,7 @@ export function ZenodoVersionedRecord({
         versions={versions}
         recordIdentifier={recordIdentifier}
         onChange={identifier => {
-          setRecordIdentifier(identifier);
-          void loadRecord(identifier);
+          selectRecord(identifier);
         }}
       />
       {record && !('error' in record)
