@@ -1,11 +1,13 @@
 import React from 'react';
 
 import { JobProgress } from './JobProgress';
-import { ZenodoFileDownloadStatus } from './ZenodoFileDownloadStatus';
-import type { ZenodoFile, ZenodoFileIdentifier } from '../api_calls';
+import type { ZenodoFile } from '../api_calls';
 import {
+  useDeleteDownload,
   useDeleteZenodoFile,
+  useDownloadStatus,
   useDownloadZenodoFile,
+  useInsertImportCell,
   useZenodoFileIdentifierFromProps
 } from '../core';
 
@@ -16,6 +18,16 @@ export const ZenodoFileInfo: React.FC<{
   editable: boolean;
 }> = ({ file, recordId, isDraft, editable }) => {
   const fileId = useZenodoFileIdentifierFromProps(file, recordId, isDraft);
+  const { status } = useDownloadStatus(fileId);
+  const { deleteDownload } = useDeleteDownload(fileId);
+  const { insertImportCell } = useInsertImportCell(fileId);
+  const { deleteFile, isDeleting } = useDeleteZenodoFile(fileId);
+
+  const { download, downloadId } = useDownloadZenodoFile(fileId); // TODO how to split this so that both the download button and the status can use it with correct download id
+
+  if (status === null) {
+    return <div>Checking download status...</div>;
+  }
 
   return (
     <div
@@ -25,48 +37,39 @@ export const ZenodoFileInfo: React.FC<{
         marginBottom: '2px'
       }}
     >
-      <ZenodoFileDetails file={file} />
-      <ZenodoFileDownload fileId={fileId} />
-      {editable && <ZenodoFileDeleteButton fileId={fileId} />}
-    </div>
-  );
-};
-
-const ZenodoFileDetails: React.FC<{
-  file: ZenodoFile;
-}> = ({ file }) => (
-  <div>
-    {file.key}
-    {/* TODO display file size in a reasonable unit */}
-    {file.size ? ` (${(file.size / 1024 / 1024).toFixed(2)} MB)` : null}
-  </div>
-);
-
-const ZenodoFileDownload: React.FC<{
-  fileId: ZenodoFileIdentifier;
-}> = ({ fileId }) => {
-  const { download, downloadId } = useDownloadZenodoFile(fileId);
-
-  return (
-    <>
-      <button onClick={download} type="button">
+      <div>
+        {file.key}
+        {/* TODO display file size in a reasonable unit */}
+        {file.size ? ` (${(file.size / 1024 / 1024).toFixed(2)} MB)` : null}
+      </div>
+      <div>
+        {status.downloaded ? '✅ Downloaded' : '❌ Not downloaded'}
+        {downloadId ? <JobProgress jobId={downloadId} /> : null}
+      </div>
+      <br />
+      Actions:
+      <br />
+      <button
+        disabled={status.downloaded !== false}
+        onClick={download}
+        title={status.downloaded ? 'File is already downloaded.' : undefined}
+        type="button"
+      >
         Download in JupyterServer
       </button>
-      <ZenodoFileDownloadStatus fileId={fileId} />
-      {downloadId ? <JobProgress jobId={downloadId} /> : null}
-    </>
-  );
-};
-
-const ZenodoFileDeleteButton: React.FC<{
-  fileId: ZenodoFileIdentifier;
-}> = ({ fileId }) => {
-  const { deleteFile, isDeleting } = useDeleteZenodoFile(fileId);
-  return (
-    <>
+      {status.downloaded && (
+        <React.Fragment>
+          <button onClick={deleteDownload} type="button">
+            Delete download
+          </button>
+          <button onClick={insertImportCell} type="button">
+            Insert import cell
+          </button>
+        </React.Fragment>
+      )}
       <button disabled={isDeleting} onClick={deleteFile} type="button">
         {isDeleting ? 'Deleting…' : 'Delete from Zenodo'}
       </button>
-    </>
+    </div>
   );
 };
