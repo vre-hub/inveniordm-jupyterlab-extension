@@ -4,10 +4,7 @@ import {
   ZenodoRecordVersion,
   useZenodoRecordPermission
 } from '../api_calls';
-import { CreateNewVersionButton } from './CreateNewVersionButton';
-import { DiscardDraftButton } from './DiscardDraftButton';
-import { ZenodoRecordDetails } from './ZenodoRecordDetails';
-import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
+import { ZenodoRecordRenderer } from './ZenodoRecordDetails';
 
 /**
  * Display the details of a Zenodo record for the user.
@@ -17,35 +14,22 @@ export const ZenodoUserRecordDetails: React.FC<{
   record: ZenodoRecordData;
   versions: ZenodoRecordVersion[];
 }> = ({ record, versions }) => {
+  const hasEditingRights = useHasEditingRights(record);
+
+  return (
+    <ZenodoRecordRenderer
+      record={record}
+      versions={versions}
+      hasEditingRights={hasEditingRights}
+    />
+  );
+};
+
+function useHasEditingRights(record: ZenodoRecordData): boolean {
   const isDraft = record.is_draft;
   const userPermission = useZenodoRecordPermission(
     record.id,
     isDraft ? 'draft' : 'published'
   );
-  const hasEditingRights =
-    userPermission === 'edit' || userPermission === 'manage';
-  const editable = isDraft && hasEditingRights;
-
-  return (
-    <section>
-      <ZenodoRecordDetails record={record} editable={editable} />
-      <CreateNewVersionButton
-        id={record.id}
-        versions={versions}
-        allowedToCreateNewVersion={hasEditingRights}
-      />
-      {isDraft && (
-        <DiscardDraftButton
-          id={record.id}
-          allowedToDiscardDraft={hasEditingRights}
-        />
-      )}
-      {editable && (
-        <>
-          <ZenodoRecordFileUpload recordId={record.id} />
-        </>
-      )}
-      <p>Access Rights: {userPermission}</p>
-    </section>
-  );
-};
+  return userPermission === 'edit' || userPermission === 'manage';
+}

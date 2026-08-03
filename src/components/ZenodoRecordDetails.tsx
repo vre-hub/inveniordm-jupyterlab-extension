@@ -2,12 +2,15 @@ import React from 'react';
 
 import { ZenodoFileInfo } from './ZenodoFileInfo';
 import { OpenRecordButton } from './OpenRecordButton';
-import { ZenodoRecordData } from '../api_calls';
+import { ZenodoRecordData, ZenodoRecordVersion } from '../api_calls';
+import { CreateNewVersionButton } from './CreateNewVersionButton';
+import { DiscardDraftButton } from './DiscardDraftButton';
+import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
 
 /**
  * Display the details of a Zenodo record.
  */
-export const ZenodoRecordDetails: React.FC<{
+const ZenodoRecordDetails: React.FC<{
   record: ZenodoRecordData;
   editable: boolean;
 }> = ({ record, editable }) => {
@@ -39,6 +42,37 @@ export const ZenodoRecordDetails: React.FC<{
           ))}
         </div>
       </section>
+    </section>
+  );
+};
+
+export const ZenodoRecordRenderer: React.FC<{
+  record: ZenodoRecordData;
+  versions: ZenodoRecordVersion[];
+  hasEditingRights?: boolean;
+}> = ({ record, versions, hasEditingRights = false }) => {
+  const isDraft = record.is_draft;
+  const editable = isDraft && hasEditingRights;
+
+  return (
+    <section>
+      <ZenodoRecordDetails record={record} editable={editable} />
+      <CreateNewVersionButton
+        id={record.id}
+        versions={versions}
+        allowedToCreateNewVersion={hasEditingRights}
+      />
+      {isDraft && (
+        <DiscardDraftButton
+          id={record.id}
+          allowedToDiscardDraft={hasEditingRights}
+        />
+      )}
+      {editable && (
+        <>
+          <ZenodoRecordFileUpload recordId={record.id} />
+        </>
+      )}
     </section>
   );
 };

@@ -3,7 +3,7 @@ import React from 'react';
 import { searchZenodoRecords, ZenodoRecordData } from '../api_calls';
 import { useServerSettings } from '../store';
 import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
-import { ZenodoRecordDetails } from './ZenodoRecordDetails';
+import { ZenodoRecordRenderer } from './ZenodoRecordDetails';
 
 type ZenodoRecordSearchResponse = {
   hits?: {
@@ -66,8 +66,8 @@ export const ZenodoRecordSearch: React.FC = () => {
           }}
           initialRecordValue={result}
           include_drafts_in_version_dropdown={false}
-          renderRecord={record => (
-            <ZenodoRecordDetails record={record} editable={false} />
+          renderRecord={(record, versions) => (
+            <ZenodoRecordRenderer record={record} versions={versions} />
           )}
         />
       ))}
