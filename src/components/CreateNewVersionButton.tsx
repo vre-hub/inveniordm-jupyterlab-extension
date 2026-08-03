@@ -15,12 +15,13 @@ export function CreateNewVersionButton({
   allowedToCreateNewVersion: boolean;
 }): JSX.Element {
   // check if the latest version is a draft or not. If it is, disable button
-  const noNewVersionDraftExists =
-    [...versions].sort(
-      (a, b) =>
-        b.versions.index - a.versions.index ||
-        Number(b.is_draft) - Number(a.is_draft)
-    )?.[0]?.is_draft === false;
+  const latestVersion = [...versions].sort(
+    (a, b) =>
+      b.versions.index - a.versions.index ||
+      Number(b.is_draft) - Number(a.is_draft)
+  )?.[0];
+
+  const noNewVersionDraftExists = latestVersion?.is_draft === false;
 
   const disable = !allowedToCreateNewVersion || !noNewVersionDraftExists;
   const hint = !allowedToCreateNewVersion
@@ -38,7 +39,7 @@ export function CreateNewVersionButton({
     setError(null);
 
     try {
-      await createZenodoRecordVersion(serverSettings, id);
+      await createZenodoRecordVersion(serverSettings, latestVersion?.id ?? id);
       await onCreated?.();
     } catch (reason) {
       setError(String(reason));

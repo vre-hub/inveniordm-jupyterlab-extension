@@ -126,7 +126,8 @@ export function useZenodoVersionedRecord({
 
     if (
       eventData.type === 'version_created' &&
-      eventData.record_id === recordIdentifier.record_id &&
+      (eventData.record_id === recordIdentifier.record_id ||
+        eventData.parent_id === parentId) &&
       eventData.record
     ) {
       setRecordIdentifier(zenodoRecordIdentifierFromRecord(eventData.record));
