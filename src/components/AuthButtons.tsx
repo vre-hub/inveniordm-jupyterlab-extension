@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useOpenAuth } from '../core/useOpenAuth';
+import { useOpenAuth } from '../core';
 
 type AuthButtonProps = {
   sandbox: boolean;

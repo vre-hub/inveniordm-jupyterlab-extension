@@ -3,7 +3,7 @@ import React from 'react';
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 import { OpenRecordButton } from './OpenRecordButton';
-import { useZenodoRecordDraftUpload } from '../core/useZenodoRecordDraftUpload';
+import { useZenodoRecordDraftUpload } from '../core';
 
 export const ZenodoRecordDraftUpload: React.FC = () => {
   const {

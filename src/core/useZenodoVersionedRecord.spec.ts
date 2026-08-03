@@ -1,5 +1,5 @@
 import { ZenodoRecordVersion } from '../api_calls';
-import { selectVersionAfterDraftDiscard } from './useZenodoVersionedRecord';
+import { selectVersionAfterDraftDiscard } from '.';
 
 describe('selectVersionAfterDraftDiscard', () => {
   const sameRecordPublished: ZenodoRecordVersion = {

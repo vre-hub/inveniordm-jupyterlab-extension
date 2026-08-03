@@ -3,9 +3,11 @@ import React from 'react';
 import { JobProgress } from './JobProgress';
 import { ZenodoFileDownloadStatus } from './ZenodoFileDownloadStatus';
 import type { ZenodoFile, ZenodoFileIdentifier } from '../api_calls';
-import { useZenodoFileIdentifierFromProps } from '../core/useZenodoFileIdentifierFromProps';
-import { useDeleteZenodoFile } from '../core/useDeleteZenodoFile';
-import { useDownloadZenodoFile } from '../core/useDownloadZenodoFile';
+import {
+  useDeleteZenodoFile,
+  useDownloadZenodoFile,
+  useZenodoFileIdentifierFromProps
+} from '../core';
 
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;

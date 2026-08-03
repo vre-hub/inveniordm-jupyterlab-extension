@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useZenodoUserProfile } from '../core/useZenodoUserProfile';
+import { useZenodoUserProfile } from '../core';
 
 export const ZenodoUserProfile: React.FC = () => {
   const { profile, error } = useZenodoUserProfile();

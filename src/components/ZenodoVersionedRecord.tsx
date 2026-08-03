@@ -1,6 +1,6 @@
 import React from 'react';
 import { ZenodoRecordData, ZenodoRecordIdentifier } from '../api_calls';
-import { useZenodoVersionedRecord } from '../core/useZenodoVersionedRecord';
+import { useZenodoVersionedRecord } from '../core';
 import { ZenodoRecordRendererProps } from './ZenodoRecordRenderer';
 
 /**

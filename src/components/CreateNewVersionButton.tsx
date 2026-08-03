@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { ZenodoRecordVersion } from '../api_calls';
-import { useCreateNewVersion } from '../core/useCreateNewVersion';
+import { useCreateNewVersion } from '../core';
 
 export function CreateNewVersionButton({
   versions,

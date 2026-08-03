@@ -1,5 +1,5 @@
 import React from 'react';
-import { useDiscardDraft } from '../core/useDiscardDraft';
+import { useDiscardDraft } from '../core';
 
 export function DiscardDraftButton({
   id,

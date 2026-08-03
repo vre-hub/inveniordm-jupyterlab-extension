@@ -3,7 +3,7 @@ import {
   ZenodoRecordRenderer,
   ZenodoRecordRendererProps
 } from './ZenodoRecordRenderer';
-import { useHasEditingRights } from '../core/useHasEditingRights';
+import { useHasEditingRights } from '../core';
 
 type ZenodoUserRecordDetailsProps = Omit<
   ZenodoRecordRendererProps,

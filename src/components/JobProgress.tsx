@@ -1,9 +1,6 @@
 import React from 'react';
 
-import {
-  JobProgressProps,
-  useJobProgressUpdates
-} from '../core/useJobProgressUpdates';
+import { JobProgressProps, useJobProgressUpdates } from '../core';
 
 export const JobProgress: React.FC<JobProgressProps> = props => {
   const { progress, progressLabel, canCancel, cancel, loadingProgress } =

@@ -2,8 +2,7 @@ import React from 'react';
 
 import { ZenodoFileIdentifier } from '../api_calls';
 import { ZenodoFileImportCellButton } from './ZenodoFileImportCell';
-import { useDownloadStatus } from '../core/useDownloadStatus';
-import { useDeleteDownload } from '../core/useDeleteDownload';
+import { useDeleteDownload, useDownloadStatus } from '../core';
 
 export const ZenodoFileDownloadStatus: React.FC<{
   fileId: ZenodoFileIdentifier;

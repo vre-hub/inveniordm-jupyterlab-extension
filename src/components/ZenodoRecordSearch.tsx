@@ -2,7 +2,7 @@ import React from 'react';
 
 import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
 import { ZenodoRecordRenderer } from './ZenodoRecordRenderer';
-import { useZenodoRecordSearch } from '../core/useZenodoRecordSearch';
+import { useZenodoRecordSearch } from '../core';
 
 export const ZenodoRecordSearch: React.FC = () => {
   const [query, setQuery] = React.useState('');

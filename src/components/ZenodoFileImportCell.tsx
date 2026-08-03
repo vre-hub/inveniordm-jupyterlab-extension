@@ -1,6 +1,6 @@
 import React from 'react';
 import { ZenodoFileIdentifier } from '../api_calls';
-import { useInsertImportCell } from '../core/useInsertImportCell';
+import { useInsertImportCell } from '../core';
 
 export const ZenodoFileImportCellButton: React.FC<{
   fileId: ZenodoFileIdentifier;

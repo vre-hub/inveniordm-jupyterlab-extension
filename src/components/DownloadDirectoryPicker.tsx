@@ -1,7 +1,9 @@
 import React from 'react';
 import { PickDirectoryButton } from './DirectoryPicker';
-import { useSetZenodoDownloadDirectory } from '../core/useSetZenodoDownloadDirectory';
-import { useUnsetZenodoDownloadDirectory } from '../core/useUnsetZenodoDownloadDirectory';
+import {
+  useSetZenodoDownloadDirectory,
+  useUnsetZenodoDownloadDirectory
+} from '../core';
 
 /**
  * Allows the user to select a download directory for Zenodo downloads.

@@ -7,7 +7,7 @@ import {
 } from '../api_calls';
 import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
 import { ZenodoUserRecordDetails } from './ZenodoUserRecordDetails';
-import { useZenodoUserRecords } from '../core/useZenodoUserRecords';
+import { useZenodoUserRecords } from '../core';
 
 export const ZenodoUserRecordList: React.FC = () => {
   const { records, isLoading } = useZenodoUserRecords();

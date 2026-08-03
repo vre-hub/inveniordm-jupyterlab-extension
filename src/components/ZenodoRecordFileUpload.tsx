@@ -2,7 +2,7 @@ import React from 'react';
 
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
-import { useZenodoRecordFileUpload } from '../core/useZenodoRecordFileUpload';
+import { useZenodoRecordFileUpload } from '../core';
 
 export const ZenodoRecordFileUpload: React.FC<{
   recordId: string;
