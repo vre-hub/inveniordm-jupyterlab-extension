@@ -1,12 +1,11 @@
 import React from 'react';
 
-import { downloadZenodoFile, getLatestActiveJobId } from '../api_calls';
-import { useServerSettings } from '../store';
 import { JobProgress } from './JobProgress';
 import { ZenodoFileDownloadStatus } from './ZenodoFileDownloadStatus';
 import type { ZenodoFile, ZenodoFileIdentifier } from '../api_calls';
 import { useZenodoFileIdentifierFromProps } from '../core/useZenodoFileIdentifierFromProps';
 import { useDeleteZenodoFile } from '../core/useDeleteZenodoFile';
+import { useDownloadZenodoFile } from '../core/useDownloadZenodoFile';
 
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;
@@ -41,35 +40,10 @@ const ZenodoFileDetails: React.FC<{
   </div>
 );
 
-// TODO refactor and extract
 const ZenodoFileDownload: React.FC<{
   fileId: ZenodoFileIdentifier;
 }> = ({ fileId }) => {
-  const serverSettings = useServerSettings();
-  const [downloadId, setDownloadId] = React.useState<string | null>(null);
-  React.useEffect(() => {
-    let isMounted = true;
-
-    const findDownload = async (): Promise<void> => {
-      const jobId = await getLatestActiveJobId(serverSettings, {
-        jobType: 'download',
-        fileId
-      });
-      if (isMounted) {
-        setDownloadId(jobId);
-      }
-    };
-
-    void findDownload();
-    return () => {
-      isMounted = false;
-    };
-  }, [fileId, serverSettings]);
-
-  const download = async (): Promise<void> => {
-    const response = await downloadZenodoFile(serverSettings, fileId);
-    setDownloadId(response.job_id);
-  };
+  const { download, downloadId } = useDownloadZenodoFile(fileId);
 
   return (
     <>
