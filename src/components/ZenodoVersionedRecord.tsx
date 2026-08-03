@@ -1,7 +1,7 @@
 import React from 'react';
 import { ZenodoRecordData, ZenodoRecordIdentifier } from '../api_calls';
 import { useZenodoVersionedRecord } from './useZenodoVersionedRecord';
-import { ZenodoRecordRendererProps } from './ZenodoRecordDetails';
+import { ZenodoRecordRendererProps } from './ZenodoRecordRenderer';
 
 /**
  * Display a single Zenodo record for the user.

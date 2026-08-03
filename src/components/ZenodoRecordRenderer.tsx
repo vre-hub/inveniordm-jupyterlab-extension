@@ -12,45 +12,6 @@ import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
 import { VersionDropdown } from './VersionDropdown';
 import { CreateNewVersionButton } from './CreateNewVersionButton';
 
-/**
- * Display the details of a Zenodo record.
- */
-const ZenodoRecordDetails: React.FC<{
-  record: ZenodoRecordData;
-  editable: boolean;
-}> = ({ record, editable }) => {
-  const files = Object.values(record.files?.entries ?? {});
-  return (
-    <section>
-      <section>
-        <h4>{record.metadata?.title ?? record.id}</h4>
-        <div>ID: {record.id}</div>
-        {record.pids?.doi?.identifier ? (
-          <div>DOI: {record.pids.doi.identifier}</div>
-        ) : null}
-        <div>Status: {record.status}</div>
-        <OpenRecordButton
-          record={record}
-          text={editable ? 'Edit Record' : 'Open Record'}
-        />
-      </section>
-      <section>
-        <div>
-          {files.map(file => (
-            <ZenodoFileInfo
-              file={file}
-              key={file.key}
-              recordId={record.id}
-              isDraft={record.is_draft}
-              editable={editable}
-            />
-          ))}
-        </div>
-      </section>
-    </section>
-  );
-};
-
 export type ZenodoRecordRendererProps = {
   record: ZenodoRecordData;
   versions: ZenodoRecordVersion[];
@@ -105,5 +66,44 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
         )}
       </section>
     </div>
+  );
+};
+
+/**
+ * Display the details of a Zenodo record.
+ */
+const ZenodoRecordDetails: React.FC<{
+  record: ZenodoRecordData;
+  editable: boolean;
+}> = ({ record, editable }) => {
+  const files = Object.values(record.files?.entries ?? {});
+  return (
+    <section>
+      <section>
+        <h4>{record.metadata?.title ?? record.id}</h4>
+        <div>ID: {record.id}</div>
+        {record.pids?.doi?.identifier ? (
+          <div>DOI: {record.pids.doi.identifier}</div>
+        ) : null}
+        <div>Status: {record.status}</div>
+        <OpenRecordButton
+          record={record}
+          text={editable ? 'Edit Record' : 'Open Record'}
+        />
+      </section>
+      <section>
+        <div>
+          {files.map(file => (
+            <ZenodoFileInfo
+              file={file}
+              key={file.key}
+              recordId={record.id}
+              isDraft={record.is_draft}
+              editable={editable}
+            />
+          ))}
+        </div>
+      </section>
+    </section>
   );
 };

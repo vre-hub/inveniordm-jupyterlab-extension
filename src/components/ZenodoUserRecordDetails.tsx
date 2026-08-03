@@ -3,7 +3,7 @@ import { ZenodoRecordData, useZenodoRecordPermission } from '../api_calls';
 import {
   ZenodoRecordRenderer,
   ZenodoRecordRendererProps
-} from './ZenodoRecordDetails';
+} from './ZenodoRecordRenderer';
 
 type ZenodoUserRecordDetailsProps = Omit<
   ZenodoRecordRendererProps,

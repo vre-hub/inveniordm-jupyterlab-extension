@@ -3,7 +3,7 @@ import React from 'react';
 import { searchZenodoRecords, ZenodoRecordData } from '../api_calls';
 import { useServerSettings } from '../store';
 import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
-import { ZenodoRecordRenderer } from './ZenodoRecordDetails';
+import { ZenodoRecordRenderer } from './ZenodoRecordRenderer';
 
 type ZenodoRecordSearchResponse = {
   hits?: {
