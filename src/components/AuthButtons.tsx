@@ -1,29 +1,9 @@
 import React from 'react';
 
-import { constructZenodoAuthUrl } from '../api_calls';
-import { useServerSettings } from '../store';
-
-type AuthButtonsProps = {
-  sandbox: boolean;
-};
+import { useOpenAuth } from '../core/useOpenAuth';
 
 type AuthButtonProps = {
   sandbox: boolean;
-};
-
-const useOpenAuth = (
-  sandbox: boolean
-): ((action: 'login' | 'logout') => void) => {
-  const serverSettings = useServerSettings();
-
-  return (action: 'login' | 'logout'): void => {
-    window.location.href = constructZenodoAuthUrl(
-      serverSettings,
-      action,
-      window.location.href,
-      sandbox
-    );
-  };
 };
 
 export const LoginButton: React.FC<AuthButtonProps> = ({ sandbox }) => {
@@ -46,7 +26,7 @@ export const LogoutButton: React.FC<AuthButtonProps> = ({ sandbox }) => {
   );
 };
 
-export const AuthButtons: React.FC<AuthButtonsProps> = ({ sandbox }) => {
+export const AuthButtons: React.FC<AuthButtonProps> = ({ sandbox }) => {
   return (
     <div>
       <LoginButton sandbox={sandbox} />

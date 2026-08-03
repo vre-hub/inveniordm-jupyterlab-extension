@@ -1,28 +1,22 @@
 import React from 'react';
-import {
-  setZenodoDownloadDirectory,
-  unsetZenodoDownloadDirectory
-} from '../api_calls';
-import { useServerSettings } from '../store';
 import { PickDirectoryButton } from './DirectoryPicker';
+import { useSetZenodoDownloadDirectory } from '../core/useSetZenodoDownloadDirectory';
+import { useUnsetZenodoDownloadDirectory } from '../core/useUnsetZenodoDownloadDirectory';
 
 /**
  * Allows the user to select a download directory for Zenodo downloads.
  */
 export function SelectDownloadDirectory() {
-  const serverSettings = useServerSettings();
+  const { setDownloadDirectory } = useSetZenodoDownloadDirectory();
+  const { unsetDownloadDirectory } = useUnsetZenodoDownloadDirectory();
+
   return (
     <>
       <PickDirectoryButton
         buttonText="Select download directory"
-        onDirectorySelected={dir =>
-          setZenodoDownloadDirectory(serverSettings, dir)
-        }
+        onDirectorySelected={dir => setDownloadDirectory(dir)}
       />
-      <button
-        onClick={() => unsetZenodoDownloadDirectory(serverSettings)}
-        type="button"
-      >
+      <button onClick={() => unsetDownloadDirectory()} type="button">
         Reset to default download directory
       </button>
     </>
