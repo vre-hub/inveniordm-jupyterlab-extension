@@ -66,8 +66,8 @@ export const ZenodoRecordSearch: React.FC = () => {
           }}
           initialRecordValue={result}
           include_drafts_in_version_dropdown={false}
-          renderRecord={(record, versions) => (
-            <ZenodoRecordRenderer record={record} versions={versions} />
+          renderRecord={zenodoRecordRendererProps => (
+            <ZenodoRecordRenderer {...zenodoRecordRendererProps} />
           )}
         />
       ))}

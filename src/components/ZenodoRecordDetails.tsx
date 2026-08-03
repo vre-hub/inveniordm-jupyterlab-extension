@@ -2,10 +2,15 @@ import React from 'react';
 
 import { ZenodoFileInfo } from './ZenodoFileInfo';
 import { OpenRecordButton } from './OpenRecordButton';
-import { ZenodoRecordData, ZenodoRecordVersion } from '../api_calls';
-import { CreateNewVersionButton } from './CreateNewVersionButton';
+import {
+  ZenodoRecordData,
+  ZenodoRecordIdentifier,
+  ZenodoRecordVersion
+} from '../api_calls';
 import { DiscardDraftButton } from './DiscardDraftButton';
 import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
+import { VersionDropdown } from './VersionDropdown';
+import { CreateNewVersionButton } from './CreateNewVersionButton';
 
 /**
  * Display the details of a Zenodo record.
@@ -46,33 +51,59 @@ const ZenodoRecordDetails: React.FC<{
   );
 };
 
-export const ZenodoRecordRenderer: React.FC<{
+export type ZenodoRecordRendererProps = {
   record: ZenodoRecordData;
   versions: ZenodoRecordVersion[];
+  selectRecord: (identifier: ZenodoRecordIdentifier) => void;
+  recordIdentifier: ZenodoRecordIdentifier; // TODO we need to pass this so that pending versions are displayed correctly in the dropdown. Maybe refactor this to avoid passing the identifier separately.
   hasEditingRights?: boolean;
-}> = ({ record, versions, hasEditingRights = false }) => {
+};
+
+export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
+  record,
+  hasEditingRights = false,
+  versions,
+  recordIdentifier,
+  selectRecord
+}) => {
   const isDraft = record.is_draft;
   const editable = isDraft && hasEditingRights;
 
   return (
-    <section>
-      <ZenodoRecordDetails record={record} editable={editable} />
-      <CreateNewVersionButton
-        id={record.id}
-        versions={versions}
-        allowedToCreateNewVersion={hasEditingRights}
-      />
-      {isDraft && (
-        <DiscardDraftButton
-          id={record.id}
-          allowedToDiscardDraft={hasEditingRights}
+    <div
+      style={{
+        border: '1px solid #ccc',
+        padding: '1rem',
+        borderRadius: '0.5rem'
+      }}
+    >
+      <section>
+        <VersionDropdown
+          versions={versions}
+          recordIdentifier={recordIdentifier}
+          onChange={identifier => {
+            selectRecord(identifier);
+          }}
         />
-      )}
-      {editable && (
-        <>
-          <ZenodoRecordFileUpload recordId={record.id} />
-        </>
-      )}
-    </section>
+        <ZenodoRecordDetails record={record} editable={editable} />
+        <CreateNewVersionButton
+          id={record.id}
+          versions={versions}
+          allowedToCreateNewVersion={hasEditingRights}
+        />
+
+        {isDraft && (
+          <DiscardDraftButton
+            id={record.id}
+            allowedToDiscardDraft={hasEditingRights}
+          />
+        )}
+        {editable && (
+          <>
+            <ZenodoRecordFileUpload recordId={record.id} />
+          </>
+        )}
+      </section>
+    </div>
   );
 };

@@ -68,8 +68,8 @@ function ZenodoUserRecord({
         initialRecordIdentifier={initialRecordIdentifier}
         initialRecordValue={initialRecordValue}
         include_drafts_in_version_dropdown={true}
-        renderRecord={(record, versions) => (
-          <ZenodoUserRecordDetails record={record} versions={versions} />
+        renderRecord={zenodoRecordRendererProps => (
+          <ZenodoUserRecordDetails {...zenodoRecordRendererProps} />
         )}
       />
     </div>

@@ -1,11 +1,7 @@
 import React from 'react';
-import {
-  ZenodoRecordData,
-  ZenodoRecordIdentifier,
-  ZenodoRecordVersion
-} from '../api_calls';
-import { VersionDropdown } from './VersionDropdown';
+import { ZenodoRecordData, ZenodoRecordIdentifier } from '../api_calls';
 import { useZenodoVersionedRecord } from './useZenodoVersionedRecord';
+import { ZenodoRecordRendererProps } from './ZenodoRecordDetails';
 
 /**
  * Display a single Zenodo record for the user.
@@ -20,10 +16,7 @@ export function ZenodoVersionedRecord({
   initialRecordIdentifier: ZenodoRecordIdentifier;
   initialRecordValue?: ZenodoRecordData;
   include_drafts_in_version_dropdown: boolean;
-  renderRecord: (
-    record: ZenodoRecordData,
-    versions: ZenodoRecordVersion[] // TODO we pass this versions array around a lot, think about better component structure
-  ) => JSX.Element;
+  renderRecord: (props: ZenodoRecordRendererProps) => JSX.Element;
 }): JSX.Element {
   const {
     recordIdentifier,
@@ -46,25 +39,19 @@ export function ZenodoVersionedRecord({
     );
   }
 
+  const renderProps: ZenodoRecordRendererProps = {
+    record: record as ZenodoRecordData,
+    recordIdentifier,
+    versions,
+    selectRecord
+  };
+
   return (
-    <div
-      style={{
-        border: '1px solid #ccc',
-        padding: '1rem',
-        borderRadius: '0.5rem'
-      }}
-    >
-      {isLoading && <p>Loading...</p>}
-      <VersionDropdown
-        versions={versions}
-        recordIdentifier={recordIdentifier}
-        onChange={identifier => {
-          selectRecord(identifier);
-        }}
-      />
+    <>
       {record && !('error' in record)
-        ? renderRecord(record, versions)
+        ? renderRecord(renderProps)
         : record?.error}
-    </div>
+      {isLoading && <p>Loading...</p>}
+    </>
   );
 }
