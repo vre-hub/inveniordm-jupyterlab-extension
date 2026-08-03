@@ -30,6 +30,29 @@ jupyter server extension enable zenodo_jupyterlab
 jlpm build
 ```
 
+### Building the Tailwind CSS
+
+The extension's Tailwind source is `style/tailwind.css`. After adding or
+changing Tailwind classes in the TypeScript or TSX source, activate the Python
+virtual environment (so that `jlpm` is available) and regenerate the committed
+stylesheet:
+
+```bash
+source .venv/bin/activate
+jlpm tailwindcss --input style/tailwind.css --output style/index.css
+```
+
+`style/index.css` is generated, but it is intentionally committed because it
+is the stylesheet loaded and published by the JupyterLab extension. Include
+the updated file in the same commit as the Tailwind source or class changes.
+
+To regenerate the stylesheet automatically while developing, run:
+
+```bash
+source .venv/bin/activate
+jlpm tailwindcss --input style/tailwind.css --output style/index.css --watch
+```
+
 You can watch the source directory and run JupyterLab at the same time in different terminals to watch for changes in the extension's source and automatically rebuild the extension.
 
 ```bash
