@@ -20,3 +20,4 @@ export * from './useZenodoRecordSearch';
 export * from './useZenodoUserProfile';
 export * from './useZenodoUserRecords';
 export * from './useZenodoVersionedRecord';
+export * from './ZenodoVersionedRecordBase';
