@@ -1,6 +1,8 @@
 import React from 'react';
+import { Download, FileCode2, HardDrive, Trash2 } from 'lucide-react';
 
 import { JobProgress } from './JobProgress';
+import { OverflowMenu, OverflowMenuItem } from './OverflowMenu';
 import type { ZenodoFile } from '../api_calls';
 import {
   useDeleteDownload,
@@ -23,53 +25,91 @@ export const ZenodoFileInfo: React.FC<{
   const { insertImportCell } = useInsertImportCell(fileId);
   const { deleteFile, isDeleting } = useDeleteZenodoFile(fileId);
 
-  const { download, downloadId } = useDownloadZenodoFile(fileId); // TODO how to split this so that both the download button and the status can use it with correct download id
+  const { download, downloadId } = useDownloadZenodoFile(fileId); // TODO both the download button and the status need this, fix if we want to split this into separate components
 
   if (status === null) {
-    return <div>Checking download status...</div>;
+    return (
+      <div className="mb-2 animate-pulse rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
+        Checking download status…
+      </div>
+    );
   }
 
+  const actions: OverflowMenuItem[] = [
+    {
+      label: 'Download in JupyterServer',
+      hint: status.downloaded
+        ? 'File is already downloaded.'
+        : 'Save this file to the Jupyter server.',
+      icon: <Download size={16} />,
+      onClick: download,
+      disabled: status.downloaded !== false
+    },
+    ...(status.downloaded
+      ? [
+          {
+            label: 'Delete download',
+            hint: 'Remove the local copy from the Jupyter server.',
+            icon: <HardDrive size={16} />,
+            onClick: deleteDownload,
+            destructive: true
+          },
+          {
+            label: 'Insert import cell',
+            hint: 'Add a notebook cell that imports this file.',
+            icon: <FileCode2 size={16} />,
+            onClick: insertImportCell
+          }
+        ]
+      : []),
+    {
+      label: isDeleting ? 'Deleting…' : 'Delete from Zenodo',
+      hint: 'Permanently remove this file from the Zenodo record.',
+      icon: <Trash2 size={16} />,
+      onClick: deleteFile,
+      disabled: isDeleting,
+      destructive: true
+    }
+  ];
+
   return (
-    <div
-      style={{
-        border: '1px solid #000000',
-        padding: '3px',
-        marginBottom: '2px'
-      }}
-    >
-      <div>
-        {file.key}
-        {/* TODO display file size in a reasonable unit */}
-        {file.size ? ` (${(file.size / 1024 / 1024).toFixed(2)} MB)` : null}
+    <div className="relative mb-2 rounded-lg border border-slate-200 bg-white p-4 pr-12 shadow-sm transition-shadow hover:shadow-md">
+      <div className="absolute right-3 top-3">
+        <OverflowMenu items={actions} label={`Actions for ${file.key}`} />
       </div>
-      <div>
-        {status.downloaded ? '✅ Downloaded' : '❌ Not downloaded'}
+
+      <div className="min-w-0">
+        <div
+          className="truncate text-sm font-semibold text-slate-900"
+          title={file.key}
+        >
+          {file.key}
+        </div>
+        {file.size ? (
+          <div className="mt-0.5 text-xs text-slate-500">
+            {(file.size / 1024 / 1024).toFixed(2)} MB
+          </div>
+        ) : null}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
+            status.downloaded
+              ? 'bg-emerald-50 text-emerald-700'
+              : 'bg-slate-100 text-slate-600'
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className={`size-1.5 rounded-full ${
+              status.downloaded ? 'bg-emerald-500' : 'bg-slate-400'
+            }`}
+          />
+          {status.downloaded ? 'Downloaded' : 'Not downloaded'}
+        </span>
         {downloadId ? <JobProgress jobId={downloadId} /> : null}
       </div>
-      <br />
-      Actions:
-      <br />
-      <button
-        disabled={status.downloaded !== false}
-        onClick={download}
-        title={status.downloaded ? 'File is already downloaded.' : undefined}
-        type="button"
-      >
-        Download in JupyterServer
-      </button>
-      {status.downloaded && (
-        <React.Fragment>
-          <button onClick={deleteDownload} type="button">
-            Delete download
-          </button>
-          <button onClick={insertImportCell} type="button">
-            Insert import cell
-          </button>
-        </React.Fragment>
-      )}
-      <button disabled={isDeleting} onClick={deleteFile} type="button">
-        {isDeleting ? 'Deleting…' : 'Delete from Zenodo'}
-      </button>
     </div>
   );
 };
