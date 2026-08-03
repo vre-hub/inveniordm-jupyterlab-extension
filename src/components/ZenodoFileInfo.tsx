@@ -108,6 +108,18 @@ export const ZenodoFileInfo: React.FC<{
           />
           {status.downloaded ? 'Downloaded' : 'Not downloaded'}
         </span>
+        {!status.downloaded && (
+          <button
+            aria-label={`Download ${file.key} in JupyterServer`}
+            className="inline-flex items-center gap-1.5 rounded-md border border-blue-600 bg-blue-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            onClick={download}
+            title="Download in JupyterServer"
+            type="button"
+          >
+            <Download aria-hidden="true" size={14} />
+            Download
+          </button>
+        )}
         {downloadId ? <JobProgress jobId={downloadId} /> : null}
       </div>
     </div>
