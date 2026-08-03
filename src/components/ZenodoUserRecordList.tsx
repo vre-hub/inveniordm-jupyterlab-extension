@@ -1,7 +1,5 @@
 import React from 'react';
 
-import { listZenodoUserRecords } from '../api_calls';
-import { useServerSettings } from '../store';
 import {
   ZenodoRecordData,
   ZenodoRecordIdentifier,
@@ -9,34 +7,7 @@ import {
 } from '../api_calls';
 import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
 import { ZenodoUserRecordDetails } from './ZenodoUserRecordDetails';
-
-function useZenodoUserRecords() {
-  const serverSettings = useServerSettings();
-  const [records, setRecords] = React.useState<
-    ZenodoRecordData[] | { error: string } | null
-  >(null);
-  const [isLoading, setIsLoading] = React.useState(false);
-
-  const loadRecords = React.useCallback(async (): Promise<void> => {
-    setIsLoading(true);
-
-    try {
-      setRecords(
-        (await listZenodoUserRecords(serverSettings)) as ZenodoRecordData[]
-      );
-    } catch (reason) {
-      setRecords({ error: String(reason) });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [serverSettings]);
-
-  React.useEffect(() => {
-    void loadRecords();
-  }, [loadRecords]);
-
-  return { records, isLoading };
-}
+import { useZenodoUserRecords } from '../core/useZenodoUserRecords';
 
 export const ZenodoUserRecordList: React.FC = () => {
   const { records, isLoading } = useZenodoUserRecords();

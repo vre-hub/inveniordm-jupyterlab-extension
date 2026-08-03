@@ -1,29 +1,12 @@
 import React from 'react';
 
-import {
-  deleteZenodoRecordFile,
-  downloadZenodoFile,
-  getLatestActiveJobId
-} from '../api_calls';
+import { downloadZenodoFile, getLatestActiveJobId } from '../api_calls';
 import { useServerSettings } from '../store';
 import { JobProgress } from './JobProgress';
 import { ZenodoFileDownloadStatus } from './ZenodoFileDownloadStatus';
 import type { ZenodoFile, ZenodoFileIdentifier } from '../api_calls';
-
-function useZenodoFileIdentifierFromProps(
-  file: ZenodoFile,
-  recordId: string,
-  isDraft: boolean
-): ZenodoFileIdentifier {
-  return React.useMemo<ZenodoFileIdentifier>(
-    () => ({
-      file_key: file.key,
-      record_id: recordId,
-      record_status: isDraft ? 'draft' : 'published'
-    }),
-    [file.key, isDraft, recordId]
-  );
-}
+import { useZenodoFileIdentifierFromProps } from '../core/useZenodoFileIdentifierFromProps';
+import { useDeleteZenodoFile } from '../core/useDeleteZenodoFile';
 
 export const ZenodoFileInfo: React.FC<{
   file: ZenodoFile;
@@ -58,12 +41,12 @@ const ZenodoFileDetails: React.FC<{
   </div>
 );
 
+// TODO refactor and extract
 const ZenodoFileDownload: React.FC<{
   fileId: ZenodoFileIdentifier;
 }> = ({ fileId }) => {
   const serverSettings = useServerSettings();
   const [downloadId, setDownloadId] = React.useState<string | null>(null);
-
   React.useEffect(() => {
     let isMounted = true;
 
@@ -98,21 +81,6 @@ const ZenodoFileDownload: React.FC<{
     </>
   );
 };
-
-function useDeleteZenodoFile(fileId: ZenodoFileIdentifier) {
-  const serverSettings = useServerSettings();
-  const [isDeleting, setIsDeleting] = React.useState(false);
-
-  const deleteFile = async (): Promise<void> => {
-    setIsDeleting(true);
-    try {
-      await deleteZenodoRecordFile(serverSettings, fileId);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-  return { deleteFile, isDeleting };
-}
 
 const ZenodoFileDeleteButton: React.FC<{
   fileId: ZenodoFileIdentifier;

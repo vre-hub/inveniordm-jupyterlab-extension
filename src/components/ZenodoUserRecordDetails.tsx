@@ -1,9 +1,9 @@
 import React from 'react';
-import { ZenodoRecordData, useZenodoRecordPermission } from '../api_calls';
 import {
   ZenodoRecordRenderer,
   ZenodoRecordRendererProps
 } from './ZenodoRecordRenderer';
+import { useHasEditingRights } from '../core/useHasEditingRights';
 
 type ZenodoUserRecordDetailsProps = Omit<
   ZenodoRecordRendererProps,
@@ -23,12 +23,3 @@ export const ZenodoUserRecordDetails: React.FC<
     <ZenodoRecordRenderer {...props} hasEditingRights={hasEditingRights} />
   );
 };
-
-function useHasEditingRights(record: ZenodoRecordData): boolean {
-  const isDraft = record.is_draft;
-  const userPermission = useZenodoRecordPermission(
-    record.id,
-    isDraft ? 'draft' : 'published'
-  );
-  return userPermission === 'edit' || userPermission === 'manage';
-}
