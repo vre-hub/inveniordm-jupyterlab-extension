@@ -1,26 +1,16 @@
 import React from 'react';
-import { KeyRound, LoaderCircle, ShieldCheck } from 'lucide-react';
+import { KeyRound, ShieldCheck } from 'lucide-react';
 
 import { LoginButton, LogoutButton } from './AuthButtons';
 import { ZenodoUserProfile } from './ZenodoUserProfile';
 import { useAccessTokenStatus } from '../api_calls';
+import { LoadingPanel } from './LoadingPanel';
 
 export const ZenodoLoginForm: React.FC = () => {
   const accessStatus = useAccessTokenStatus();
 
   if (!accessStatus) {
-    return (
-      <div
-        aria-live="polite"
-        className="flex items-center justify-center gap-2 rounded-lg border border-border bg-surface-muted px-4 py-8 text-sm font-medium text-muted shadow-sm"
-      >
-        <LoaderCircle
-          aria-hidden="true"
-          className="size-5 animate-spin text-primary"
-        />
-        Checking your login status…
-      </div>
-    );
+    return <LoadingPanel text="Checking Zenodo login status…" />;
   }
 
   const loggedIn =
