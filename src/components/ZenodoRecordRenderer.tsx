@@ -1,16 +1,14 @@
 import React from 'react';
 
 import { ZenodoFileInfo } from './ZenodoFileInfo';
-import { OpenRecordButton } from './OpenRecordButton';
 import {
   ZenodoRecordData,
   ZenodoRecordIdentifier,
   ZenodoRecordVersion
 } from '../api_calls';
-import { DiscardDraftButton } from './DiscardDraftButton';
-import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
 import { VersionDropdown } from './VersionDropdown';
-import { CreateNewVersionButton } from './CreateNewVersionButton';
+import { ZenodoRecordActions } from './ZenodoRecordActions';
+import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
 
 export type ZenodoRecordRendererProps = {
   record: ZenodoRecordData;
@@ -32,6 +30,7 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
 
   return (
     <div
+      className="relative"
       style={{
         border: '1px solid #ccc',
         padding: '1rem',
@@ -47,22 +46,12 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
           }}
         />
         <ZenodoRecordDetails record={record} editable={editable} />
-        <CreateNewVersionButton
+        <ZenodoRecordActions
+          record={record}
           versions={versions}
-          allowedToCreateNewVersion={hasEditingRights}
+          hasEditingRights={hasEditingRights}
         />
-
-        {isDraft && (
-          <DiscardDraftButton
-            id={record.id}
-            allowedToDiscardDraft={hasEditingRights}
-          />
-        )}
-        {editable && (
-          <>
-            <ZenodoRecordFileUpload recordId={record.id} />
-          </>
-        )}
+        {editable && <ZenodoRecordFileUpload recordId={record.id} />}
       </section>
     </div>
   );
@@ -85,10 +74,6 @@ const ZenodoRecordDetails: React.FC<{
           <div>DOI: {record.pids.doi.identifier}</div>
         ) : null}
         <div>Status: {record.status}</div>
-        <OpenRecordButton
-          record={record}
-          text={editable ? 'Edit Record' : 'Open Record'}
-        />
       </section>
       <section>
         <div>
