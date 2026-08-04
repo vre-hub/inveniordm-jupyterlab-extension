@@ -49,7 +49,7 @@ export const ZenodoRecordDraftUpload: React.FC = () => {
       {message && <p>{message}</p>}
       {result && (
         <div>
-          <p>Created draft {result.id}.</p>
+          <p>Created draft.</p>
           <OpenRecordButton record={result} text="Edit metadata" />
         </div>
       )}
