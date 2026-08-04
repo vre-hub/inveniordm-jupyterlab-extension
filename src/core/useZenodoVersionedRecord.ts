@@ -1,4 +1,5 @@
 import React from 'react';
+import { ServerConnection } from '@jupyterlab/services';
 import {
   getZenodoRecordVariant,
   listZenodoRecordVersions,
@@ -53,6 +54,8 @@ export function useZenodoVersionedRecord({
     ZenodoRecordData | { error: string } | null
   >(initialRecordValue ?? null);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [recordDeleted, setRecordDeleted] = React.useState(false);
+  const [versions, setVersions] = React.useState<ZenodoRecordVersion[]>([]);
   const serverSettings = useServerSettings();
 
   const loadRecord = React.useCallback(
@@ -64,10 +67,37 @@ export function useZenodoVersionedRecord({
         setRecord(record);
         console.log('Loaded record', record);
       } catch (reason) {
+        // Recover from a 404 error when the record is a draft that has been discarded from external sources (e.g. Zenodo web interface)
+        if (
+          reason instanceof ServerConnection.ResponseError &&
+          reason.response.status === 404 &&
+          identifier.record_status === 'draft'
+        ) {
+          const remainingVersions = versions.filter(
+            version =>
+              !(version.id === identifier.record_id && version.is_draft)
+          );
+          setVersions(remainingVersions);
+          const nextVersion = selectVersionAfterDraftDiscard(
+            remainingVersions,
+            identifier.record_id
+          );
+          if (nextVersion) {
+            const nextIdentifier =
+              zenodoRecordIdentifierFromRecord(nextVersion);
+            setRecordIdentifier(nextIdentifier);
+            setRecord(
+              await getZenodoRecordVariant(serverSettings, nextIdentifier)
+            );
+          } else {
+            setRecordDeleted(true);
+          }
+          return;
+        }
         setRecord({ error: String(reason) });
       }
     },
-    [recordIdentifier, serverSettings]
+    [recordIdentifier, serverSettings, versions]
   );
 
   // If no initial record value is provided, load the record data from the API.
@@ -87,9 +117,6 @@ export function useZenodoVersionedRecord({
     }
   );
 
-  const [recordDeleted, setRecordDeleted] = React.useState(false);
-
-  const [versions, setVersions] = React.useState<ZenodoRecordVersion[]>([]);
   const includeDrafts = include_drafts_in_version_dropdown;
 
   React.useEffect(() => {
