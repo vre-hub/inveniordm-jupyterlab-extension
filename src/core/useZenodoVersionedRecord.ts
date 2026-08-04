@@ -103,7 +103,7 @@ export function useZenodoVersionedRecord({
   // If no initial record value is provided, load the record data from the API.
   React.useEffect(() => {
     if (!record) {
-      setIsLoading(true);
+      setIsLoading(true); // TODO since this is never called if we pass an initialRecordValue, find a better way to display loading state
       void loadRecord();
       setIsLoading(false);
     }
