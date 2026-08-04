@@ -81,11 +81,17 @@
   .top-1\/2 {
     top: calc(1 / 2 * 100%);
   }
+  .top-2 {
+    top: calc(var(--spacing) * 2);
+  }
   .top-3 {
     top: calc(var(--spacing) * 3);
   }
   .right-0 {
     right: 0px;
+  }
+  .right-2 {
+    right: calc(var(--spacing) * 2);
   }
   .right-3 {
     right: calc(var(--spacing) * 3);
@@ -148,9 +154,21 @@
     width: calc(var(--spacing) * 1.5);
     height: calc(var(--spacing) * 1.5);
   }
+  .size-3\.5 {
+    width: calc(var(--spacing) * 3.5);
+    height: calc(var(--spacing) * 3.5);
+  }
   .size-4 {
     width: calc(var(--spacing) * 4);
     height: calc(var(--spacing) * 4);
+  }
+  .size-5 {
+    width: calc(var(--spacing) * 5);
+    height: calc(var(--spacing) * 5);
+  }
+  .size-7 {
+    width: calc(var(--spacing) * 7);
+    height: calc(var(--spacing) * 7);
   }
   .size-8 {
     width: calc(var(--spacing) * 8);
@@ -159,6 +177,10 @@
   .size-9 {
     width: calc(var(--spacing) * 9);
     height: calc(var(--spacing) * 9);
+  }
+  .size-10 {
+    width: calc(var(--spacing) * 10);
+    height: calc(var(--spacing) * 10);
   }
   .h-1\.5 {
     height: calc(var(--spacing) * 1.5);
@@ -202,6 +224,9 @@
   }
   .cursor-pointer {
     cursor: pointer;
+  }
+  .resize-none {
+    resize: none;
   }
   .appearance-none {
     appearance: none;
@@ -296,6 +321,9 @@
   .border-border-strong {
     border-color: var(--color-border-strong);
   }
+  .border-danger-border {
+    border-color: var(--color-danger-border);
+  }
   .border-primary {
     border-color: var(--color-primary);
   }
@@ -365,8 +393,14 @@
   .py-1 {
     padding-block: var(--spacing);
   }
+  .py-1\.5 {
+    padding-block: calc(var(--spacing) * 1.5);
+  }
   .py-2 {
     padding-block: calc(var(--spacing) * 2);
+  }
+  .py-8 {
+    padding-block: calc(var(--spacing) * 8);
   }
   .pt-2 {
     padding-top: calc(var(--spacing) * 2);
@@ -380,6 +414,9 @@
   .pr-9 {
     padding-right: calc(var(--spacing) * 9);
   }
+  .pr-10 {
+    padding-right: calc(var(--spacing) * 10);
+  }
   .pr-12 {
     padding-right: calc(var(--spacing) * 12);
   }
@@ -388,6 +425,9 @@
   }
   .pl-9 {
     padding-left: calc(var(--spacing) * 9);
+  }
+  .text-center {
+    text-align: center;
   }
   .text-left {
     text-align: left;
@@ -415,6 +455,12 @@
   .font-semibold {
     --tw-font-weight: var(--font-weight-semibold);
     font-weight: var(--font-weight-semibold);
+  }
+  .break-words {
+    overflow-wrap: break-word;
+  }
+  .break-all {
+    word-break: break-all;
   }
   .text-danger {
     color: var(--color-danger);
@@ -465,6 +511,11 @@
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
   .transition-colors {
     transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
@@ -488,6 +539,10 @@
     color: var(--color-muted);
   }
   @media (hover: hover) {
+    .hover\:-translate-y-px:hover {
+      --tw-translate-y: -1px;
+      translate: var(--tw-translate-x) var(--tw-translate-y);
+    }
     .hover\:border-border-hover:hover {
       border-color: var(--color-border-hover);
     }
@@ -496,6 +551,9 @@
     }
     .hover\:border-danger-border:hover {
       border-color: var(--color-danger-border);
+    }
+    .hover\:border-primary:hover {
+      border-color: var(--color-primary);
     }
     .hover\:bg-danger-subtle:hover {
       background-color: var(--color-danger-subtle);
@@ -514,6 +572,9 @@
     }
     .hover\:text-danger:hover {
       color: var(--color-danger);
+    }
+    .hover\:text-foreground:hover {
+      color: var(--color-foreground);
     }
     .hover\:text-foreground-secondary:hover {
       color: var(--color-foreground-secondary);
@@ -567,6 +628,14 @@
   }
   .focus-visible\:outline-primary:focus-visible {
     outline-color: var(--color-primary);
+  }
+  .active\:translate-y-0:active {
+    --tw-translate-y: 0px;
+    translate: var(--tw-translate-x) var(--tw-translate-y);
+  }
+  .active\:shadow-sm:active {
+    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .disabled\:cursor-not-allowed:disabled {
     cursor: not-allowed;
