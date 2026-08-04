@@ -1,8 +1,8 @@
 import React from 'react';
 import { VDomRenderer } from '@jupyterlab/apputils';
 import {
+  CircleUser,
   Library,
-  LogIn,
   Search,
   Settings as SettingsIcon,
   Upload
@@ -24,7 +24,6 @@ type SidebarTab = TabItem<string> & {
 };
 
 const TABS: SidebarTab[] = [
-  { id: 'login', label: 'Login', icon: LogIn, Component: ZenodoLoginForm },
   {
     id: 'search',
     label: 'Search',
@@ -38,22 +37,30 @@ const TABS: SidebarTab[] = [
     Component: ZenodoRecordDraftUpload
   },
   {
-    id: 'settings',
-    label: 'Settings',
-    icon: SettingsIcon,
-    Component: Settings
-  },
-  {
-    id: 'account',
+    id: 'user-records',
     label: 'My Records',
     icon: Library,
     Component: ZenodoUserRecordList
+  },
+  {
+    id: 'account',
+    label: 'Account',
+    icon: CircleUser,
+    Component: ZenodoLoginForm
+  },
+  {
+    id: 'settings',
+    icon: SettingsIcon,
+    Component: Settings
   }
 ];
+const DEFAULT_TAB_ID = 'account';
 
 const Panel: React.FC = () => {
   const currentTabID = useCurrentTabID();
-  const selectedTab = TABS.find(tab => tab.id === currentTabID) ?? TABS[0];
+  const selectedTab =
+    TABS.find(tab => tab.id === currentTabID) ??
+    TABS.find(tab => tab.id === DEFAULT_TAB_ID)!;
   const SelectedTabComponent = selectedTab.Component;
 
   return (
