@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, FileCode2, HardDrive, Trash2 } from 'lucide-react';
+import { Copy, Download, FileCode2, HardDrive, Trash2 } from 'lucide-react';
 
 import { JobProgress } from './JobProgress';
 import { OverflowMenu, OverflowMenuItem } from './OverflowMenu';
@@ -27,6 +27,12 @@ export const ZenodoFileInfo: React.FC<{
 
   const { download, downloadId } = useDownloadZenodoFile(fileId); // TODO both the download button and the status need this, fix if we want to split this into separate components
 
+  const copyFilePath = React.useCallback(async (): Promise<void> => {
+    if (status?.path) {
+      await navigator.clipboard.writeText(status.path);
+    }
+  }, [status?.path]);
+
   if (status === null) {
     return (
       <div className="mb-2 animate-pulse rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
@@ -53,6 +59,13 @@ export const ZenodoFileInfo: React.FC<{
             icon: <HardDrive size={16} />,
             onClick: deleteDownload,
             destructive: true
+          },
+          {
+            label: 'Copy File Path',
+            hint: 'Copy the path to this file to the clipboard.',
+            icon: <Copy size={16} />,
+            onClick: copyFilePath,
+            disabled: !status.path
           },
           {
             label: 'Insert Cell with File Path',
