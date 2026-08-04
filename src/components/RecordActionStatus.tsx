@@ -4,6 +4,7 @@ import { LoaderCircle } from 'lucide-react';
 type RecordAction = {
   description: string;
   icon?: React.ReactNode;
+  isLoading?: boolean;
 };
 
 type RecordActionContextValue = {
@@ -44,18 +45,22 @@ export const RecordActionStatus: React.FC = () => {
 
   return (
     <div
-      className="mt-3 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-slate-700"
-      role="status"
+      className={`mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 ${
+        currentAction.isLoading === false ? 'bg-red-50' : 'bg-blue-50'
+      }`}
+      role={currentAction.isLoading === false ? 'alert' : 'status'}
     >
       {currentAction.icon ? (
         <span aria-hidden="true">{currentAction.icon}</span>
       ) : null}
       <span>{currentAction.description}</span>
-      <LoaderCircle
-        aria-hidden="true"
-        className="ml-auto animate-spin text-blue-600"
-        size={16}
-      />
+      {currentAction.isLoading !== false ? (
+        <LoaderCircle
+          aria-hidden="true"
+          className="ml-auto animate-spin text-blue-600"
+          size={16}
+        />
+      ) : null}
     </div>
   );
 };

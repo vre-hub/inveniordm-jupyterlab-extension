@@ -38,13 +38,21 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
     <RecordActionProvider>
       <div className="relative mb-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <section>
-          <div className="mb-2">
-            <VersionDropdown
+          <div className="mb-2 flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <VersionDropdown
+                versions={versions}
+                recordIdentifier={recordIdentifier}
+                onChange={identifier => {
+                  selectRecord(identifier);
+                }}
+              />
+            </div>
+            <ZenodoRecordActions
+              record={record}
               versions={versions}
-              recordIdentifier={recordIdentifier}
-              onChange={identifier => {
-                selectRecord(identifier);
-              }}
+              hasEditingRights={hasEditingRights}
+              refresh={refresh}
             />
           </div>
           {record.metadata?.title && (
@@ -72,12 +80,6 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
               />
             ))}
           </div>
-          <ZenodoRecordActions
-            record={record}
-            versions={versions}
-            hasEditingRights={hasEditingRights}
-            refresh={refresh}
-          />
           <RecordActionStatus />
           {editable && <ZenodoRecordFileUpload recordId={record.id} />}
         </section>

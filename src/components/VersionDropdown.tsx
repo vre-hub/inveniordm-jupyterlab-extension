@@ -38,6 +38,7 @@ export function VersionDropdown({
   return (
     <select
       aria-label="Record version"
+      className="box-border rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition-colors hover:border-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20"
       onChange={event => {
         const selectedIdentifier = findRecordIdentifier(
           versions,

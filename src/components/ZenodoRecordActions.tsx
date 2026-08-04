@@ -1,5 +1,11 @@
 import React from 'react';
-import { ExternalLink, GitBranchPlus, RefreshCw, Trash2 } from 'lucide-react';
+import {
+  AlertCircle,
+  ExternalLink,
+  GitBranchPlus,
+  RefreshCw,
+  Trash2
+} from 'lucide-react';
 
 import { ZenodoRecordData, ZenodoRecordVersion } from '../api_calls';
 import { useCreateNewVersion, useDiscardDraft } from '../core';
@@ -27,6 +33,17 @@ export const ZenodoRecordActions: React.FC<{
     error: discardDraftError,
     hint: discardDraftHint
   } = useDiscardDraft(record.id, hasEditingRights);
+
+  React.useEffect(() => {
+    const error = createVersionError ?? discardDraftError;
+    if (error) {
+      setRecordAction({
+        description: error,
+        icon: <AlertCircle size={16} />,
+        isLoading: false
+      });
+    }
+  }, [createVersionError, discardDraftError, setRecordAction]);
 
   const openRecord = (): void => {
     const newTab = window.open(record.links.self_html, '_blank');
@@ -82,13 +99,5 @@ export const ZenodoRecordActions: React.FC<{
       : [])
   ];
 
-  return (
-    <>
-      <div className="absolute right-3 top-3">
-        <OverflowMenu items={actions} label="Record actions" />
-      </div>
-      {createVersionError ? <span>{createVersionError}</span> : null}
-      {discardDraftError ? <span>{discardDraftError}</span> : null}
-    </>
-  );
+  return <OverflowMenu items={actions} label="Record actions" />;
 };
