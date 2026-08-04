@@ -4,15 +4,16 @@ import { AuthButtons } from './AuthButtons';
 import { ZenodoSandboxOverrideSetting } from './ZenodoSandboxOverrideSetting';
 import { SelectDownloadDirectory } from './DownloadDirectoryPicker';
 
-export function DeveloperSettings(): JSX.Element {
+export function Settings(): JSX.Element {
   return (
     <>
-      <ZenodoSandboxOverrideSetting />
-      <hr />
-      <AuthButtons sandbox={true} />
-      <hr />
       <b>Download Directory: </b>
       <SelectDownloadDirectory />
+      <hr />
+      <b>Developer Settings</b>
+      <br />
+      <ZenodoSandboxOverrideSetting />
+      <AuthButtons sandbox={true} />
     </>
   );
 }

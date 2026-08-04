@@ -1,13 +1,19 @@
 import React from 'react';
 import { VDomRenderer } from '@jupyterlab/apputils';
-import { Library, LogIn, Search, Settings, Upload } from 'lucide-react';
+import {
+  Library,
+  LogIn,
+  Search,
+  Settings as SettingsIcon,
+  Upload
+} from 'lucide-react';
 
 import { Tabs, TabItem } from '../components/Tabs';
 import { ZenodoUserRecordList } from '../components/ZenodoUserRecordList';
 import { ZenodoLoginForm } from '../components/ZenodoLoginForm';
 import { ZenodoRecordSearch } from '../components/ZenodoRecordSearch';
 import { setCurrentTabID, useCurrentTabID } from '../store';
-import { DeveloperSettings } from '../components/DeveloperSettings';
+import { Settings } from '../components/Settings';
 import { ZenodoRecordDraftUpload } from '../components/ZenodoRecordDraftUpload';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
@@ -34,8 +40,8 @@ const TABS: SidebarTab[] = [
   {
     id: 'settings',
     label: 'Settings',
-    icon: Settings,
-    Component: DeveloperSettings
+    icon: SettingsIcon,
+    Component: Settings
   },
   {
     id: 'account',
