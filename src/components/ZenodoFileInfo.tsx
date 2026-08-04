@@ -55,8 +55,8 @@ export const ZenodoFileInfo: React.FC<{
             destructive: true
           },
           {
-            label: 'Insert import cell',
-            hint: 'Add a notebook cell that imports this file.',
+            label: 'Insert Cell with File Path',
+            hint: 'Add a notebook cell that hardcodes the path to this file.',
             icon: <FileCode2 size={16} />,
             onClick: insertImportCell
           }
