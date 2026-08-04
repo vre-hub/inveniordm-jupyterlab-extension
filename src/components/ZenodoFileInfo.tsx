@@ -120,8 +120,12 @@ export const ZenodoFileInfo: React.FC<{
             Download
           </button>
         )}
-        {downloadId ? <JobProgress jobId={downloadId} /> : null}
       </div>
+      {downloadId ? (
+        <div className="mt-3">
+          <JobProgress jobId={downloadId} />
+        </div>
+      ) : null}
     </div>
   );
 };

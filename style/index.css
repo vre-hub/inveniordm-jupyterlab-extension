@@ -86,6 +86,9 @@
   .mb-2 {
     margin-bottom: calc(var(--spacing) * 2);
   }
+  .box-border {
+    box-sizing: border-box;
+  }
   .block {
     display: block;
   }
@@ -118,6 +121,9 @@
   }
   .h-full {
     height: 100%;
+  }
+  .min-h-16 {
+    min-height: calc(var(--spacing) * 16);
   }
   .w-1 {
     width: var(--spacing);
