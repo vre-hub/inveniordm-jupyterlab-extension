@@ -27,9 +27,9 @@ export function PickFilesButton({
   };
 
   return (
-    <div className="box-border w-full rounded-lg border border-dashed border-slate-300 bg-slate-50 p-2">
+    <div className="box-border w-full rounded-lg border border-dashed border-border-strong bg-surface-muted p-2">
       <button
-        className="group flex w-full cursor-pointer items-center justify-center gap-3 rounded-md border-0 bg-white px-4 py-2 text-left text-slate-700 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+        className="group flex w-full cursor-pointer items-center justify-center gap-3 rounded-md border-0 bg-surface px-4 py-2 text-left text-foreground-secondary shadow-sm transition-colors hover:bg-primary-subtle hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
         disabled={disabled}
         onClick={selectFiles}
         type="button"
@@ -37,7 +37,7 @@ export function PickFilesButton({
         <Upload className="size-4 shrink-0" aria-hidden="true" />
         <span className="flex flex-col gap-0.5">
           <span className="text-sm font-medium">{buttonText}</span>
-          <span className="text-xs font-normal text-slate-500 group-hover:text-blue-600">
+          <span className="text-xs font-normal text-muted group-hover:text-primary">
             Choose one or more files from JupyterLab
           </span>
         </span>

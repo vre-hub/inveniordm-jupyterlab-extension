@@ -36,7 +36,7 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
 
   return (
     <RecordActionProvider>
-      <div className="relative mb-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="relative mb-2 rounded-lg border border-border bg-surface p-4 shadow-sm">
         <section>
           <div className="mb-2 flex items-center gap-2">
             <div className="min-w-0 flex-1">
@@ -56,11 +56,11 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
             />
           </div>
           {record.metadata?.title && (
-            <div className="m-0 mb-1 pr-8 text-sm font-semibold text-slate-900">
+            <div className="m-0 mb-1 pr-8 text-sm font-semibold text-foreground">
               {record.metadata?.title}
             </div>
           )}
-          <div className="mb-1 text-xs text-slate-500">
+          <div className="mb-1 text-xs text-muted">
             <div>ID: {record.id}</div>
             {record.pids?.doi?.identifier ? (
               <div>DOI: {record.pids.doi.identifier}</div>

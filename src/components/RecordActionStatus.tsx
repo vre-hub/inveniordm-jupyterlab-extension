@@ -45,8 +45,10 @@ export const RecordActionStatus: React.FC = () => {
 
   return (
     <div
-      className={`mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 ${
-        currentAction.isLoading === false ? 'bg-red-50' : 'bg-blue-50'
+      className={`mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground-secondary ${
+        currentAction.isLoading === false
+          ? 'bg-danger-subtle'
+          : 'bg-primary-subtle'
       }`}
       role={currentAction.isLoading === false ? 'alert' : 'status'}
     >
@@ -57,7 +59,7 @@ export const RecordActionStatus: React.FC = () => {
       {currentAction.isLoading !== false ? (
         <LoaderCircle
           aria-hidden="true"
-          className="ml-auto animate-spin text-blue-600"
+          className="ml-auto animate-spin text-primary"
           size={16}
         />
       ) : null}

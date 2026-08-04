@@ -1,6 +1,38 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
+@theme {
+  /* Brand and interactive states */
+  --color-primary: #1b90df;
+  --color-primary-hover: #167bc0;
+  --color-primary-subtle: #e8f5fc;
+  --color-on-primary: var(--color-white);
+
+  /* Surfaces, borders, and text */
+  --color-surface: var(--color-white);
+  --color-surface-muted: var(--color-slate-50);
+  --color-surface-subtle: var(--color-slate-100);
+  --color-border: var(--color-slate-200);
+  --color-border-strong: var(--color-slate-300);
+  --color-border-hover: var(--color-slate-400);
+  --color-foreground: var(--color-slate-900);
+  --color-foreground-secondary: var(--color-slate-700);
+  --color-muted: var(--color-slate-500);
+  --color-muted-strong: var(--color-slate-600);
+
+  /* Feedback states */
+  --color-success: var(--color-emerald-700);
+  --color-success-indicator: var(--color-emerald-500);
+  --color-success-subtle: var(--color-emerald-50);
+  --color-warning: var(--color-amber-700);
+  --color-warning-strong: var(--color-amber-800);
+  --color-warning-subtle: var(--color-amber-50);
+  --color-warning-surface: var(--color-amber-100);
+  --color-danger: var(--color-red-700);
+  --color-danger-border: var(--color-red-200);
+  --color-danger-subtle: var(--color-red-50);
+}
+
 .jp-ZenodoExtensionPanel {
   height: 100%;
   min-height: 0;

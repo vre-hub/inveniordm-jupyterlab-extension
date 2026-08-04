@@ -17,7 +17,7 @@ export const JobProgress: React.FC<JobProgressProps> = props => {
   if (loadingProgress || !progress) {
     return (
       <div
-        className="box-border flex min-h-16 w-full items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500 shadow-sm"
+        className="box-border flex min-h-16 w-full items-center gap-2 rounded-lg border border-border bg-surface-muted p-3 text-xs text-muted shadow-sm"
         role="status"
       >
         <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
@@ -43,41 +43,41 @@ export const JobProgress: React.FC<JobProgressProps> = props => {
     pending: {
       icon: <Clock3 aria-hidden="true" size={14} />,
       label: 'Pending',
-      className: 'text-slate-600'
+      className: 'text-muted-strong'
     },
     running: {
       icon: (
         <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
       ),
       label: 'Running',
-      className: 'text-blue-700'
+      className: 'text-primary-hover'
     },
     canceling: {
       icon: (
         <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
       ),
       label: 'Canceling',
-      className: 'text-amber-700'
+      className: 'text-warning'
     },
     canceled: {
       icon: <Ban aria-hidden="true" size={14} />,
       label: 'Canceled',
-      className: 'text-slate-600'
+      className: 'text-muted-strong'
     },
     done: {
       icon: <CheckCircle2 aria-hidden="true" size={14} />,
       label: 'Complete',
-      className: 'text-emerald-700'
+      className: 'text-success'
     },
     error: {
       icon: <CircleAlert aria-hidden="true" size={14} />,
       label: 'Failed',
-      className: 'text-red-700'
+      className: 'text-danger'
     }
   }[progress.status];
 
   return (
-    <div className="box-border w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs shadow-sm">
+    <div className="box-border w-full min-w-0 rounded-lg border border-border bg-surface-muted p-3 text-xs shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div
           className={`inline-flex min-w-0 items-center gap-1.5 font-medium ${statusPresentation.className}`}
@@ -85,12 +85,12 @@ export const JobProgress: React.FC<JobProgressProps> = props => {
         >
           <span className="shrink-0">{statusPresentation.icon}</span>
           <span>{statusPresentation.label}</span>
-          <span className="text-slate-500">· {progressLabel}</span>
+          <span className="text-muted">· {progressLabel}</span>
         </div>
         {canCancel ? (
           <button
             aria-label="Cancel job"
-            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 font-medium text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border-strong bg-surface px-2 py-1 font-medium text-muted-strong transition-colors hover:border-danger-border hover:bg-danger-subtle hover:text-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             onClick={() => void cancel()}
             title="Cancel job"
             type="button"
@@ -106,14 +106,14 @@ export const JobProgress: React.FC<JobProgressProps> = props => {
         aria-valuemax={hasTotal ? 100 : undefined}
         aria-valuemin={hasTotal ? 0 : undefined}
         aria-valuenow={percentage}
-        className={`mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 ${
+        className={`mt-2 h-1.5 overflow-hidden rounded-full bg-border ${
           hasTotal ? '' : 'animate-pulse'
         }`}
         role="progressbar"
       >
         {hasTotal ? (
           <div
-            className="h-full rounded-full bg-blue-600 transition-[width] duration-300"
+            className="h-full rounded-full bg-primary transition-[width] duration-300"
             style={{ width: `${percentage}%` }}
           />
         ) : null}
@@ -121,14 +121,14 @@ export const JobProgress: React.FC<JobProgressProps> = props => {
 
       {progress.current_item ? (
         <div
-          className="mt-2 truncate text-slate-600"
+          className="mt-2 truncate text-muted-strong"
           title={progress.current_item}
         >
           {progress.current_item}
         </div>
       ) : null}
       {progress.message ? (
-        <div className="mt-1 text-slate-500">{progress.message}</div>
+        <div className="mt-1 text-muted">{progress.message}</div>
       ) : null}
     </div>
   );

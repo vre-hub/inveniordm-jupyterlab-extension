@@ -49,7 +49,7 @@ export const OverflowMenu: React.FC<{
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-label={label}
-        className="flex size-8 items-center justify-center rounded-md border-0 bg-transparent text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        className="flex size-8 items-center justify-center rounded-md border-0 bg-transparent text-muted transition-colors hover:bg-surface-subtle hover:text-foreground-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         onClick={() => setIsOpen(open => !open)}
         title={label}
         type="button"
@@ -60,14 +60,14 @@ export const OverflowMenu: React.FC<{
       {isOpen && (
         <div
           aria-label={label}
-          className="absolute right-0 z-20 mt-1 w-64 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+          className="absolute right-0 z-20 mt-1 w-64 overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-lg"
           id={menuId}
           role="menu"
         >
           {items.map(item => (
             <button
-              className={`flex w-full items-start gap-3 border-0 bg-transparent px-3 py-2 text-left transition-colors hover:bg-slate-50 focus:bg-slate-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                item.destructive ? 'text-red-700' : 'text-slate-800'
+              className={`flex w-full items-start gap-3 border-0 bg-transparent px-3 py-2 text-left transition-colors hover:bg-surface-muted focus:bg-surface-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                item.destructive ? 'text-danger' : 'text-foreground-secondary'
               }`}
               disabled={item.disabled}
               key={item.label}
@@ -87,7 +87,7 @@ export const OverflowMenu: React.FC<{
               <span className="min-w-0">
                 <span className="block text-sm font-medium">{item.label}</span>
                 {item.hint && (
-                  <span className="mt-0.5 block text-xs leading-4 text-slate-500">
+                  <span className="mt-0.5 block text-xs leading-4 text-muted">
                     {item.hint}
                   </span>
                 )}

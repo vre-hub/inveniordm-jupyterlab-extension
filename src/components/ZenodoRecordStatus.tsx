@@ -8,15 +8,15 @@ const STATUS_STYLES: Record<
 > = {
   published: {
     label: 'Published',
-    className: 'bg-emerald-50 text-emerald-700'
+    className: 'bg-success-subtle text-success'
   },
   draft: {
     label: 'Draft',
-    className: 'bg-amber-100 text-amber-800'
+    className: 'bg-warning-surface text-warning-strong'
   },
   new_version_draft: {
     label: 'New version draft',
-    className: 'bg-blue-50 text-blue-700'
+    className: 'bg-primary-subtle text-primary-hover'
   }
 };
 

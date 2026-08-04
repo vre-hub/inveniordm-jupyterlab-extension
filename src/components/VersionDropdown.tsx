@@ -40,7 +40,7 @@ export function VersionDropdown({
     <div className="relative inline-block max-w-full">
       <select
         aria-label="Record version"
-        className="box-border max-w-full appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-9 text-sm text-slate-700 shadow-sm transition-colors hover:border-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20"
+        className="box-border max-w-full appearance-none rounded-md border border-border-strong bg-surface py-2 pl-3 pr-9 text-sm text-foreground-secondary shadow-sm transition-colors hover:border-border-hover focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
         onChange={event => {
           const selectedIdentifier = findRecordIdentifier(
             versions,
@@ -61,7 +61,7 @@ export function VersionDropdown({
       </select>
       <ChevronDown
         aria-hidden="true"
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
         size={16}
       />
     </div>
