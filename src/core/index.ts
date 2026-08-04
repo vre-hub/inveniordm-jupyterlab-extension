@@ -14,6 +14,7 @@ export * from './useOpenAuth';
 export * from './useSetZenodoDownloadDirectory';
 export * from './useUnsetZenodoDownloadDirectory';
 export * from './useZenodoFileIdentifierFromProps';
+export * from './useZenodoDownloadDirectory';
 export * from './useZenodoRecordDraftUpload';
 export * from './useZenodoRecordFileUpload';
 export * from './useZenodoRecordSearch';

@@ -56,6 +56,15 @@ export type SetZenodoDownloadDirectoryResponse = {
   downloads_dir: string;
 };
 
+export async function getZenodoDownloadDirectory(
+  serverSettings: ServerConnection.ISettings
+): Promise<SetZenodoDownloadDirectoryResponse> {
+  return await requestAPI<SetZenodoDownloadDirectoryResponse>(
+    'settings/downloads-directory',
+    serverSettings
+  );
+}
+
 export async function setZenodoDownloadDirectory(
   serverSettings: ServerConnection.ISettings,
   downloadsDir: string
