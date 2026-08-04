@@ -10,6 +10,7 @@ import { VersionDropdown } from './VersionDropdown';
 import { ZenodoRecordActions } from './ZenodoRecordActions';
 import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
 import { RecordActionProvider, RecordActionStatus } from './RecordActionStatus';
+import { ZenodoRecordStatus } from './ZenodoRecordStatus';
 
 export type ZenodoRecordRendererProps = {
   record: ZenodoRecordData;
@@ -28,29 +29,49 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
 }) => {
   const isDraft = record.is_draft;
   const editable = isDraft && hasEditingRights;
+  const files = Object.values(record.files?.entries ?? {});
   const refresh = (): void => {
     selectRecord(recordIdentifier);
   };
 
   return (
     <RecordActionProvider>
-      <div
-        className="relative"
-        style={{
-          border: '1px solid #ccc',
-          padding: '1rem',
-          borderRadius: '0.5rem'
-        }}
-      >
+      <div className="relative mb-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <section>
-          <VersionDropdown
-            versions={versions}
-            recordIdentifier={recordIdentifier}
-            onChange={identifier => {
-              selectRecord(identifier);
-            }}
-          />
-          <ZenodoRecordDetails record={record} editable={editable} />
+          <div className="mb-2">
+            <VersionDropdown
+              versions={versions}
+              recordIdentifier={recordIdentifier}
+              onChange={identifier => {
+                selectRecord(identifier);
+              }}
+            />
+          </div>
+          {record.metadata?.title && (
+            <div className="m-0 mb-1 pr-8 text-sm font-semibold text-slate-900">
+              {record.metadata?.title}
+            </div>
+          )}
+          <div className="mb-1 text-xs text-slate-500">
+            <div>ID: {record.id}</div>
+            {record.pids?.doi?.identifier ? (
+              <div>DOI: {record.pids.doi.identifier}</div>
+            ) : null}
+          </div>
+          <div className="mb-2">
+            <ZenodoRecordStatus status={record.status} />
+          </div>
+          <div className="mt-2">
+            {files.map(file => (
+              <ZenodoFileInfo
+                file={file}
+                key={file.key}
+                recordId={record.id}
+                isDraft={record.is_draft}
+                editable={editable}
+              />
+            ))}
+          </div>
           <ZenodoRecordActions
             record={record}
             versions={versions}
@@ -62,40 +83,5 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
         </section>
       </div>
     </RecordActionProvider>
-  );
-};
-
-/**
- * Display the details of a Zenodo record.
- */
-const ZenodoRecordDetails: React.FC<{
-  record: ZenodoRecordData;
-  editable: boolean;
-}> = ({ record, editable }) => {
-  const files = Object.values(record.files?.entries ?? {});
-  return (
-    <section>
-      <section>
-        <h4>{record.metadata?.title ?? record.id}</h4>
-        <div>ID: {record.id}</div>
-        {record.pids?.doi?.identifier ? (
-          <div>DOI: {record.pids.doi.identifier}</div>
-        ) : null}
-        <div>Status: {record.status}</div>
-      </section>
-      <section>
-        <div>
-          {files.map(file => (
-            <ZenodoFileInfo
-              file={file}
-              key={file.key}
-              recordId={record.id}
-              isDraft={record.is_draft}
-              editable={editable}
-            />
-          ))}
-        </div>
-      </section>
-    </section>
   );
 };
