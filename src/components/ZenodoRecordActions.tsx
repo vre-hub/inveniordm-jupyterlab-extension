@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, GitBranchPlus, Trash2 } from 'lucide-react';
+import { ExternalLink, GitBranchPlus, RefreshCw, Trash2 } from 'lucide-react';
 
 import { ZenodoRecordData, ZenodoRecordVersion } from '../api_calls';
 import { useCreateNewVersion, useDiscardDraft } from '../core';
@@ -10,7 +10,8 @@ export const ZenodoRecordActions: React.FC<{
   record: ZenodoRecordData;
   versions: ZenodoRecordVersion[];
   hasEditingRights: boolean;
-}> = ({ record, versions, hasEditingRights }) => {
+  refresh: () => void;
+}> = ({ record, versions, hasEditingRights, refresh }) => {
   const { setRecordAction } = useRecordAction();
   const editable = record.is_draft && hasEditingRights;
   const {
@@ -41,6 +42,12 @@ export const ZenodoRecordActions: React.FC<{
       label: editable ? 'Edit Record' : 'Open Record',
       icon: <ExternalLink size={16} />,
       onClick: openRecord
+    },
+    {
+      label: 'Refresh',
+      icon: <RefreshCw size={16} />,
+      hint: 'Reload the record from Zenodo',
+      onClick: refresh
     },
     {
       label: isCreatingVersion ? 'Creating...' : 'Create New Version',

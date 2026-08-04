@@ -28,6 +28,9 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
 }) => {
   const isDraft = record.is_draft;
   const editable = isDraft && hasEditingRights;
+  const refresh = (): void => {
+    selectRecord(recordIdentifier);
+  };
 
   return (
     <RecordActionProvider>
@@ -52,6 +55,7 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
             record={record}
             versions={versions}
             hasEditingRights={hasEditingRights}
+            refresh={refresh}
           />
           <RecordActionStatus />
           {editable && <ZenodoRecordFileUpload recordId={record.id} />}
