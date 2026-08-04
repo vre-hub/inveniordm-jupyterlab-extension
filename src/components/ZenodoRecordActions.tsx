@@ -4,12 +4,14 @@ import { ExternalLink, GitBranchPlus, Trash2 } from 'lucide-react';
 import { ZenodoRecordData, ZenodoRecordVersion } from '../api_calls';
 import { useCreateNewVersion, useDiscardDraft } from '../core';
 import { OverflowMenu, OverflowMenuItem } from './OverflowMenu';
+import { useRecordAction } from './RecordActionStatus';
 
 export const ZenodoRecordActions: React.FC<{
   record: ZenodoRecordData;
   versions: ZenodoRecordVersion[];
   hasEditingRights: boolean;
 }> = ({ record, versions, hasEditingRights }) => {
+  const { setRecordAction } = useRecordAction();
   const editable = record.is_draft && hasEditingRights;
   const {
     createVersion,
@@ -44,7 +46,13 @@ export const ZenodoRecordActions: React.FC<{
       label: isCreatingVersion ? 'Creating...' : 'Create New Version',
       hint: createVersionHint,
       icon: <GitBranchPlus size={16} />,
-      onClick: () => void createVersion(),
+      onClick: () => {
+        setRecordAction({
+          description: 'Creating a new version…',
+          icon: <GitBranchPlus size={16} />
+        });
+        void createVersion().finally(() => setRecordAction(null));
+      },
       disabled: disableCreateVersion || isCreatingVersion
     },
     ...(record.is_draft
@@ -53,7 +61,13 @@ export const ZenodoRecordActions: React.FC<{
             label: isDiscardingDraft ? 'Discarding...' : 'Discard Draft',
             hint: discardDraftHint,
             icon: <Trash2 size={16} />,
-            onClick: () => void discardDraft(),
+            onClick: () => {
+              setRecordAction({
+                description: 'Discarding draft…',
+                icon: <Trash2 size={16} />
+              });
+              void discardDraft().finally(() => setRecordAction(null));
+            },
             disabled: !hasEditingRights || isDiscardingDraft,
             destructive: true
           }

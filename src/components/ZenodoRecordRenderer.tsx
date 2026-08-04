@@ -9,6 +9,7 @@ import {
 import { VersionDropdown } from './VersionDropdown';
 import { ZenodoRecordActions } from './ZenodoRecordActions';
 import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
+import { RecordActionProvider, RecordActionStatus } from './RecordActionStatus';
 
 export type ZenodoRecordRendererProps = {
   record: ZenodoRecordData;
@@ -29,31 +30,34 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
   const editable = isDraft && hasEditingRights;
 
   return (
-    <div
-      className="relative"
-      style={{
-        border: '1px solid #ccc',
-        padding: '1rem',
-        borderRadius: '0.5rem'
-      }}
-    >
-      <section>
-        <VersionDropdown
-          versions={versions}
-          recordIdentifier={recordIdentifier}
-          onChange={identifier => {
-            selectRecord(identifier);
-          }}
-        />
-        <ZenodoRecordDetails record={record} editable={editable} />
-        <ZenodoRecordActions
-          record={record}
-          versions={versions}
-          hasEditingRights={hasEditingRights}
-        />
-        {editable && <ZenodoRecordFileUpload recordId={record.id} />}
-      </section>
-    </div>
+    <RecordActionProvider>
+      <div
+        className="relative"
+        style={{
+          border: '1px solid #ccc',
+          padding: '1rem',
+          borderRadius: '0.5rem'
+        }}
+      >
+        <section>
+          <VersionDropdown
+            versions={versions}
+            recordIdentifier={recordIdentifier}
+            onChange={identifier => {
+              selectRecord(identifier);
+            }}
+          />
+          <ZenodoRecordDetails record={record} editable={editable} />
+          <ZenodoRecordActions
+            record={record}
+            versions={versions}
+            hasEditingRights={hasEditingRights}
+          />
+          <RecordActionStatus />
+          {editable && <ZenodoRecordFileUpload recordId={record.id} />}
+        </section>
+      </div>
+    </RecordActionProvider>
   );
 };
 
