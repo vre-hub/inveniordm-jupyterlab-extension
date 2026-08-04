@@ -66,19 +66,23 @@ export const ZenodoRecordActions: React.FC<{
       hint: 'Reload the record from Zenodo',
       onClick: refresh
     },
-    {
-      label: isCreatingVersion ? 'Creating...' : 'Create New Version',
-      hint: createVersionHint,
-      icon: <GitBranchPlus size={16} />,
-      onClick: () => {
-        setRecordAction({
-          description: 'Creating a new version…',
-          icon: <GitBranchPlus size={16} />
-        });
-        void createVersion().finally(() => setRecordAction(null));
-      },
-      disabled: disableCreateVersion || isCreatingVersion
-    },
+    ...(hasEditingRights
+      ? [
+          {
+            label: isCreatingVersion ? 'Creating...' : 'Create New Version',
+            hint: createVersionHint,
+            icon: <GitBranchPlus size={16} />,
+            onClick: () => {
+              setRecordAction({
+                description: 'Creating a new version…',
+                icon: <GitBranchPlus size={16} />
+              });
+              void createVersion().finally(() => setRecordAction(null));
+            },
+            disabled: disableCreateVersion || isCreatingVersion
+          }
+        ]
+      : []),
     ...(record.is_draft
       ? [
           {
