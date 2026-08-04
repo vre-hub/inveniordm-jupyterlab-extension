@@ -75,14 +75,18 @@ export const ZenodoFileInfo: React.FC<{
           }
         ]
       : []),
-    {
-      label: isDeleting ? 'Deleting…' : 'Delete from Zenodo',
-      hint: 'Permanently remove this file from the Zenodo record.',
-      icon: <Trash2 size={16} />,
-      onClick: deleteFile,
-      disabled: isDeleting,
-      destructive: true
-    }
+    ...(editable
+      ? [
+          {
+            label: isDeleting ? 'Deleting…' : 'Delete from Zenodo',
+            hint: 'Permanently remove this file from the Zenodo record.',
+            icon: <Trash2 size={16} />,
+            onClick: deleteFile,
+            disabled: isDeleting,
+            destructive: true
+          }
+        ]
+      : [])
   ];
 
   return (
