@@ -80,8 +80,8 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
               />
             ))}
           </div>
-          <RecordActionStatus />
           {editable && <ZenodoRecordFileUpload recordId={record.id} />}
+          <RecordActionStatus />
         </section>
       </div>
     </RecordActionProvider>
