@@ -4,6 +4,7 @@ import { ChevronDown, Download, FlaskConical } from 'lucide-react';
 import { AuthButtons } from './AuthButtons';
 import { ZenodoSandboxOverrideSetting } from './ZenodoSandboxOverrideSetting';
 import { SelectDownloadDirectory } from './DownloadDirectoryPicker';
+import { RemoteServerId } from '../remoteServers';
 
 export function Settings(): JSX.Element {
   return (
@@ -50,7 +51,7 @@ export function Settings(): JSX.Element {
             <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
               Sandbox session
             </p>
-            <AuthButtons sandbox={true} />
+            <AuthButtons remoteServerId={RemoteServerId.ZenodoSandbox} />
           </div>
         </div>
       </details>

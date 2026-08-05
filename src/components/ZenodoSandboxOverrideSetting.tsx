@@ -1,30 +1,33 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
 
-import { setSandboxOverride, useSandboxOverride } from '../store';
+import { RemoteServerId } from '../remoteServers';
+import { setRemoteServerOverride, useRemoteServerOverride } from '../store';
 
-type SandboxOverrideValue = 'default' | 'production' | 'sandbox';
+type RemoteServerOverrideValue = 'default' | RemoteServerId;
 
 function toSelectValue(
-  sandboxOverride: boolean | undefined
-): SandboxOverrideValue {
-  if (sandboxOverride === undefined) {
+  remoteServerOverride: RemoteServerId | undefined
+): RemoteServerOverrideValue {
+  if (remoteServerOverride === undefined) {
     return 'default';
   }
 
-  return sandboxOverride ? 'sandbox' : 'production';
+  return remoteServerOverride;
 }
 
-function fromSelectValue(value: SandboxOverrideValue): boolean | undefined {
+function fromSelectValue(
+  value: RemoteServerOverrideValue
+): RemoteServerId | undefined {
   if (value === 'default') {
     return undefined;
   }
 
-  return value === 'sandbox';
+  return value;
 }
 
 export const ZenodoSandboxOverrideSetting: React.FC = () => {
-  const sandboxOverride = useSandboxOverride();
+  const remoteServerOverride = useRemoteServerOverride();
 
   return (
     <label className="block">
@@ -39,15 +42,15 @@ export const ZenodoSandboxOverrideSetting: React.FC = () => {
           aria-label="Zenodo sandbox override"
           className="box-border w-full appearance-none rounded-md border border-border-strong bg-surface px-3 py-2 pr-9 text-sm text-foreground shadow-sm transition-colors hover:border-border-hover focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           onChange={event =>
-            setSandboxOverride(
-              fromSelectValue(event.target.value as SandboxOverrideValue)
+            setRemoteServerOverride(
+              fromSelectValue(event.target.value as RemoteServerOverrideValue)
             )
           }
-          value={toSelectValue(sandboxOverride)}
+          value={toSelectValue(remoteServerOverride)}
         >
           <option value="default">Use login environment</option>
-          <option value="production">Production</option>
-          <option value="sandbox">Sandbox</option>
+          <option value={RemoteServerId.ZenodoProduction}>Production</option>
+          <option value={RemoteServerId.ZenodoSandbox}>Sandbox</option>
         </select>
         <ChevronDown
           aria-hidden="true"

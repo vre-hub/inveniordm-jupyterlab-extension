@@ -4,6 +4,8 @@ from typing import Any
 
 import requests
 
+from zenodo_auth.remote_servers import RemoteServerId
+
 from zenodo_jupyterlab.zenodo_requests.zenodo_helpers import (
     include_zenodo_file_if_draft_or_restricted,
 )
@@ -34,7 +36,7 @@ from .zenodo import (
 class AccessTokenStatus:
     access_token_present: bool
     access_token_valid: bool
-    sandbox: bool
+    remote_server_id: RemoteServerId
 
 
 class ZenodoRequests:

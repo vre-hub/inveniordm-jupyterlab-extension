@@ -2,17 +2,17 @@ import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
 
-import { getSandboxOverride } from './store';
+import { getRemoteServerOverride } from './store';
 
-function withSandboxOverride(endPoint: string): string {
-  const sandboxOverride = getSandboxOverride();
-  if (sandboxOverride === undefined) {
+function withRemoteServerOverride(endPoint: string): string {
+  const remoteServerOverride = getRemoteServerOverride();
+  if (remoteServerOverride === undefined) {
     return endPoint;
   }
 
   const [path, queryString = ''] = endPoint.split('?');
   const params = new URLSearchParams(queryString);
-  params.set('sandbox', sandboxOverride.toString());
+  params.set('remote_server', remoteServerOverride);
   return `${path}?${params.toString()}`;
 }
 
@@ -29,12 +29,12 @@ export async function requestAPI<T>(
   serverSettings: ServerConnection.ISettings,
   init: RequestInit = {}
 ): Promise<T> {
-  const endPointWithSandboxOverride = withSandboxOverride(endPoint);
+  const endPointWithRemoteServerOverride = withRemoteServerOverride(endPoint);
   // Make request to Jupyter API
   const requestUrl = URLExt.join(
     serverSettings.baseUrl,
     'zenodo-jupyterlab', // our server extension's API namespace
-    endPointWithSandboxOverride
+    endPointWithRemoteServerOverride
   );
 
   let response: Response;

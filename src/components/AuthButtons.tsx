@@ -2,13 +2,15 @@ import React from 'react';
 import { LogIn, LogOut } from 'lucide-react';
 
 import { useOpenAuth } from '../core';
+import { RemoteServerId } from '../remoteServers';
 
 type AuthButtonProps = {
-  sandbox: boolean;
+  remoteServerId: RemoteServerId;
 };
 
-export const LoginButton: React.FC<AuthButtonProps> = ({ sandbox }) => {
-  const openAuth = useOpenAuth(sandbox);
+export const LoginButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
+  const openAuth = useOpenAuth(remoteServerId);
+  const sandbox = remoteServerId === RemoteServerId.ZenodoSandbox;
 
   return (
     <button
@@ -22,8 +24,9 @@ export const LoginButton: React.FC<AuthButtonProps> = ({ sandbox }) => {
   );
 };
 
-export const LogoutButton: React.FC<AuthButtonProps> = ({ sandbox }) => {
-  const openAuth = useOpenAuth(sandbox);
+export const LogoutButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
+  const openAuth = useOpenAuth(remoteServerId);
+  const sandbox = remoteServerId === RemoteServerId.ZenodoSandbox;
 
   return (
     <button
@@ -37,11 +40,11 @@ export const LogoutButton: React.FC<AuthButtonProps> = ({ sandbox }) => {
   );
 };
 
-export const AuthButtons: React.FC<AuthButtonProps> = ({ sandbox }) => {
+export const AuthButtons: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
   return (
     <div className="flex flex-col gap-2">
-      <LoginButton sandbox={sandbox} />
-      <LogoutButton sandbox={sandbox} />
+      <LoginButton remoteServerId={remoteServerId} />
+      <LogoutButton remoteServerId={remoteServerId} />
     </div>
   );
 };

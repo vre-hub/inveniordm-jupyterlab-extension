@@ -1014,7 +1014,9 @@ def setup_route_handlers(web_app):
     ) -> dict[str, object]:
         return {
             "zenodo_user_id": zenodo_requests.zenodo_user_id,
-            "sandbox": zenodo_requests_factory.is_sandbox(zenodo_requests),
+            "remote_server_id": zenodo_requests_factory.get_remote_server_id(
+                zenodo_requests
+            ),
         }
 
     def get_user_settings(handler: APIHandler) -> ZenodoUserSettings:

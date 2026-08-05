@@ -5,6 +5,7 @@ import { LoginButton, LogoutButton } from './AuthButtons';
 import { ZenodoUserProfile } from './ZenodoUserProfile';
 import { useAccessTokenStatus } from '../api_calls';
 import { LoadingPanel } from './LoadingPanel';
+import { RemoteServerId } from '../remoteServers';
 
 export const ZenodoLoginForm: React.FC = () => {
   const accessStatus = useAccessTokenStatus();
@@ -31,19 +32,19 @@ export const ZenodoLoginForm: React.FC = () => {
           <p className="mb-5 mt-1.5 text-sm leading-5 text-muted-strong">
             Log in to access your account, manage records, and upload files.
           </p>
-          <LoginButton sandbox={false} />
+          <LoginButton remoteServerId={RemoteServerId.ZenodoProduction} />
         </div>
       )}
       {loggedIn && (
         <div className="px-3 py-4">
           <ZenodoUserProfile />
-          {accessStatus.sandbox && (
+          {accessStatus.remote_server_id === RemoteServerId.ZenodoSandbox && (
             <div className="mb-4 mt-3 flex items-center gap-2 rounded-md bg-warning-subtle px-3 py-2 text-xs font-medium text-warning-strong">
               <ShieldCheck aria-hidden="true" className="size-4 shrink-0" />
               Connected to the Zenodo sandbox environment
             </div>
           )}
-          <LogoutButton sandbox={false} />
+          <LogoutButton remoteServerId={RemoteServerId.ZenodoProduction} />
         </div>
       )}
     </div>

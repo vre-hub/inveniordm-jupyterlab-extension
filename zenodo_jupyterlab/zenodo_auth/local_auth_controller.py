@@ -7,40 +7,38 @@ from jupyter_server.utils import url_path_join
 from tornado.web import RequestHandler
 
 from zenodo_auth import OAuthCallback, OAuthClientConfig
+from zenodo_auth.remote_servers import (
+    RemoteServerId,
+    get_remote_server,
+)
 from zenodo_auth.token_store import BoundedTokenStore
 from zenodo_auth.tornado_oauth import (
     begin_zenodo_oauth_login,
     finish_zenodo_oauth_callback,
 )
 
-from ..zenodo_requests.zenodo_requests_factory import get_sandbox_override
+from ..zenodo_requests.zenodo_requests_factory import get_remote_server_override
 
-SANDBOX_OAUTH_CLIENT_ID = "ca8NzRHmqp6tVA0IE9XUlmbL74cGm9RqguC9DZlU"
-PRODUCTION_OAUTH_CLIENT_ID = "HaWBPRb7lsif7cqTypUNeFni9PJOoTm5IcjTJrtt"
 OAUTH_SCOPE = "deposit:write deposit:actions"
 
 
 class LocalZenodoAuthController:
-    production_url = "https://zenodo.org"
-    sandbox_url = "https://sandbox.zenodo.org"
-
     def __init__(self, token_store: BoundedTokenStore):
         self.token_store = token_store
 
-        # key: (sandbox, redirect_uri)
-        self.oauth_configs: dict[tuple[bool, str], OAuthClientConfig] = {}
-        self.oauth_states: dict[str, tuple[str, bool, str]] = {}
+        self.oauth_configs: dict[tuple[RemoteServerId, str], OAuthClientConfig] = {}
+        self.oauth_states: dict[str, tuple[str, RemoteServerId, str]] = {}
 
     def login(self, handler: APIHandler) -> None:
-        sandbox = self._oauth_sandbox(handler)
-        oauth_config = self._oauth_config(handler, sandbox)
+        remote_server_id = self._oauth_remote_server_id(handler)
+        oauth_config = self._oauth_config(handler, remote_server_id)
         begin_zenodo_oauth_login(
             handler,
             oauth_config=oauth_config,
             save_oauth_state=lambda state, return_to: self._save_oauth_state(
                 state,
                 return_to,
-                sandbox=sandbox,
+                remote_server_id=remote_server_id,
                 redirect_uri=oauth_config.redirect_uri,
             ),
             default_return_to=self._default_return_to(handler),
@@ -63,7 +61,7 @@ class LocalZenodoAuthController:
         handler.finish(json.dumps({"authenticated": False}))
 
     def callback(self, handler: APIHandler) -> None:
-        oauth_config, sandbox = self._oauth_config_for_callback(handler)
+        oauth_config, remote_server_id = self._oauth_config_for_callback(handler)
         finish_zenodo_oauth_callback(
             handler,
             oauth_config=oauth_config,
@@ -71,7 +69,7 @@ class LocalZenodoAuthController:
             on_success=lambda callback_handler, callback: self._complete_oauth_login(
                 callback_handler,
                 callback,
-                sandbox=sandbox,
+                remote_server_id=remote_server_id,
             ),
         )
 
@@ -80,24 +78,26 @@ class LocalZenodoAuthController:
         handler: RequestHandler,
         callback: OAuthCallback,
         *,
-        sandbox: bool,
+        remote_server_id: RemoteServerId,
     ) -> None:
         self.token_store.set_token(
             callback.access_token,
             True,
-            sandbox=sandbox,
+            remote_server_id=remote_server_id,
             zenodo_user_id=callback.zenodo_user_id,
         )
         handler.redirect(callback.return_to)
 
-    def _oauth_config(self, handler: APIHandler, sandbox: bool) -> OAuthClientConfig:
+    def _oauth_config(
+        self, handler: APIHandler, remote_server_id: RemoteServerId
+    ) -> OAuthClientConfig:
         redirect_uri = self._oauth_callback_url(handler)
-        key = (sandbox, redirect_uri)
-        client_id = SANDBOX_OAUTH_CLIENT_ID if sandbox else PRODUCTION_OAUTH_CLIENT_ID
+        key = (remote_server_id, redirect_uri)
+        server = get_remote_server(remote_server_id)
         if key not in self.oauth_configs:
             self.oauth_configs[key] = OAuthClientConfig(
-                zenodo_base_url=self._server_url(sandbox),
-                client_id=client_id,
+                zenodo_base_url=server.base_url,
+                client_id=server.oauth_client_id,
                 redirect_uri=redirect_uri,
                 scope=OAUTH_SCOPE,
             )
@@ -106,24 +106,26 @@ class LocalZenodoAuthController:
     def _oauth_config_for_callback(
         self,
         handler: APIHandler,
-    ) -> tuple[OAuthClientConfig, bool]:
+    ) -> tuple[OAuthClientConfig, RemoteServerId]:
         state = handler.get_query_argument("state", None)
         if state in self.oauth_states:
-            _, sandbox, redirect_uri = self.oauth_states[state]
-            return self.oauth_configs[(sandbox, redirect_uri)], sandbox
+            _, remote_server_id, redirect_uri = self.oauth_states[state]
+            return self.oauth_configs[
+                (remote_server_id, redirect_uri)
+            ], remote_server_id
 
-        sandbox = self._oauth_sandbox(handler)
-        return self._oauth_config(handler, sandbox), sandbox
+        remote_server_id = self._oauth_remote_server_id(handler)
+        return self._oauth_config(handler, remote_server_id), remote_server_id
 
     def _save_oauth_state(
         self,
         state: str,
         return_to: str,
         *,
-        sandbox: bool,
+        remote_server_id: RemoteServerId,
         redirect_uri: str,
     ) -> None:
-        self.oauth_states[state] = (return_to, sandbox, redirect_uri)
+        self.oauth_states[state] = (return_to, remote_server_id, redirect_uri)
 
     def _pop_return_to(self, state: str) -> str | None:
         stored_state = self.oauth_states.pop(state, None)
@@ -131,12 +133,8 @@ class LocalZenodoAuthController:
             return None
         return stored_state[0]
 
-    def _oauth_sandbox(self, handler: APIHandler) -> bool:
-        sandbox_override = get_sandbox_override(handler)
-        return sandbox_override if sandbox_override is not None else False
-
-    def _server_url(self, sandbox: bool) -> str:
-        return self.sandbox_url if sandbox else self.production_url
+    def _oauth_remote_server_id(self, handler: APIHandler) -> RemoteServerId:
+        return get_remote_server_override(handler) or RemoteServerId.ZENODO_PRODUCTION
 
     def _public_url(self, handler: APIHandler) -> str:
         return os.environ.get(

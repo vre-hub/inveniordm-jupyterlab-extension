@@ -10,13 +10,13 @@ from __future__ import annotations
 import secrets
 import sys
 from http import HTTPStatus
-from urllib.parse import urlparse
 
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 
 from zenodo_auth import OAuthCallback, OAuthClientConfig
+from zenodo_auth.remote_servers import get_remote_server_by_url
 from zenodo_auth.token_store import FileTokenStore, MultiTokenStore
 from zenodo_auth.tornado_oauth import (
     begin_zenodo_oauth_login,
@@ -80,7 +80,7 @@ def complete_proxy_login(
         callback.zenodo_user_id,
         callback.access_token,
         True,
-        sandbox="sandbox.zenodo.org" in urlparse(config.zenodo_base_url).netloc,
+        remote_server_id=get_remote_server_by_url(config.zenodo_base_url).id,
     )
 
     session_id = secrets.token_urlsafe(32)

@@ -2,16 +2,18 @@ from abc import ABC, abstractmethod
 
 from jupyter_server.base.handlers import APIHandler
 
+from zenodo_auth.remote_servers import RemoteServerId, get_remote_server_by_url
+
 from ..zenodo_auth.auth_controller import ZenodoAuthController
 from .zenodo import check_zenodo_authentication
 from .zenodo_requests import AccessTokenStatus, ZenodoRequests
 
 
-def get_sandbox_override(handler: APIHandler) -> bool | None:
-    if handler.get_query_argument("sandbox", None) is None:
+def get_remote_server_override(handler: APIHandler) -> RemoteServerId | None:
+    remote_server = handler.get_query_argument("remote_server", None)
+    if remote_server is None:
         return None
-
-    return handler.get_query_argument("sandbox", "false").lower() in ("1", "true")
+    return RemoteServerId(remote_server)
 
 
 class ZenodoRequestsFactory(ABC):
@@ -24,12 +26,8 @@ class ZenodoRequestsFactory(ABC):
     def create_zenodo_requests(self, handler: APIHandler) -> ZenodoRequests:
         pass
 
-    @abstractmethod
-    def is_sandbox(self, zenodo_requests: ZenodoRequests) -> bool:
-        """
-        Check if the given ZenodoRequests instance is for the sandbox server.
-        """
-        pass
+    def get_remote_server_id(self, zenodo_requests: ZenodoRequests) -> RemoteServerId:
+        return get_remote_server_by_url(zenodo_requests.url).id
 
     def get_access_token_status(self, handler: APIHandler) -> AccessTokenStatus:
         zenodo_requests = self.create_zenodo_requests(handler)
@@ -44,5 +42,5 @@ class ZenodoRequestsFactory(ABC):
                 if authentication_present
                 else False
             ),
-            sandbox=self.is_sandbox(zenodo_requests),
+            remote_server_id=self.get_remote_server_id(zenodo_requests),
         )

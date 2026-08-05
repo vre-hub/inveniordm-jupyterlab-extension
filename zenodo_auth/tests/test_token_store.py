@@ -1,5 +1,6 @@
 import json
 
+from zenodo_auth.remote_servers import RemoteServerId
 from zenodo_auth.token_store import (
     BoundedTokenStore,
     FileTokenStore,
@@ -11,33 +12,38 @@ def test_file_token_store_persists_multiple_tokens(tmp_path):
     store = FileTokenStore(path)
 
     store.set_token("alice", "alice-token", True, zenodo_user_id="123")
-    store.set_token("bob", "bob-token", False, sandbox=True)
+    store.set_token(
+        "bob",
+        "bob-token",
+        False,
+        remote_server_id=RemoteServerId.ZENODO_SANDBOX,
+    )
 
     alice_token = store.get_token("alice")
     assert alice_token is not None
     assert alice_token.access_token == "alice-token"
     assert alice_token.access_token_valid is True
-    assert alice_token.sandbox is False
+    assert alice_token.remote_server_id == RemoteServerId.ZENODO_PRODUCTION
     assert alice_token.zenodo_user_id == "123"
 
     bob_token = store.get_token("bob")
     assert bob_token is not None
     assert bob_token.access_token == "bob-token"
     assert bob_token.access_token_valid is False
-    assert bob_token.sandbox is True
+    assert bob_token.remote_server_id == RemoteServerId.ZENODO_SANDBOX
 
     assert json.loads(path.read_text()) == {
         "tokens": {
             "alice": {
                 "access_token": "alice-token",
                 "access_token_valid": True,
-                "sandbox": False,
+                "remote_server_id": "zenodo_production",
                 "zenodo_user_id": "123",
             },
             "bob": {
                 "access_token": "bob-token",
                 "access_token_valid": False,
-                "sandbox": True,
+                "remote_server_id": "zenodo_sandbox",
                 "zenodo_user_id": None,
             },
         },
@@ -77,33 +83,17 @@ def test_bounded_token_store_uses_single_bound_token(tmp_path):
     multi_store = FileTokenStore(path)
     store = BoundedTokenStore(multi_store, "local-user")
 
-    store.set_token("token", True, sandbox=True, zenodo_user_id="456")
+    store.set_token(
+        "token",
+        True,
+        remote_server_id=RemoteServerId.ZENODO_SANDBOX,
+        zenodo_user_id="456",
+    )
 
     token = store.get_token()
     assert token is not None
     assert token.access_token == "token"
     assert token.access_token_valid is True
-    assert token.sandbox is True
+    assert token.remote_server_id == RemoteServerId.ZENODO_SANDBOX
     assert token.zenodo_user_id == "456"
     assert multi_store.get_token("local-user") == token
-
-
-def test_file_token_store_reads_legacy_single_token_file(tmp_path):
-    path = tmp_path / "tokens.json"
-    path.write_text(
-        json.dumps(
-            {
-                "access_token": "legacy-token",
-                "access_token_valid": False,
-                "sandbox": True,
-            }
-        )
-    )
-
-    token = FileTokenStore(path).get_token("user")
-
-    assert token is not None
-    assert token.access_token == "legacy-token"
-    assert token.access_token_valid is False
-    assert token.sandbox is True
-    assert token.zenodo_user_id is None

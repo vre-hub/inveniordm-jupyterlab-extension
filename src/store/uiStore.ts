@@ -1,16 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import { RemoteServerId } from '../remoteServers';
+
 interface IZenodoUiState {
   currentTab: string;
-  sandboxOverride: boolean | undefined;
+  remoteServerOverride: RemoteServerId | undefined;
 }
 
 const useZenodoUiStore = create<IZenodoUiState>()(
   persist(
     () => ({
       currentTab: 'login' as string,
-      sandboxOverride: undefined as boolean | undefined
+      remoteServerOverride: undefined as RemoteServerId | undefined
     }),
     {
       name: 'zenodo-jupyterlab-store'
@@ -18,30 +20,32 @@ const useZenodoUiStore = create<IZenodoUiState>()(
   )
 );
 
-function getSandboxOverride(): boolean | undefined {
-  return useZenodoUiStore.getState().sandboxOverride;
+function getRemoteServerOverride(): RemoteServerId | undefined {
+  return useZenodoUiStore.getState().remoteServerOverride;
 }
 
 function useCurrentTabID(): string {
   return useZenodoUiStore(state => state.currentTab);
 }
 
-function useSandboxOverride(): boolean | undefined {
-  return useZenodoUiStore(state => state.sandboxOverride);
+function useRemoteServerOverride(): RemoteServerId | undefined {
+  return useZenodoUiStore(state => state.remoteServerOverride);
 }
 
 function setCurrentTabID(currentTab: string): void {
   useZenodoUiStore.setState({ currentTab });
 }
 
-function setSandboxOverride(sandboxOverride: boolean | undefined): void {
-  useZenodoUiStore.setState({ sandboxOverride });
+function setRemoteServerOverride(
+  remoteServerOverride: RemoteServerId | undefined
+): void {
+  useZenodoUiStore.setState({ remoteServerOverride });
 }
 
 export {
-  getSandboxOverride,
+  getRemoteServerOverride,
   setCurrentTabID,
-  setSandboxOverride,
+  setRemoteServerOverride,
   useCurrentTabID,
-  useSandboxOverride
+  useRemoteServerOverride
 };

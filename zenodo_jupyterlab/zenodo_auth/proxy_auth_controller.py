@@ -5,11 +5,13 @@ from urllib.parse import urlencode
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
 
-from ..zenodo_requests.zenodo_requests_factory import get_sandbox_override
+from zenodo_auth.remote_servers import RemoteServerId
+
+from ..zenodo_requests.zenodo_requests_factory import get_remote_server_override
 
 
 class ProxyZenodoAuthController:
-    def __init__(self, proxy_url: Callable[[bool], str]):
+    def __init__(self, proxy_url: Callable[[RemoteServerId], str]):
         self._proxy_url = proxy_url
 
     def login(self, handler: APIHandler) -> None:
@@ -26,8 +28,9 @@ class ProxyZenodoAuthController:
         )
 
     def _redirect_to_proxy_auth(self, handler: APIHandler, action: str) -> None:
-        sandbox_override = get_sandbox_override(handler)
-        sandbox = sandbox_override if sandbox_override is not None else False
+        remote_server_id = (
+            get_remote_server_override(handler) or RemoteServerId.ZENODO_PRODUCTION
+        )
         return_to = handler.get_query_argument("return_to", None)
         if return_to is None:
             return_to = handler.request.headers.get(
@@ -39,6 +42,6 @@ class ProxyZenodoAuthController:
             )
 
         handler.redirect(
-            f"{self._proxy_url(sandbox)}/auth/{action}?"
+            f"{self._proxy_url(remote_server_id)}/auth/{action}?"
             + urlencode({"return_to": return_to})
         )

@@ -6,6 +6,7 @@ from tornado.testing import AsyncHTTPTestCase
 from zenodo_api_proxy.app import create_app
 from zenodo_api_proxy.config import Config
 from zenodo_api_proxy.types import ProxyState
+from zenodo_auth.remote_servers import RemoteServerId
 from zenodo_auth.token_store import MultiTokenStore, StoredToken
 
 
@@ -18,7 +19,8 @@ class _TokenStore(MultiTokenStore):
         token_id: str,
         access_token: str,
         access_token_valid: bool,
-        sandbox: bool = False,
+        remote_server_id: RemoteServerId = RemoteServerId.ZENODO_PRODUCTION,
+        zenodo_user_id: str | None = None,
     ) -> None:
         raise NotImplementedError
 

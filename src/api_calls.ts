@@ -6,11 +6,12 @@ import type { InsertZenodoCellAction } from './jupyterlab_interactions';
 import { requestAPI } from './request';
 import { useEventData, useEventListener } from './sse';
 import { useServerSettings } from './store';
+import { RemoteServerId } from './remoteServers';
 
 export type AccessTokenResponse = {
   access_token_present: boolean;
   access_token_valid: boolean;
-  sandbox: boolean;
+  remote_server_id: RemoteServerId;
 };
 
 export function useAccessTokenStatus(): AccessTokenResponse | undefined {
@@ -92,23 +93,23 @@ export async function unsetZenodoDownloadDirectory(
 
 /**
  * Construct the URL for Zenodo authentication (login or logout),
- * with the correct return URL and sandbox parameter.
+ * with the correct return URL and remote server parameter.
  *
  * @param serverSettings - The server settings for the JupyterLab server.
  * @param action - The action to perform ('login' or 'logout').
  * @param returnTo - The URL to return to after authentication.
- * @param sandbox - Whether to use the Zenodo sandbox environment.
+ * @param remoteServerId - The remote server to use.
  * @returns The constructed authentication URL.
  */
 export function constructZenodoAuthUrl(
   serverSettings: ServerConnection.ISettings,
   action: 'login' | 'logout',
   returnTo: string,
-  sandbox: boolean = false
+  remoteServerId: RemoteServerId = RemoteServerId.ZenodoProduction
 ): string {
   const params = new URLSearchParams({
     return_to: returnTo,
-    sandbox: sandbox.toString()
+    remote_server: remoteServerId
   });
   return (
     URLExt.join(serverSettings.baseUrl, 'zenodo-jupyterlab', 'auth', action) +

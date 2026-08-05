@@ -1,8 +1,9 @@
 import { constructZenodoAuthUrl } from '../api_calls';
 import { useServerSettings } from '../store';
+import { RemoteServerId } from '../remoteServers';
 
 export const useOpenAuth = (
-  sandbox: boolean
+  remoteServerId: RemoteServerId
 ): ((action: 'login' | 'logout') => void) => {
   const serverSettings = useServerSettings();
 
@@ -11,7 +12,7 @@ export const useOpenAuth = (
       serverSettings,
       action,
       window.location.href,
-      sandbox
+      remoteServerId
     );
   };
 };

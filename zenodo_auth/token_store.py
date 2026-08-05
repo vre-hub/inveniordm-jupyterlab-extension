@@ -7,6 +7,8 @@ from typing import Any
 
 from jupyter_core.paths import jupyter_data_dir
 
+from .remote_servers import RemoteServerId
+
 TOKEN_STORE_PATH_ENV_VAR = "ZENODO_JUPYTERLAB_TOKEN_STORE"
 
 
@@ -14,7 +16,7 @@ TOKEN_STORE_PATH_ENV_VAR = "ZENODO_JUPYTERLAB_TOKEN_STORE"
 class StoredToken:
     access_token: str
     access_token_valid: bool
-    sandbox: bool = False
+    remote_server_id: RemoteServerId = RemoteServerId.ZENODO_PRODUCTION
     zenodo_user_id: str | None = None
 
 
@@ -29,7 +31,7 @@ class MultiTokenStore(ABC):
         token_id: str,
         access_token: str,
         access_token_valid: bool,
-        sandbox: bool = False,
+        remote_server_id: RemoteServerId = RemoteServerId.ZENODO_PRODUCTION,
         zenodo_user_id: str | None = None,
     ) -> None:
         pass
@@ -51,14 +53,14 @@ class BoundedTokenStore:
         self,
         access_token: str,
         access_token_valid: bool,
-        sandbox: bool = False,
+        remote_server_id: RemoteServerId = RemoteServerId.ZENODO_PRODUCTION,
         zenodo_user_id: str | None = None,
     ) -> None:
         self.multi_store.set_token(
             self.token_id,
             access_token,
             access_token_valid,
-            sandbox,
+            remote_server_id,
             zenodo_user_id,
         )
 
@@ -90,7 +92,7 @@ class FileTokenStore(MultiTokenStore):
         return StoredToken(
             access_token=token_data["access_token"],
             access_token_valid=bool(token_data.get("access_token_valid", True)),
-            sandbox=bool(token_data.get("sandbox", False)),
+            remote_server_id=RemoteServerId(token_data["remote_server_id"]),
             zenodo_user_id=token_data.get("zenodo_user_id"),
         )
 
@@ -99,7 +101,7 @@ class FileTokenStore(MultiTokenStore):
         token_id: str,
         access_token: str,
         access_token_valid: bool,
-        sandbox: bool = False,
+        remote_server_id: RemoteServerId = RemoteServerId.ZENODO_PRODUCTION,
         zenodo_user_id: str | None = None,
     ) -> None:
         data = self._read_tokens()
@@ -107,7 +109,7 @@ class FileTokenStore(MultiTokenStore):
             StoredToken(
                 access_token,
                 access_token_valid,
-                sandbox,
+                remote_server_id,
                 zenodo_user_id,
             ),
         )
@@ -130,10 +132,6 @@ class FileTokenStore(MultiTokenStore):
 
         if isinstance(data, dict) and isinstance(data.get("tokens"), dict):
             return data["tokens"]
-
-        # Backwards compatibility for the former single-token file format.
-        if isinstance(data, dict) and isinstance(data.get("access_token"), str):
-            return {"user": data}
 
         return {}
 
