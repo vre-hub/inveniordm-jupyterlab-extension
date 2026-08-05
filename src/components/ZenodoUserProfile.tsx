@@ -9,7 +9,7 @@ export const ZenodoUserProfile: React.FC = () => {
   if (profile === null) {
     return error ? (
       <div
-        className="flex items-start gap-2 rounded-md border border-danger-border bg-danger-subtle p-3 text-sm text-danger"
+        className="flex items-start gap-2 rounded-md border border-danger-border bg-danger-subtle px-2 py-3 text-sm text-danger"
         role="alert"
       >
         <AlertCircle aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
@@ -19,7 +19,7 @@ export const ZenodoUserProfile: React.FC = () => {
   }
 
   return (
-    <div className="mb-4 flex min-w-0 items-center gap-3 rounded-lg bg-primary-subtle p-3">
+    <div className="mb-4 flex min-w-0 items-center gap-2 rounded-lg bg-primary-subtle px-2 py-3">
       <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary shadow-sm">
         <UserRound aria-hidden="true" className="size-5" />
       </div>

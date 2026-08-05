@@ -21,7 +21,7 @@ export const ZenodoLoginForm: React.FC = () => {
   return (
     <div>
       {!loggedIn && (
-        <div className="p-5">
+        <div className="px-3 py-5">
           <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-primary-subtle text-primary">
             <KeyRound aria-hidden="true" className="size-5" />
           </div>
@@ -35,7 +35,7 @@ export const ZenodoLoginForm: React.FC = () => {
         </div>
       )}
       {loggedIn && (
-        <div className="p-4">
+        <div className="px-3 py-4">
           <ZenodoUserProfile />
           {accessStatus.sandbox && (
             <div className="mb-4 mt-3 flex items-center gap-2 rounded-md bg-warning-subtle px-3 py-2 text-xs font-medium text-warning-strong">

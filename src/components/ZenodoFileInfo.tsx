@@ -23,15 +23,15 @@ export const ZenodoFileInfo: React.FC<{
 
   if (status === null) {
     return (
-      <div className="mb-2 animate-pulse rounded-lg border border-border bg-surface p-4 text-sm text-muted">
+      <div className="mb-2 animate-pulse rounded-lg border border-border bg-surface px-2 py-3 text-sm text-muted">
         Checking download status…
       </div>
     );
   }
 
   return (
-    <div className="relative mb-2 rounded-lg border border-border bg-surface p-4 pr-12 shadow-sm transition-shadow hover:shadow-md">
-      <div className="absolute right-3 top-3">
+    <div className="relative mb-2 rounded-lg border border-border bg-surface py-3 pl-2 pr-10 shadow-sm transition-shadow hover:shadow-md">
+      <div className="absolute right-2 top-2">
         <ZenodoFileActions
           download={download}
           editable={editable}

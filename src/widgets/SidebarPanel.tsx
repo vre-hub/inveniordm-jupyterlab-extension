@@ -73,7 +73,7 @@ const Panel: React.FC = () => {
       />
       <div
         aria-labelledby={`tab-${selectedTab.id}`}
-        className="min-h-0 flex-1 overflow-y-auto p-3"
+        className="min-h-0 flex-1 overflow-y-auto px-2 py-3"
         id={TAB_PANEL_ID}
         role="tabpanel"
         tabIndex={0}

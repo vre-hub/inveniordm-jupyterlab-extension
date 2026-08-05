@@ -21,7 +21,7 @@ export const ZenodoUserRecordList: React.FC = () => {
   if (records && 'error' in records) {
     return (
       <div
-        className="flex items-start gap-3 rounded-lg border border-danger-border bg-danger-subtle p-4 text-danger shadow-sm"
+        className="flex items-start gap-2 rounded-lg border border-danger-border bg-danger-subtle px-2 py-3 text-danger shadow-sm"
         role="alert"
       >
         <AlertCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0" />

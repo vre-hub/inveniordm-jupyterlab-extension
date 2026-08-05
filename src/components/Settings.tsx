@@ -9,7 +9,7 @@ export function Settings(): JSX.Element {
   return (
     <div className="space-y-4">
       <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-        <div className="flex items-start gap-3 border-b border-border bg-surface-muted px-4 py-3">
+        <div className="flex items-start gap-2 border-b border-border bg-surface-muted px-2 py-3">
           <Download
             aria-hidden="true"
             className="mt-0.5 size-4 shrink-0 text-primary"
@@ -23,13 +23,13 @@ export function Settings(): JSX.Element {
             </p>
           </div>
         </div>
-        <div className="p-4">
+        <div className="px-2 py-4">
           <SelectDownloadDirectory />
         </div>
       </section>
 
       <details className="group overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-        <summary className="flex cursor-pointer list-none items-start gap-3 bg-surface-muted px-4 py-3 transition-colors hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-start gap-2 bg-surface-muted px-2 py-3 transition-colors hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
           <FlaskConical
             aria-hidden="true"
             className="mt-0.5 size-4 shrink-0 text-warning"
@@ -44,7 +44,7 @@ export function Settings(): JSX.Element {
             className="mt-0.5 size-4 shrink-0 text-muted transition-transform group-open:rotate-180"
           />
         </summary>
-        <div className="space-y-4 border-t border-border p-4">
+        <div className="space-y-4 border-t border-border px-2 py-4">
           <ZenodoSandboxOverrideSetting />
           <div className="border-t border-border pt-4">
             <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">

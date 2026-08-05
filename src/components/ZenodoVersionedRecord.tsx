@@ -31,7 +31,7 @@ export function ZenodoVersionedRecord(
 function RecordLoadingError({ error }: { error: string }): JSX.Element {
   return (
     <div
-      className="flex items-start gap-3 rounded-lg border border-danger-border bg-danger-subtle p-4 text-danger shadow-sm"
+      className="flex items-start gap-2 rounded-lg border border-danger-border bg-danger-subtle px-2 py-3 text-danger shadow-sm"
       role="alert"
     >
       <AlertCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
@@ -47,7 +47,7 @@ function RecordLoading(): JSX.Element {
   return (
     <div
       aria-label="Loading record"
-      className="flex items-center justify-center gap-2 rounded-lg border border-border bg-surface-muted px-4 py-8 text-sm font-medium text-muted shadow-sm"
+      className="flex items-center justify-center gap-2 rounded-lg border border-border bg-surface-muted px-2 py-8 text-sm font-medium text-muted shadow-sm"
       role="status"
     >
       <LoaderCircle
@@ -68,7 +68,7 @@ function RecordDeleted(): JSX.Element | null {
 
   return (
     <div
-      className="flex items-center gap-3 rounded-lg border border-border bg-surface-muted p-3 shadow-sm"
+      className="flex items-center gap-2 rounded-lg border border-border bg-surface-muted px-2 py-3 shadow-sm"
       role="status"
     >
       <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-muted">

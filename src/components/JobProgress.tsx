@@ -17,7 +17,7 @@ export const JobProgress: React.FC<JobProgressProps> = props => {
   if (loadingProgress || !progress) {
     return (
       <div
-        className="box-border flex min-h-16 w-full items-center gap-2 rounded-lg border border-border bg-surface-muted p-3 text-xs text-muted shadow-sm"
+        className="box-border flex min-h-16 w-full items-center gap-2 rounded-lg border border-border bg-surface-muted px-2 py-3 text-xs text-muted shadow-sm"
         role="status"
       >
         <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
@@ -77,8 +77,8 @@ export const JobProgress: React.FC<JobProgressProps> = props => {
   }[progress.status];
 
   return (
-    <div className="box-border w-full min-w-0 rounded-lg border border-border bg-surface-muted p-3 text-xs shadow-sm">
-      <div className="flex items-center justify-between gap-3">
+    <div className="box-border w-full min-w-0 rounded-lg border border-border bg-surface-muted px-2 py-3 text-xs shadow-sm">
+      <div className="flex items-center justify-between gap-2">
         <div
           className={`inline-flex min-w-0 items-center gap-1.5 font-medium ${statusPresentation.className}`}
           role="status"

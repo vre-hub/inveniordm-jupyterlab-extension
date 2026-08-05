@@ -29,7 +29,7 @@ export function PickFilesButton({
   return (
     <div className="box-border w-full rounded-lg border border-dashed border-border-strong bg-surface-muted p-2">
       <button
-        className="group flex w-full cursor-pointer items-center justify-center gap-3 rounded-md border-0 bg-surface px-4 py-2 text-left text-foreground-secondary shadow-sm transition-colors hover:bg-primary-subtle hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+        className="group flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border-0 bg-surface px-2 py-2 text-left text-foreground-secondary shadow-sm transition-colors hover:bg-primary-subtle hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
         disabled={disabled}
         onClick={selectFiles}
         type="button"
