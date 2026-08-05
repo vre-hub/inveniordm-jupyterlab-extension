@@ -36,7 +36,7 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
 
   return (
     <RecordActionProvider>
-      <div className="relative mb-2 rounded-lg border border-border bg-surface px-2 py-3 shadow-sm">
+      <div className="relative mb-3 rounded-lg border border-border bg-surface px-2 py-3 shadow-sm">
         <section>
           <div className="mb-2 flex items-center gap-2">
             <div className="min-w-0 flex-1">
