@@ -38,7 +38,7 @@ export function PickFilesButton({
         <span className="flex flex-col gap-0.5">
           <span className="text-sm font-medium">{buttonText}</span>
           <span className="text-xs font-normal text-muted group-hover:text-primary">
-            Choose one or more files from JupyterLab
+            Choose files from JupyterLab
           </span>
         </span>
       </button>
