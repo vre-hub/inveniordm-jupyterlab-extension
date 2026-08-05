@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Protocol
 
+from zenodo_auth.remote_servers import RemoteServerId
+
 from .zenodo_file_identifier import ZenodoFileIdentifier
 from .zenodo_requests.zenodo import ZenodoFileResponse
 
@@ -21,8 +23,9 @@ class ZenodoDownloadLocationManager:
     Resolves Zenodo file download locations on disk.
     """
 
-    def __init__(self, downloads_dir: Path):
+    def __init__(self, downloads_dir: Path, remote_server_id: RemoteServerId):
         self.downloads_dir = downloads_dir
+        self.remote_server_id = remote_server_id
 
     def find_downloaded_file(
         self,
@@ -57,6 +60,7 @@ class ZenodoDownloadLocationManager:
 
         return (
             self.downloads_dir
+            / self.remote_server_id
             / safe_record_id
             / file_id.record_status
             / safe_file_key

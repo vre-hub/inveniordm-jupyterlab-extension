@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from zenodo_auth.remote_servers import RemoteServerId
+
 from .util.job_manager import JobContext, JobManager, ProgressListener
 from .util.job_types import JobProgress
 from .zenodo_downloads import ZenodoDownloads, ZenodoFileSource
@@ -15,9 +17,10 @@ class ZenodoDownloadManager:
     def __init__(
         self,
         downloads_dir: Path,
+        remote_server_id: RemoteServerId,
         job_manager: JobManager | None = None,
     ):
-        self.zenodo_downloads = ZenodoDownloads(downloads_dir)
+        self.zenodo_downloads = ZenodoDownloads(downloads_dir, remote_server_id)
         self.job_manager = job_manager or JobManager()
 
     def start_download(

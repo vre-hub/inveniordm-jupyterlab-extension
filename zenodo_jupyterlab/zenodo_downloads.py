@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from zenodo_auth.remote_servers import RemoteServerId
+
 from .util.job_types import (
     CancelCheck,
     DownloadProgressCallback,
@@ -18,8 +20,10 @@ class ZenodoDownloads:
     Resolves Zenodo file download locations and writes downloaded files to disk.
     """
 
-    def __init__(self, downloads_dir: Path):
-        self.location_manager = ZenodoDownloadLocationManager(downloads_dir)
+    def __init__(self, downloads_dir: Path, remote_server_id: RemoteServerId):
+        self.location_manager = ZenodoDownloadLocationManager(
+            downloads_dir, remote_server_id
+        )
 
     def get_download_location(
         self,

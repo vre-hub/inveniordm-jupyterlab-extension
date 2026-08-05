@@ -1024,8 +1024,12 @@ def setup_route_handlers(web_app):
 
     def get_zenodo_download_manager(handler: APIHandler) -> ZenodoDownloadManager:
         settings = get_user_settings(handler)
+        zenodo_requests = get_zenodo_requests(handler)
         return ZenodoDownloadManager(
             settings.get_downloads_directory(),
+            remote_server_id=zenodo_requests_factory.get_remote_server_id(
+                zenodo_requests
+            ),
             job_manager=job_manager,
         )
 

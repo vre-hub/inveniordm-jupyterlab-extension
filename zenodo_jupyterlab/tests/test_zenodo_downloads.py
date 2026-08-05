@@ -1,3 +1,5 @@
+from zenodo_auth.remote_servers import RemoteServerId
+
 from zenodo_jupyterlab.zenodo_download_location_manager import (
     ZenodoDownloadLocationManager,
 )
@@ -8,7 +10,9 @@ from zenodo_jupyterlab.zenodo_file_identifier import (
 
 
 def test_draft_and_published_downloads_have_distinct_locations(tmp_path):
-    locations = ZenodoDownloadLocationManager(tmp_path)
+    locations = ZenodoDownloadLocationManager(
+        tmp_path, RemoteServerId.ZENODO_SANDBOX
+    )
     draft_file = ZenodoFileIdentifier(
         record_id="123",
         record_status="draft",
@@ -21,10 +25,10 @@ def test_draft_and_published_downloads_have_distinct_locations(tmp_path):
     )
 
     assert locations.download_location(file_id=draft_file) == (
-        tmp_path / "123" / "draft" / "data.csv"
+        tmp_path / "zenodo_sandbox" / "123" / "draft" / "data.csv"
     )
     assert locations.download_location(file_id=published_file) == (
-        tmp_path / "123" / "published" / "data.csv"
+        tmp_path / "zenodo_sandbox" / "123" / "published" / "data.csv"
     )
 
 
