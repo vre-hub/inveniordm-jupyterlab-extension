@@ -42,7 +42,7 @@ export const ZenodoFileInfo: React.FC<{
 
       <div className="min-w-0">
         <div
-          className="truncate text-sm font-semibold text-foreground"
+          className="truncate text-xs font-medium text-foreground"
           title={file.key}
         >
           {file.key}

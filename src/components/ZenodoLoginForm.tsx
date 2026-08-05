@@ -25,7 +25,7 @@ export const ZenodoLoginForm: React.FC = () => {
           <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-primary-subtle text-primary">
             <KeyRound aria-hidden="true" className="size-5" />
           </div>
-          <h2 className="m-0 text-base font-semibold text-foreground">
+          <h2 className="m-0 text-sm font-semibold text-foreground">
             Connect your Zenodo account
           </h2>
           <p className="mb-5 mt-1.5 text-sm leading-5 text-muted-strong">

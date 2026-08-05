@@ -20,7 +20,7 @@ export const ZenodoRecordDraftUpload: React.FC = () => {
 
   return (
     <div>
-      <h2>Upload</h2>
+      <h2 className="m-0 text-sm font-semibold text-foreground">Upload</h2>
       <p>
         Upload files to a Zenodo draft. You will be able to edit the draft
         metadata and publish it on Zenodo after the upload.
