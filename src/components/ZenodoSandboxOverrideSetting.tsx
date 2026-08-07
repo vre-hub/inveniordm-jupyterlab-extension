@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 
 import { RemoteServerId } from '../remoteServers';
 import { setRemoteServerOverride, useRemoteServerOverride } from '../store';
+import { useRemoteServers } from '../core';
 
 type RemoteServerOverrideValue = 'default' | RemoteServerId;
 
@@ -28,6 +29,7 @@ function fromSelectValue(
 
 export const ZenodoSandboxOverrideSetting: React.FC = () => {
   const remoteServerOverride = useRemoteServerOverride();
+  const remoteServers = useRemoteServers();
 
   return (
     <label className="block">
@@ -49,8 +51,11 @@ export const ZenodoSandboxOverrideSetting: React.FC = () => {
           value={toSelectValue(remoteServerOverride)}
         >
           <option value="default">Use login environment</option>
-          <option value={'zenodo_production'}>Production</option>
-          <option value={'zenodo_sandbox'}>Sandbox</option>
+          {remoteServers.map(remoteServer => (
+            <option key={remoteServer.id} value={remoteServer.id}>
+              {remoteServer.label}
+            </option>
+          ))}
         </select>
         <ChevronDown
           aria-hidden="true"

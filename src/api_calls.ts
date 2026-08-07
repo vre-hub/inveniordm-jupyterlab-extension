@@ -14,6 +14,20 @@ export type AccessTokenResponse = {
   remote_server_id: RemoteServerId;
 };
 
+export type RemoteServerOption = {
+  id: RemoteServerId;
+  label: string;
+};
+
+export async function getRemoteServers(
+  serverSettings: ServerConnection.ISettings
+): Promise<RemoteServerOption[]> {
+  return await requestAPI<RemoteServerOption[]>(
+    'remote-servers',
+    serverSettings
+  );
+}
+
 export function useAccessTokenStatus(): AccessTokenResponse | undefined {
   const serverSettings = useServerSettings();
   const [status, setStatus] = React.useState<AccessTokenResponse>();

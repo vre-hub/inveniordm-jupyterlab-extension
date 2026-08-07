@@ -1,5 +1,5 @@
 c = get_config()  # noqa: F821
-c.ZenodoJupyterLab.remote_servers_mode = "replace"
+c.ZenodoJupyterLab.remote_servers_mode = "extend"
 c.ZenodoJupyterLab.remote_servers = {
     "inveniordm_local": {
         "label": "InvenioRDM Local",

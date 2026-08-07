@@ -11,6 +11,7 @@ export * from './useHasEditingRights';
 export * from './useInsertImportCell';
 export * from './useJobProgressUpdates';
 export * from './useOpenAuth';
+export * from './useRemoteServers';
 export * from './useSetZenodoDownloadDirectory';
 export * from './useUnsetZenodoDownloadDirectory';
 export * from './useZenodoFileIdentifierFromProps';

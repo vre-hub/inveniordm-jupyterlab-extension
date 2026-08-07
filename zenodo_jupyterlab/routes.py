@@ -9,8 +9,8 @@ import tornado
 from jupyter_core.paths import jupyter_data_dir
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
-from zenodo_auth.remote_servers import RemoteServerRegistry
 
+from zenodo_auth.remote_servers import RemoteServerRegistry
 from zenodo_jupyterlab.user_settings import (
     ZenodoUserSettings,
     ZenodoUserSettingsFromFile,
@@ -126,6 +126,25 @@ class ZenodoAccessTokenHandler(APIHandler):
     def get(self):
         status = self.zenodo_requests_factory.get_access_token_status(self)
         self.finish(json.dumps(status.__dict__))
+
+
+class ZenodoRemoteServersHandler(APIHandler):
+    def initialize(self, remote_servers: RemoteServerRegistry):
+        self.remote_servers = remote_servers
+
+    @tornado.web.authenticated
+    def get(self):
+        self.finish(
+            json.dumps(
+                [
+                    {
+                        "id": server.id,
+                        "label": server.label,
+                    }
+                    for server in self.remote_servers.all()
+                ]
+            )
+        )
 
 
 class ZenodoAuthHandler(APIHandler):
@@ -1050,6 +1069,11 @@ def setup_route_handlers(
             url_path_join(zenodo_base_url, "access-token"),
             ZenodoAccessTokenHandler,
             {"zenodo_requests_factory": zenodo_requests_factory},
+        ),
+        (
+            url_path_join(zenodo_base_url, "remote-servers"),
+            ZenodoRemoteServersHandler,
+            {"remote_servers": remote_servers},
         ),
         (
             url_path_join(zenodo_base_url, "auth", r"(login|logout|callback)"),
