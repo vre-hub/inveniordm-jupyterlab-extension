@@ -73,8 +73,8 @@ class ZenodoJupyterLab(Configurable):
             )
         if self.remote_servers_mode == "extend":
             configured_servers: dict[str, dict[str, Any]] = {
-                **DEFAULT_REMOTE_SERVERS,
                 **self.remote_servers,
+                **DEFAULT_REMOTE_SERVERS,
             }
         else:
             configured_servers = dict(self.remote_servers)
