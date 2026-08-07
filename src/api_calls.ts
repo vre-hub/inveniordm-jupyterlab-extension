@@ -30,6 +30,15 @@ export async function getRemoteServers(
   );
 }
 
+export async function getRemoteServersDefault(
+  serverSettings: ServerConnection.ISettings
+): Promise<RemoteServerOption> {
+  return await requestAPI<RemoteServerOption>(
+    'remote-servers/default',
+    serverSettings
+  );
+}
+
 export function useAccessTokenStatus(): AccessTokenResponse | undefined {
   const serverSettings = useServerSettings();
   const [status, setStatus] = React.useState<AccessTokenResponse>();

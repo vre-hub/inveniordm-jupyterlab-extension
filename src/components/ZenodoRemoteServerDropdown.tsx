@@ -10,6 +10,7 @@ type ZenodoRemoteServerDropdownProps = {
   value: RemoteServerId | undefined;
   onChange: (value: RemoteServerId | undefined) => void;
   ariaLabel?: string;
+  useDefaultOption?: boolean;
   defaultOptionLabel?: string;
   className?: string;
 };
@@ -41,6 +42,7 @@ export const ZenodoRemoteServerDropdown: React.FC<
   onChange,
   ariaLabel = 'Zenodo remote server',
   defaultOptionLabel = 'Default',
+  useDefaultOption = true,
   className
 }) => {
   const remoteServers = useRemoteServers();
@@ -58,7 +60,9 @@ export const ZenodoRemoteServerDropdown: React.FC<
           }
           value={toSelectValue(value)}
         >
-          <option value="default">{defaultOptionLabel}</option>
+          {useDefaultOption && (
+            <option value="default">{defaultOptionLabel}</option>
+          )}
           {remoteServers.map(remoteServer => (
             <option key={remoteServer.id} value={remoteServer.id}>
               {remoteServer.label}

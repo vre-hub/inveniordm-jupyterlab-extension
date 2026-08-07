@@ -7,12 +7,21 @@ import { ZenodoUserProfile } from './ZenodoUserProfile';
 import { useAccessTokenStatus } from '../api_calls';
 import { RemoteServerId } from '../remoteServers';
 import { LoadingPanel } from './LoadingPanel';
+import { useGetRemoteServersDefault } from '../core/useGetRemoteServersDefault';
 
 export const ZenodoLoginForm: React.FC = () => {
   const accessStatus = useAccessTokenStatus();
   const [loginRemoteServer, setLoginRemoteServer] = React.useState<
     RemoteServerId | undefined
   >();
+
+  // Get the default remote server and set it as the initial value for loginRemoteServer
+  const defaultOption = useGetRemoteServersDefault();
+  React.useEffect(() => {
+    if (defaultOption) {
+      setLoginRemoteServer(defaultOption.id as RemoteServerId);
+    }
+  }, [defaultOption]);
 
   if (!accessStatus) {
     return <LoadingPanel text="Checking Zenodo login status…" />;
@@ -47,9 +56,9 @@ export const ZenodoLoginForm: React.FC = () => {
               <div className="mt-2">
                 <ZenodoRemoteServerDropdown
                   ariaLabel="Zenodo login environment"
-                  defaultOptionLabel="Use default"
                   onChange={setLoginRemoteServer}
                   value={loginRemoteServer}
+                  useDefaultOption={false}
                 />
               </div>
             </label>

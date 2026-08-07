@@ -147,6 +147,22 @@ class ZenodoRemoteServersHandler(APIHandler):
         )
 
 
+class ZenodoRemoteServersDefaultHandler(APIHandler):
+    def initialize(self, remote_servers: RemoteServerRegistry):
+        self.remote_servers = remote_servers
+
+    @tornado.web.authenticated
+    def get(self):
+        self.finish(
+            json.dumps(
+                {
+                    "id": self.remote_servers.default.id,
+                    "label": self.remote_servers.default.label,
+                }
+            )
+        )
+
+
 class ZenodoAuthHandler(APIHandler):
     def initialize(self, zenodo_auth_controller: ZenodoAuthController):
         self.zenodo_auth_controller = zenodo_auth_controller
@@ -1073,6 +1089,11 @@ def setup_route_handlers(
         (
             url_path_join(zenodo_base_url, "remote-servers"),
             ZenodoRemoteServersHandler,
+            {"remote_servers": remote_servers},
+        ),
+        (
+            url_path_join(zenodo_base_url, "remote-servers", "default"),
+            ZenodoRemoteServersDefaultHandler,
             {"remote_servers": remote_servers},
         ),
         (
