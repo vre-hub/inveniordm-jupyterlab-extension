@@ -524,7 +524,7 @@ export type ZenodoFile = {
     download?: string;
   };
 };
-type ZenodoRecordStatus = 'new_version_draft' | 'draft' | 'published';
+type ZenodoRecordStatus = 'new_version_draft' | 'draft' | 'published' | string;
 // TODO check if these fields exist/ if they are always present
 
 export type ZenodoRecordData = {

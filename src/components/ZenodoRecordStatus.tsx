@@ -23,7 +23,9 @@ const STATUS_STYLES: Record<
 export const ZenodoRecordStatus: React.FC<{
   status: ZenodoRecordData['status'];
 }> = ({ status }) => {
-  const { label, className } = STATUS_STYLES[status];
+  const { label, className } = Object.entries(STATUS_STYLES).find(
+    ([key]) => key === status
+  )?.[1] ?? { label: status, className: 'bg-muted text-muted-strong' };
 
   return (
     <span

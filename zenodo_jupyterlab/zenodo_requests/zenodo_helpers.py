@@ -1,5 +1,7 @@
 from typing import Any
 
+import requests
+
 from .zenodo import list_zenodo_record_files
 
 
@@ -34,11 +36,15 @@ def include_zenodo_file(
     if not files_url:
         return
 
-    files = list_zenodo_record_files(
-        files_url,
-        base_url=base_url,
-        headers=headers,
-    )
+    try:
+        files = list_zenodo_record_files(
+            files_url,
+            base_url=base_url,
+            headers=headers,
+        )
+    except requests.HTTPError as error:
+        print(f"Failed to fetch files for record {item.get('id')}: {error}")
+        return
     entries = files.get("entries")
     # entries is a list, but we want to store it as a dict keyed by the file key for compatibility with the rest of the api
     if isinstance(entries, list):

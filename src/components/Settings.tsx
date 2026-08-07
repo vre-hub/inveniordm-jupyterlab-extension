@@ -53,6 +53,24 @@ export function Settings(): JSX.Element {
             </p>
             <AuthButtons remoteServerId={RemoteServerId.ZenodoSandbox} />
           </div>
+          <div className="border-t border-border pt-4">
+            <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
+              CDS session
+            </p>
+            <AuthButtons remoteServerId={RemoteServerId.CdsRepository} />
+          </div>
+          <div className="border-t border-border pt-4">
+            <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
+              CDS Sandbox session
+            </p>
+            <AuthButtons remoteServerId={RemoteServerId.CdsRepositorySandbox} />
+          </div>
+          <div className="border-t border-border pt-4">
+            <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
+              InvenioRDM Local session
+            </p>
+            <AuthButtons remoteServerId={RemoteServerId.InvenioRdmLocal} />
+          </div>
         </div>
       </details>
     </div>

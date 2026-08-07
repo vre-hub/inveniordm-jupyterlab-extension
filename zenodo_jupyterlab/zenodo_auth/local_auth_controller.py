@@ -19,7 +19,7 @@ from zenodo_auth.tornado_oauth import (
 
 from ..zenodo_requests.zenodo_requests_factory import get_remote_server_override
 
-OAUTH_SCOPE = "deposit:write deposit:actions"
+OAUTH_SCOPE = "user:email"
 
 
 class LocalZenodoAuthController:

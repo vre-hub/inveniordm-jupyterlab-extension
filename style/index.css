@@ -362,6 +362,9 @@
   .bg-danger-subtle {
     background-color: var(--color-danger-subtle);
   }
+  .bg-muted {
+    background-color: var(--color-muted);
+  }
   .bg-primary {
     background-color: var(--color-primary);
   }
