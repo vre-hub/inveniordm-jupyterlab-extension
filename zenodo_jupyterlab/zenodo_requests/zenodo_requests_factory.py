@@ -35,6 +35,7 @@ class ZenodoRequestsFactory(ABC):
     def get_access_token_status(self, handler: APIHandler) -> AccessTokenStatus:
         zenodo_requests = self.create_zenodo_requests(handler)
         authentication_present = bool(zenodo_requests.headers)
+        remote_server_id = self.get_remote_server_id(zenodo_requests)
         return AccessTokenStatus(
             access_token_present=authentication_present,
             access_token_valid=(
@@ -45,5 +46,7 @@ class ZenodoRequestsFactory(ABC):
                 if authentication_present
                 else False
             ),
-            remote_server_id=self.get_remote_server_id(zenodo_requests),
+            remote_server_id=remote_server_id,
+            remote_server_label=self.remote_servers.get(remote_server_id).label,
+            remote_server_base_url=self.remote_servers.get(remote_server_id).base_url,
         )

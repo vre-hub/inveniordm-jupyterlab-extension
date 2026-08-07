@@ -5,7 +5,6 @@ from typing import Any
 import requests
 
 from zenodo_auth.remote_servers import RemoteServerId
-
 from zenodo_jupyterlab.zenodo_requests.zenodo_helpers import (
     include_zenodo_file_if_draft_or_restricted,
 )
@@ -20,8 +19,8 @@ from .zenodo import (
     check_user_record_permission_workaround,
     create_zenodo_record_draft,
     create_zenodo_record_version,
-    delete_zenodo_record_draft,
     delete_zenodo_draft_file,
+    delete_zenodo_record_draft,
     get_zenodo_me,
     get_zenodo_record_public_or_draft,
     list_zenodo_record_versions,
@@ -37,6 +36,8 @@ class AccessTokenStatus:
     access_token_present: bool
     access_token_valid: bool
     remote_server_id: RemoteServerId
+    remote_server_label: str
+    remote_server_base_url: str
 
 
 class ZenodoRequests:

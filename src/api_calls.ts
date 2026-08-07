@@ -12,6 +12,8 @@ export type AccessTokenResponse = {
   access_token_present: boolean;
   access_token_valid: boolean;
   remote_server_id: RemoteServerId;
+  remote_server_label: string;
+  remote_server_base_url: string;
 };
 
 export type RemoteServerOption = {

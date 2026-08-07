@@ -60,12 +60,20 @@ export const ZenodoLoginForm: React.FC = () => {
       {loggedIn && (
         <div className="px-3 py-4">
           <ZenodoUserProfile />
-          {accessStatus.remote_server_id === 'zenodo_sandbox' && (
-            <div className="mb-4 mt-3 flex items-center gap-2 rounded-md bg-warning-subtle px-3 py-2 text-xs font-medium text-warning-strong">
-              <ShieldCheck aria-hidden="true" className="size-4 shrink-0" />
-              Connected to the Zenodo sandbox environment
-            </div>
-          )}
+          <div className="mb-4 mt-3 flex items-center gap-2 rounded-md bg-warning-subtle px-3 py-2 text-xs font-medium text-warning-strong">
+            <ShieldCheck aria-hidden="true" className="size-4 shrink-0" />
+
+            <span>
+              Connected to{' '}
+              <a
+                href={accessStatus.remote_server_base_url}
+                className="font-semibold text-warning-strong underline underline-offset-2 transition-colors hover:text-warning"
+                target="_blank"
+              >
+                {accessStatus.remote_server_label}
+              </a>
+            </span>
+          </div>
           <LogoutButton remoteServerId={loginRemoteServer} />
         </div>
       )}
