@@ -7,7 +7,10 @@ import { ZenodoUserProfile } from './ZenodoUserProfile';
 import { useAccessTokenStatus } from '../api_calls';
 import { RemoteServerId } from '../remoteServers';
 import { LoadingPanel } from './LoadingPanel';
-import { useGetRemoteServersDefault } from '../core/useGetRemoteServersDefault';
+import {
+  useGetRemoteServersDefault,
+  useShouldShowRemoteServerDropdownForLogin
+} from '../core';
 
 export const ZenodoLoginForm: React.FC = () => {
   const accessStatus = useAccessTokenStatus();
@@ -22,6 +25,8 @@ export const ZenodoLoginForm: React.FC = () => {
       setLoginRemoteServer(defaultOption.id as RemoteServerId);
     }
   }, [defaultOption]);
+
+  const showDropdown = useShouldShowRemoteServerDropdownForLogin();
 
   if (!accessStatus) {
     return <LoadingPanel text="Checking Zenodo login status…" />;
@@ -45,24 +50,26 @@ export const ZenodoLoginForm: React.FC = () => {
           <p className="mb-5 mt-1.5 text-sm leading-5 text-muted-strong">
             Log in to access your account, manage records, and upload files.
           </p>
-          <div className="mb-4">
-            <label className="block">
-              <span className="block text-sm font-medium text-foreground-secondary">
-                Zenodo environment
-              </span>
-              <span className="mt-1 block text-xs leading-5 text-muted">
-                Choose the environment to log into for this session.
-              </span>
-              <div className="mt-2">
-                <ZenodoRemoteServerDropdown
-                  ariaLabel="Zenodo login environment"
-                  onChange={setLoginRemoteServer}
-                  value={loginRemoteServer}
-                  useDefaultOption={false}
-                />
-              </div>
-            </label>
-          </div>
+          {showDropdown && (
+            <div className="mb-4">
+              <label className="block">
+                <span className="block text-sm font-medium text-foreground-secondary">
+                  Zenodo environment
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-muted">
+                  Choose the environment to log into for this session.
+                </span>
+                <div className="mt-2">
+                  <ZenodoRemoteServerDropdown
+                    ariaLabel="Zenodo login environment"
+                    onChange={setLoginRemoteServer}
+                    value={loginRemoteServer}
+                    useDefaultOption={false}
+                  />
+                </div>
+              </label>
+            </div>
+          )}
           <LoginButton remoteServerId={loginRemoteServer} />
         </div>
       )}

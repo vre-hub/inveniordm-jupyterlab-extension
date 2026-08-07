@@ -42,7 +42,7 @@ remote_servers_modes = ["extend", "replace"]
 class ZenodoJupyterLab(Configurable):
     remote_servers_mode = Enum(
         remote_servers_modes,
-        default_value="extend",
+        default_value="replace",
         config=True,
         help="How configured remote servers should be applied to the built-in defaults.",
     )
