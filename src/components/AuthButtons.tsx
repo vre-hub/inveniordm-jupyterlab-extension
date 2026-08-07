@@ -10,7 +10,6 @@ type AuthButtonProps = {
 
 export const LoginButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
   const openAuth = useOpenAuth(remoteServerId);
-  const sandbox = remoteServerId === RemoteServerId.ZenodoSandbox;
 
   return (
     <button
@@ -19,14 +18,13 @@ export const LoginButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
       type="button"
     >
       <LogIn aria-hidden="true" className="size-4 shrink-0" />
-      Log in{sandbox ? ' to sandbox' : ''}
+      Log in
     </button>
   );
 };
 
 export const LogoutButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
   const openAuth = useOpenAuth(remoteServerId);
-  const sandbox = remoteServerId === RemoteServerId.ZenodoSandbox;
 
   return (
     <button
@@ -35,7 +33,7 @@ export const LogoutButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
       type="button"
     >
       <LogOut aria-hidden="true" className="size-4 shrink-0" />
-      Log out{sandbox ? ' of sandbox' : ''}
+      Log out
     </button>
   );
 };

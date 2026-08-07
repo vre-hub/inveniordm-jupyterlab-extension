@@ -49,8 +49,8 @@ export const ZenodoSandboxOverrideSetting: React.FC = () => {
           value={toSelectValue(remoteServerOverride)}
         >
           <option value="default">Use login environment</option>
-          <option value={RemoteServerId.ZenodoProduction}>Production</option>
-          <option value={RemoteServerId.ZenodoSandbox}>Sandbox</option>
+          <option value={'zenodo_production'}>Production</option>
+          <option value={'zenodo_sandbox'}>Sandbox</option>
         </select>
         <ChevronDown
           aria-hidden="true"

@@ -4,7 +4,6 @@ import { ChevronDown, Download, FlaskConical } from 'lucide-react';
 import { AuthButtons } from './AuthButtons';
 import { ZenodoSandboxOverrideSetting } from './ZenodoSandboxOverrideSetting';
 import { SelectDownloadDirectory } from './DownloadDirectoryPicker';
-import { RemoteServerId } from '../remoteServers';
 
 export function Settings(): JSX.Element {
   return (
@@ -51,25 +50,25 @@ export function Settings(): JSX.Element {
             <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
               Sandbox session
             </p>
-            <AuthButtons remoteServerId={RemoteServerId.ZenodoSandbox} />
+            <AuthButtons remoteServerId={'zenodo_sandbox'} />
           </div>
           <div className="border-t border-border pt-4">
             <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
               CDS session
             </p>
-            <AuthButtons remoteServerId={RemoteServerId.CdsRepository} />
+            <AuthButtons remoteServerId={'cds_repository'} />
           </div>
           <div className="border-t border-border pt-4">
             <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
               CDS Sandbox session
             </p>
-            <AuthButtons remoteServerId={RemoteServerId.CdsRepositorySandbox} />
+            <AuthButtons remoteServerId={'cds_repository_sandbox'} />
           </div>
           <div className="border-t border-border pt-4">
             <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
               InvenioRDM Local session
             </p>
-            <AuthButtons remoteServerId={RemoteServerId.InvenioRdmLocal} />
+            <AuthButtons remoteServerId={'inveniordm_local'} />
           </div>
         </div>
       </details>

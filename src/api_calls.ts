@@ -105,7 +105,7 @@ export function constructZenodoAuthUrl(
   serverSettings: ServerConnection.ISettings,
   action: 'login' | 'logout',
   returnTo: string,
-  remoteServerId: RemoteServerId = RemoteServerId.ZenodoProduction
+  remoteServerId: RemoteServerId = 'zenodo_production'
 ): string {
   const params = new URLSearchParams({
     return_to: returnTo,
