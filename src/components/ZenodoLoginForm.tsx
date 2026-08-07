@@ -2,6 +2,7 @@ import React from 'react';
 import { KeyRound, ShieldCheck } from 'lucide-react';
 
 import { LoginButton, LogoutButton } from './AuthButtons';
+import { ZenodoSandboxOverrideSetting } from './ZenodoSandboxOverrideSetting';
 import { ZenodoUserProfile } from './ZenodoUserProfile';
 import { useAccessTokenStatus } from '../api_calls';
 import { LoadingPanel } from './LoadingPanel';
@@ -31,7 +32,10 @@ export const ZenodoLoginForm: React.FC = () => {
           <p className="mb-5 mt-1.5 text-sm leading-5 text-muted-strong">
             Log in to access your account, manage records, and upload files.
           </p>
-          <LoginButton remoteServerId={'zenodo_production'} />
+          <div className="mb-4">
+            <ZenodoSandboxOverrideSetting />
+          </div>
+          <LoginButton />
         </div>
       )}
       {loggedIn && (
@@ -43,7 +47,10 @@ export const ZenodoLoginForm: React.FC = () => {
               Connected to the Zenodo sandbox environment
             </div>
           )}
-          <LogoutButton remoteServerId={'zenodo_production'} />
+          <div className="mb-4 mt-3">
+            <ZenodoSandboxOverrideSetting />
+          </div>
+          <LogoutButton />
         </div>
       )}
     </div>

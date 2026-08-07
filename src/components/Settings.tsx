@@ -1,8 +1,6 @@
 import React from 'react';
-import { ChevronDown, Download, FlaskConical } from 'lucide-react';
+import { Download } from 'lucide-react';
 
-import { AuthButtons } from './AuthButtons';
-import { ZenodoSandboxOverrideSetting } from './ZenodoSandboxOverrideSetting';
 import { SelectDownloadDirectory } from './DownloadDirectoryPicker';
 
 export function Settings(): JSX.Element {
@@ -27,51 +25,6 @@ export function Settings(): JSX.Element {
           <SelectDownloadDirectory />
         </div>
       </section>
-
-      <details className="group overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-        <summary className="flex cursor-pointer list-none items-start gap-2 bg-surface-muted px-2 py-3 transition-colors hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
-          <FlaskConical
-            aria-hidden="true"
-            className="mt-0.5 size-4 shrink-0 text-warning"
-          />
-          <div className="min-w-0 flex-1">
-            <h2 className="m-0 text-sm font-semibold text-foreground">
-              Developer settings
-            </h2>
-          </div>
-          <ChevronDown
-            aria-hidden="true"
-            className="mt-0.5 size-4 shrink-0 text-muted transition-transform group-open:rotate-180"
-          />
-        </summary>
-        <div className="space-y-4 border-t border-border px-2 py-4">
-          <ZenodoSandboxOverrideSetting />
-          <div className="border-t border-border pt-4">
-            <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
-              Sandbox session
-            </p>
-            <AuthButtons remoteServerId={'zenodo_sandbox'} />
-          </div>
-          <div className="border-t border-border pt-4">
-            <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
-              CDS session
-            </p>
-            <AuthButtons remoteServerId={'cds_repository'} />
-          </div>
-          <div className="border-t border-border pt-4">
-            <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
-              CDS Sandbox session
-            </p>
-            <AuthButtons remoteServerId={'cds_repository_sandbox'} />
-          </div>
-          <div className="border-t border-border pt-4">
-            <p className="mb-3 mt-0 text-xs font-medium text-muted-strong">
-              InvenioRDM Local session
-            </p>
-            <AuthButtons remoteServerId={'inveniordm_local'} />
-          </div>
-        </div>
-      </details>
     </div>
   );
 }
