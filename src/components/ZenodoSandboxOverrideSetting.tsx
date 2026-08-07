@@ -50,7 +50,7 @@ export const ZenodoSandboxOverrideSetting: React.FC = () => {
           }
           value={toSelectValue(remoteServerOverride)}
         >
-          <option value="default">Use login environment</option>
+          <option value="default">Default</option>
           {remoteServers.map(remoteServer => (
             <option key={remoteServer.id} value={remoteServer.id}>
               {remoteServer.label}

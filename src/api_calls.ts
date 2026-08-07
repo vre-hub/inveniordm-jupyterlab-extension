@@ -119,12 +119,16 @@ export function constructZenodoAuthUrl(
   serverSettings: ServerConnection.ISettings,
   action: 'login' | 'logout',
   returnTo: string,
-  remoteServerId: RemoteServerId = 'zenodo_production'
+  remoteServerId?: RemoteServerId
 ): string {
   const params = new URLSearchParams({
-    return_to: returnTo,
-    remote_server: remoteServerId
+    return_to: returnTo
   });
+
+  if (remoteServerId) {
+    params.set('remote_server', remoteServerId);
+  }
+
   return (
     URLExt.join(serverSettings.baseUrl, 'zenodo-jupyterlab', 'auth', action) +
     `?${params.toString()}`

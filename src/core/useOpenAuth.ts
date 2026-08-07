@@ -10,7 +10,7 @@ export const useOpenAuth = (): ((action: 'login' | 'logout') => void) => {
       serverSettings,
       action,
       window.location.href,
-      remoteServerOverride ?? 'zenodo_production'
+      remoteServerOverride
     );
   };
 };

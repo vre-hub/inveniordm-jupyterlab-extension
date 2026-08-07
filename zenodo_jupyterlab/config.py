@@ -1,6 +1,6 @@
 from typing import Any
 
-from traitlets import Dict, Enum
+from traitlets import Dict, Enum, Unicode
 from traitlets.config import Configurable
 
 from zenodo_auth.remote_servers import RemoteServerRegistry
@@ -55,6 +55,16 @@ class ZenodoJupyterLab(Configurable):
         help="Remote InvenioRDM servers available to the extension, keyed by ID.",
     )
 
+    default_remote_server = Unicode(
+        default_value="",
+        allow_none=True,
+        config=True,
+        help=(
+            "ID of the default remote server to use when no override is provided. "
+            "If not set, the first configured server is used."
+        ),
+    )
+
     def remote_server_registry(self) -> RemoteServerRegistry:
         if self.remote_servers_mode not in remote_servers_modes:
             raise ValueError(
@@ -69,4 +79,15 @@ class ZenodoJupyterLab(Configurable):
         else:
             configured_servers = dict(self.remote_servers)
 
-        return RemoteServerRegistry(configured_servers)
+        default_remote_server_id = (
+            self.default_remote_server.strip()
+            if self.default_remote_server is not None
+            else None
+        )
+        if default_remote_server_id == "":
+            default_remote_server_id = None
+
+        return RemoteServerRegistry(
+            configured_servers,
+            default_server_id=default_remote_server_id,
+        )
