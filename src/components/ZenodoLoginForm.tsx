@@ -66,24 +66,6 @@ export const ZenodoLoginForm: React.FC = () => {
               Connected to the Zenodo sandbox environment
             </div>
           )}
-          <div className="mb-4 mt-3">
-            <label className="block">
-              <span className="block text-sm font-medium text-foreground-secondary">
-                Zenodo environment
-              </span>
-              <span className="mt-1 block text-xs leading-5 text-muted">
-                Choose the environment to log out from for this session.
-              </span>
-              <div className="mt-2">
-                <ZenodoRemoteServerDropdown
-                  ariaLabel="Zenodo logout environment"
-                  defaultOptionLabel="Use default"
-                  onChange={setLoginRemoteServer}
-                  value={loginRemoteServer}
-                />
-              </div>
-            </label>
-          </div>
           <LogoutButton remoteServerId={loginRemoteServer} />
         </div>
       )}
