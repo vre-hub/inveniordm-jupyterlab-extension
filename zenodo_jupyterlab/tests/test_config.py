@@ -4,7 +4,6 @@ from traitlets.config import Config
 from zenodo_auth.remote_servers import RemoteServerRegistry
 from zenodo_jupyterlab.config import ZenodoJupyterLab
 
-
 REMOTE_SERVERS = {
     "zenodo_sandbox": {
         "label": "Sandbox",
@@ -17,15 +16,53 @@ REMOTE_SERVERS = {
 
 
 def test_reads_remote_servers_from_jupyter_config():
-    config = Config({"ZenodoJupyterLab": {"remote_servers": REMOTE_SERVERS}})
+    config = Config(
+        {
+            "ZenodoJupyterLab": {
+                "remote_servers_mode": "extend",
+                "remote_servers": {
+                    "inveniordm_local": {
+                        "label": "InvenioRDM Local",
+                        "base_url": "http://127.0.0.1:80",
+                        "oauth_client_id": "jupyterlab-extension",
+                        "proxy_url": "http://127.0.0.1:8006",
+                        "proxy_session_cookie_name": "invenioRDM_local_proxy_session",
+                    }
+                },
+            }
+        }
+    )
 
     registry = ZenodoJupyterLab(config=config).remote_server_registry()
 
-    server = registry.get("zenodo_sandbox")
-    assert server.label == "Sandbox"
-    assert server.base_url == "https://sandbox.example"
-    assert server.proxy_url == "http://proxy.example"
-    assert registry.default == server
+    assert registry.get("zenodo_production").label == "Production"
+    assert registry.get("zenodo_sandbox").base_url == "https://sandbox.zenodo.org"
+    assert registry.get("inveniordm_local").proxy_url == "http://127.0.0.1:8006"
+    assert registry.default.id == "zenodo_production"
+
+
+def test_replaces_remote_servers_from_jupyter_config():
+    config = Config(
+        {
+            "ZenodoJupyterLab": {
+                "remote_servers_mode": "replace",
+                "remote_servers": {
+                    "inveniordm_local": {
+                        "label": "InvenioRDM Local",
+                        "base_url": "http://127.0.0.1:80",
+                        "oauth_client_id": "jupyterlab-extension",
+                        "proxy_url": "http://127.0.0.1:8006",
+                        "proxy_session_cookie_name": "invenioRDM_local_proxy_session",
+                    }
+                },
+            }
+        }
+    )
+
+    registry = ZenodoJupyterLab(config=config).remote_server_registry()
+
+    assert [server.id for server in registry.all()] == ["inveniordm_local"]
+    assert registry.default.id == "inveniordm_local"
 
 
 def test_remote_server_registry_rejects_empty_config():
