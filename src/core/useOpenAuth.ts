@@ -1,7 +1,10 @@
 import { constructZenodoAuthUrl } from '../api_calls';
+import { RemoteServerId } from '../remoteServers';
 import { useServerSettings, useRemoteServerOverride } from '../store';
 
-export const useOpenAuth = (): ((action: 'login' | 'logout') => void) => {
+export const useOpenAuth = (
+  remoteServerId?: RemoteServerId
+): ((action: 'login' | 'logout') => void) => {
   const serverSettings = useServerSettings();
   const remoteServerOverride = useRemoteServerOverride();
 
@@ -10,7 +13,7 @@ export const useOpenAuth = (): ((action: 'login' | 'logout') => void) => {
       serverSettings,
       action,
       window.location.href,
-      remoteServerOverride
+      remoteServerId ?? remoteServerOverride
     );
   };
 };

@@ -2,8 +2,14 @@ import React from 'react';
 import { LogIn, LogOut } from 'lucide-react';
 
 import { useOpenAuth } from '../core';
-export const LoginButton: React.FC = () => {
-  const openAuth = useOpenAuth();
+import { RemoteServerId } from '../remoteServers';
+
+type AuthButtonProps = {
+  remoteServerId?: RemoteServerId;
+};
+
+export const LoginButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
+  const openAuth = useOpenAuth(remoteServerId);
 
   return (
     <button
@@ -17,8 +23,8 @@ export const LoginButton: React.FC = () => {
   );
 };
 
-export const LogoutButton: React.FC = () => {
-  const openAuth = useOpenAuth();
+export const LogoutButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
+  const openAuth = useOpenAuth(remoteServerId);
 
   return (
     <button

@@ -2,13 +2,17 @@ import React from 'react';
 import { KeyRound, ShieldCheck } from 'lucide-react';
 
 import { LoginButton, LogoutButton } from './AuthButtons';
-import { ZenodoSandboxOverrideSetting } from './ZenodoSandboxOverrideSetting';
+import { ZenodoRemoteServerDropdown } from './ZenodoRemoteServerDropdown';
 import { ZenodoUserProfile } from './ZenodoUserProfile';
 import { useAccessTokenStatus } from '../api_calls';
+import { RemoteServerId } from '../remoteServers';
 import { LoadingPanel } from './LoadingPanel';
 
 export const ZenodoLoginForm: React.FC = () => {
   const accessStatus = useAccessTokenStatus();
+  const [loginRemoteServer, setLoginRemoteServer] = React.useState<
+    RemoteServerId | undefined
+  >();
 
   if (!accessStatus) {
     return <LoadingPanel text="Checking Zenodo login status…" />;
@@ -33,9 +37,24 @@ export const ZenodoLoginForm: React.FC = () => {
             Log in to access your account, manage records, and upload files.
           </p>
           <div className="mb-4">
-            <ZenodoSandboxOverrideSetting />
+            <label className="block">
+              <span className="block text-sm font-medium text-foreground-secondary">
+                Zenodo environment
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-muted">
+                Choose the environment to log into for this session.
+              </span>
+              <div className="mt-2">
+                <ZenodoRemoteServerDropdown
+                  ariaLabel="Zenodo login environment"
+                  defaultOptionLabel="Use default"
+                  onChange={setLoginRemoteServer}
+                  value={loginRemoteServer}
+                />
+              </div>
+            </label>
           </div>
-          <LoginButton />
+          <LoginButton remoteServerId={loginRemoteServer} />
         </div>
       )}
       {loggedIn && (
@@ -48,9 +67,24 @@ export const ZenodoLoginForm: React.FC = () => {
             </div>
           )}
           <div className="mb-4 mt-3">
-            <ZenodoSandboxOverrideSetting />
+            <label className="block">
+              <span className="block text-sm font-medium text-foreground-secondary">
+                Zenodo environment
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-muted">
+                Choose the environment to log out from for this session.
+              </span>
+              <div className="mt-2">
+                <ZenodoRemoteServerDropdown
+                  ariaLabel="Zenodo logout environment"
+                  defaultOptionLabel="Use default"
+                  onChange={setLoginRemoteServer}
+                  value={loginRemoteServer}
+                />
+              </div>
+            </label>
           </div>
-          <LogoutButton />
+          <LogoutButton remoteServerId={loginRemoteServer} />
         </div>
       )}
     </div>
