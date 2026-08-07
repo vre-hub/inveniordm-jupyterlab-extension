@@ -15,8 +15,9 @@ DEFAULT_SESSION_COOKIE_NAME = "zenodo_sandbox_proxy_session"
 
 @dataclass(frozen=True)
 class Config:
+    client_id: str
     zenodo_base_url: str = DEFAULT_ZENODO_BASE_URL
-    client_id: str = ""
+    session_cookie_name: str = DEFAULT_SESSION_COOKIE_NAME
     client_secret: str = ""
     proxy_host: str = DEFAULT_PROXY_HOST
     proxy_port: int = DEFAULT_PROXY_PORT
@@ -24,7 +25,6 @@ class Config:
     scope: str = DEFAULT_SCOPE
     allowed_return_hosts: tuple[str, ...] = DEFAULT_ALLOWED_RETURN_HOSTS
     allowed_cors_origins: tuple[str, ...] = DEFAULT_ALLOWED_CORS_ORIGINS
-    session_cookie_name: str = DEFAULT_SESSION_COOKIE_NAME
 
     @property
     def redirect_uri(self) -> str:
@@ -37,11 +37,11 @@ class Config:
     @classmethod
     def from_environment(cls) -> "Config":
         return cls(
+            client_id=_required_env("ZENODO_CLIENT_ID"),
             zenodo_base_url=os.environ.get(
                 "ZENODO_BASE_URL",
                 DEFAULT_ZENODO_BASE_URL,
             ).rstrip("/"),
-            client_id=os.environ.get("ZENODO_CLIENT_ID", ""),
             client_secret=os.environ.get("ZENODO_CLIENT_SECRET", ""),
             proxy_host=os.environ.get("PROXY_HOST", DEFAULT_PROXY_HOST),
             proxy_port=int(os.environ.get("PROXY_PORT", str(DEFAULT_PROXY_PORT))),
@@ -70,3 +70,10 @@ def _split_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
     if not value:
         return default
     return tuple(part.strip() for part in value.split(",") if part.strip())
+
+
+def _required_env(name: str) -> str:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise ValueError(f"Set {name} before starting the proxy")
+    return value

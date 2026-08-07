@@ -44,6 +44,22 @@ the frontend extension, check the frontend extension is installed:
 jupyter labextension list
 ```
 
+## Remote server configuration
+
+The server extension reads its available remote servers from
+`ZenodoJupyterLab.remote_servers` in the Jupyter Server configuration.
+
+For development, the config in `lab_cwd` provides Zenodo production and
+sandbox, CDS production and sandbox, and the local InvenioRDM server. Start Lab
+from that directory with:
+
+```bash
+jupyter lab --config=jupyter_server_config.py
+```
+
+The first configured remote server is used as the default when the request does
+not specify a server and no authenticated session is found.
+
 ## Contributing
 
 If you would like to contribute to this extension, please refer to the [Contributing Guide](CONTRIBUTING.md).

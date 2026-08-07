@@ -7,10 +7,7 @@ from jupyter_server.utils import url_path_join
 from tornado.web import RequestHandler
 
 from zenodo_auth import OAuthCallback, OAuthClientConfig
-from zenodo_auth.remote_servers import (
-    RemoteServerId,
-    get_remote_server,
-)
+from zenodo_auth.remote_servers import RemoteServerId, RemoteServerRegistry
 from zenodo_auth.token_store import BoundedTokenStore
 from zenodo_auth.tornado_oauth import (
     begin_zenodo_oauth_login,
@@ -23,8 +20,13 @@ OAUTH_SCOPE = "user:email"
 
 
 class LocalZenodoAuthController:
-    def __init__(self, token_store: BoundedTokenStore):
+    def __init__(
+        self,
+        token_store: BoundedTokenStore,
+        remote_servers: RemoteServerRegistry,
+    ):
         self.token_store = token_store
+        self.remote_servers = remote_servers
 
         self.oauth_configs: dict[tuple[RemoteServerId, str], OAuthClientConfig] = {}
         self.oauth_states: dict[str, tuple[str, RemoteServerId, str]] = {}
@@ -93,7 +95,7 @@ class LocalZenodoAuthController:
     ) -> OAuthClientConfig:
         redirect_uri = self._oauth_callback_url(handler)
         key = (remote_server_id, redirect_uri)
-        server = get_remote_server(remote_server_id)
+        server = self.remote_servers.get(remote_server_id)
         if key not in self.oauth_configs:
             self.oauth_configs[key] = OAuthClientConfig(
                 zenodo_base_url=server.base_url,
@@ -134,7 +136,7 @@ class LocalZenodoAuthController:
         return stored_state[0]
 
     def _oauth_remote_server_id(self, handler: APIHandler) -> RemoteServerId:
-        return get_remote_server_override(handler) or RemoteServerId.ZENODO_PRODUCTION
+        return get_remote_server_override(handler) or self.remote_servers.default.id
 
     def _public_url(self, handler: APIHandler) -> str:
         return os.environ.get(

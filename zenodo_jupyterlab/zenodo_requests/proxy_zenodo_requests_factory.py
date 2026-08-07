@@ -4,11 +4,7 @@ from http.cookies import SimpleCookie
 import requests
 from jupyter_server.base.handlers import APIHandler
 
-from zenodo_auth.remote_servers import (
-    RemoteServerId,
-    get_remote_server,
-    get_remote_servers,
-)
+from zenodo_auth.remote_servers import RemoteServerId, RemoteServerRegistry
 
 from ..zenodo_auth.auth_controller import ZenodoAuthController
 from ..zenodo_auth.proxy_auth_controller import ProxyZenodoAuthController
@@ -33,8 +29,12 @@ def _nonempty_cookie(cookie):
 
 
 class ProxyZenodoRequestsFactory(ZenodoRequestsFactory):
-    def __init__(self):
-        self._auth_controller = ProxyZenodoAuthController(self._proxy_url)
+    def __init__(self, remote_servers: RemoteServerRegistry):
+        super().__init__(remote_servers)
+        self._auth_controller = ProxyZenodoAuthController(
+            self._proxy_url,
+            remote_servers.default.id,
+        )
 
     @property
     def auth_controller(self) -> ZenodoAuthController:
@@ -46,7 +46,7 @@ class ProxyZenodoRequestsFactory(ZenodoRequestsFactory):
             server.id: _nonempty_cookie(
                 handler.request.cookies.get(server.proxy_session_cookie_name)
             )
-            for server in get_remote_servers()
+            for server in self.remote_servers.all()
         }
 
         if remote_server_override is not None:
@@ -54,23 +54,21 @@ class ProxyZenodoRequestsFactory(ZenodoRequestsFactory):
                 remote_server_override, cookies[remote_server_override]
             )
 
-        for server_id in (
-            RemoteServerId.ZENODO_PRODUCTION,
-            RemoteServerId.ZENODO_SANDBOX,
-        ):
-            if cookies[server_id] is not None:
-                return self._create_requests_for_server(server_id, cookies[server_id])
+        for server in self.remote_servers.all():
+            if cookies[server.id] is not None:
+                return self._create_requests_for_server(
+                    server.id,
+                    cookies[server.id],
+                )
 
-        return ZenodoRequests(
-            url=get_remote_server(RemoteServerId.ZENODO_PRODUCTION).base_url
-        )
+        return ZenodoRequests(url=self.remote_servers.default.base_url)
 
     def _create_requests_for_server(
         self,
         remote_server_id: RemoteServerId,
         proxy_session,
     ) -> ZenodoRequests:
-        server = get_remote_server(remote_server_id)
+        server = self.remote_servers.get(remote_server_id)
         if proxy_session is None:
             return ZenodoRequests(url=server.base_url)
 
@@ -95,7 +93,7 @@ class ProxyZenodoRequestsFactory(ZenodoRequestsFactory):
         response = requests.get(
             f"{self._proxy_url(remote_server_id)}/auth/status",
             headers=_cookie_header(
-                get_remote_server(remote_server_id).proxy_session_cookie_name,
+                self.remote_servers.get(remote_server_id).proxy_session_cookie_name,
                 proxy_session,
             ),
             timeout=5,
@@ -109,4 +107,4 @@ class ProxyZenodoRequestsFactory(ZenodoRequestsFactory):
         return str(zenodo_user_id) if zenodo_user_id is not None else None
 
     def _proxy_url(self, remote_server_id: RemoteServerId) -> str:
-        return get_remote_server(remote_server_id).proxy_url
+        return self.remote_servers.get(remote_server_id).proxy_url

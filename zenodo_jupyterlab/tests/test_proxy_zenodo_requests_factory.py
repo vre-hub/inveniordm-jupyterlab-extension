@@ -26,7 +26,7 @@ class _Response:
         }
 
 
-def test_proxy_factory_passes_cached_zenodo_user_id(monkeypatch):
+def test_proxy_factory_passes_cached_zenodo_user_id(monkeypatch, remote_servers):
     cookies = SimpleCookie()
     cookies["zenodo_sandbox_proxy_session"] = "session"
     calls = []
@@ -36,7 +36,7 @@ def test_proxy_factory_passes_cached_zenodo_user_id(monkeypatch):
         return _Response()
 
     monkeypatch.setattr(proxy_zenodo_requests_factory.requests, "get", get)
-    factory = ProxyZenodoRequestsFactory()
+    factory = ProxyZenodoRequestsFactory(remote_servers)
     handler = _Handler(cookies)
 
     first = factory.create_zenodo_requests(handler)

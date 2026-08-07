@@ -1,14 +1,9 @@
-import os
+from collections.abc import Mapping
 from dataclasses import dataclass
-from enum import StrEnum
+from typing import Any, TypeAlias
 
 
-class RemoteServerId(StrEnum):
-    ZENODO_PRODUCTION = "zenodo_production"
-    ZENODO_SANDBOX = "zenodo_sandbox"
-    CDS_REPOSITORY = "cds_repository"
-    CDS_REPOSITORY_SANDBOX = "cds_repository_sandbox"
-    INVENIORDM_LOCAL = "inveniordm_local"
+RemoteServerId: TypeAlias = str
 
 
 @dataclass(frozen=True)
@@ -21,76 +16,59 @@ class RemoteServer:
     proxy_session_cookie_name: str
 
 
-_REMOTE_SERVERS = {
-    RemoteServerId.ZENODO_PRODUCTION: RemoteServer(
-        id=RemoteServerId.ZENODO_PRODUCTION,
-        label="Production",
-        base_url="https://zenodo.org",
-        oauth_client_id="HaWBPRb7lsif7cqTypUNeFni9PJOoTm5IcjTJrtt",
-        proxy_url="http://127.0.0.1:8003",
-        proxy_session_cookie_name=os.environ.get(
-            "ZENODO_PRODUCTION_PROXY_SESSION_COOKIE_NAME",
-            "zenodo_production_proxy_session",
-        ),
-    ),
-    RemoteServerId.ZENODO_SANDBOX: RemoteServer(
-        id=RemoteServerId.ZENODO_SANDBOX,
-        label="Sandbox",
-        base_url="https://sandbox.zenodo.org",
-        oauth_client_id="ca8NzRHmqp6tVA0IE9XUlmbL74cGm9RqguC9DZlU",
-        proxy_url="http://127.0.0.1:8001",
-        proxy_session_cookie_name=os.environ.get(
-            "ZENODO_SANDBOX_PROXY_SESSION_COOKIE_NAME",
-            "zenodo_sandbox_proxy_session",
-        ),
-    ),
-    RemoteServerId.CDS_REPOSITORY: RemoteServer(
-        id=RemoteServerId.CDS_REPOSITORY,
-        label="CDS",
-        base_url="https://repository.cern",
-        oauth_client_id="q4szrkotZqAuRA6HhGeajJsqTqEd6t6lTHHGLWD4",
-        proxy_url="http://127.0.0.1:8004",
-        proxy_session_cookie_name=os.environ.get(
-            "CDS_REPOSITORY_PROXY_SESSION_COOKIE_NAME",
-            "cds_repository_proxy_session",
-        ),
-    ),
-    RemoteServerId.CDS_REPOSITORY_SANDBOX: RemoteServer(
-        id=RemoteServerId.CDS_REPOSITORY_SANDBOX,
-        label="CDS Sandbox",
-        base_url="https://sandbox-cds-rdm.web.cern.ch",
-        oauth_client_id="J5nzeas8LpcGllJysNJzj52YT0qpvJbVA0AN0F5y",
-        proxy_url="http://127.0.0.1:8005",
-        proxy_session_cookie_name=os.environ.get(
-            "CDS_REPOSITORY_SANDBOX_PROXY_SESSION_COOKIE_NAME",
-            "cds_repository_sandbox_proxy_session",
-        ),
-    ),
-    RemoteServerId.INVENIORDM_LOCAL: RemoteServer(
-        id=RemoteServerId.INVENIORDM_LOCAL,
-        label="InvenioRDM Local",
-        base_url="http://127.0.0.1:80",
-        oauth_client_id="jupyterlab-extension",
-        proxy_url="http://127.0.0.1:8006",
-        proxy_session_cookie_name=os.environ.get(
-            "INVENIORDM_LOCAL_PROXY_SESSION_COOKIE_NAME",
-            "invenioRDM_local_proxy_session",
-        ),
-    ),
-}
+class RemoteServerRegistry:
+    """The remote servers made available by the Jupyter server configuration."""
 
+    def __init__(self, configured_servers: Mapping[str, Mapping[str, Any]]):
+        self._servers: dict[str, RemoteServer] = {}
+        for server_id, settings in configured_servers.items():
+            if not isinstance(server_id, str) or not server_id.strip():
+                raise ValueError("Remote server IDs must be non-empty strings")
+            normalized_id = server_id.strip()
+            self._servers[normalized_id] = self._from_config(normalized_id, settings)
+        if not self._servers:
+            raise ValueError("ZenodoJupyterLab.remote_servers must not be empty")
 
-def get_remote_server(server_id: RemoteServerId) -> RemoteServer:
-    return _REMOTE_SERVERS[server_id]
+    @staticmethod
+    def _from_config(server_id: str, settings: Mapping[str, Any]) -> RemoteServer:
+        required_fields = (
+            "label",
+            "base_url",
+            "oauth_client_id",
+            "proxy_url",
+            "proxy_session_cookie_name",
+        )
+        values: dict[str, str] = {}
+        for field in required_fields:
+            value = settings.get(field)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(
+                    f"Remote server {server_id!r} requires a non-empty {field!r}"
+                )
+            values[field] = value.strip()
 
+        return RemoteServer(
+            id=server_id,
+            label=values["label"],
+            base_url=values["base_url"].rstrip("/"),
+            oauth_client_id=values["oauth_client_id"],
+            proxy_url=values["proxy_url"].rstrip("/"),
+            proxy_session_cookie_name=values["proxy_session_cookie_name"],
+        )
 
-def get_remote_servers() -> tuple[RemoteServer, ...]:
-    return tuple(_REMOTE_SERVERS.values())
+    @property
+    def default(self) -> RemoteServer:
+        return next(iter(self._servers.values()))
 
+    def get(self, server_id: RemoteServerId) -> RemoteServer:
+        return self._servers[server_id]
 
-def get_remote_server_by_url(url: str) -> RemoteServer:
-    normalized_url = url.rstrip("/")
-    for server in _REMOTE_SERVERS.values():
-        if normalized_url in {server.base_url, server.proxy_url}:
-            return server
-    raise ValueError(f"Unknown remote server URL: {url}")
+    def all(self) -> tuple[RemoteServer, ...]:
+        return tuple(self._servers.values())
+
+    def by_url(self, url: str) -> RemoteServer:
+        normalized_url = url.rstrip("/")
+        for server in self._servers.values():
+            if normalized_url in {server.base_url, server.proxy_url}:
+                return server
+        raise ValueError(f"Unknown remote server URL: {url}")

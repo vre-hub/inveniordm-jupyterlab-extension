@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from jupyter_server.base.handlers import APIHandler
 
-from zenodo_auth.remote_servers import RemoteServerId, get_remote_server_by_url
+from zenodo_auth.remote_servers import RemoteServerId, RemoteServerRegistry
 
 from ..zenodo_auth.auth_controller import ZenodoAuthController
 from .zenodo import check_zenodo_authentication
@@ -13,10 +13,13 @@ def get_remote_server_override(handler: APIHandler) -> RemoteServerId | None:
     remote_server = handler.get_query_argument("remote_server", None)
     if remote_server is None:
         return None
-    return RemoteServerId(remote_server)
+    return remote_server
 
 
 class ZenodoRequestsFactory(ABC):
+    def __init__(self, remote_servers: RemoteServerRegistry):
+        self.remote_servers = remote_servers
+
     @property
     @abstractmethod
     def auth_controller(self) -> ZenodoAuthController:
@@ -27,7 +30,7 @@ class ZenodoRequestsFactory(ABC):
         pass
 
     def get_remote_server_id(self, zenodo_requests: ZenodoRequests) -> RemoteServerId:
-        return get_remote_server_by_url(zenodo_requests.url).id
+        return self.remote_servers.by_url(zenodo_requests.url).id
 
     def get_access_token_status(self, handler: APIHandler) -> AccessTokenStatus:
         zenodo_requests = self.create_zenodo_requests(handler)

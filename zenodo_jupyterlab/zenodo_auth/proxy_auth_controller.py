@@ -11,8 +11,13 @@ from ..zenodo_requests.zenodo_requests_factory import get_remote_server_override
 
 
 class ProxyZenodoAuthController:
-    def __init__(self, proxy_url: Callable[[RemoteServerId], str]):
+    def __init__(
+        self,
+        proxy_url: Callable[[RemoteServerId], str],
+        default_remote_server_id: RemoteServerId,
+    ):
         self._proxy_url = proxy_url
+        self._default_remote_server_id = default_remote_server_id
 
     def login(self, handler: APIHandler) -> None:
         self._redirect_to_proxy_auth(handler, "login")
@@ -29,7 +34,7 @@ class ProxyZenodoAuthController:
 
     def _redirect_to_proxy_auth(self, handler: APIHandler, action: str) -> None:
         remote_server_id = (
-            get_remote_server_override(handler) or RemoteServerId.ZENODO_PRODUCTION
+            get_remote_server_override(handler) or self._default_remote_server_id
         )
         return_to = handler.get_query_argument("return_to", None)
         if return_to is None:

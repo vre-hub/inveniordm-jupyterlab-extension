@@ -1,6 +1,5 @@
 import json
 
-from zenodo_auth.remote_servers import RemoteServerId
 from zenodo_auth.token_store import (
     BoundedTokenStore,
     FileTokenStore,
@@ -11,26 +10,32 @@ def test_file_token_store_persists_multiple_tokens(tmp_path):
     path = tmp_path / "tokens.json"
     store = FileTokenStore(path)
 
-    store.set_token("alice", "alice-token", True, zenodo_user_id="123")
+    store.set_token(
+        "alice",
+        "alice-token",
+        True,
+        remote_server_id="zenodo_production",
+        zenodo_user_id="123",
+    )
     store.set_token(
         "bob",
         "bob-token",
         False,
-        remote_server_id=RemoteServerId.ZENODO_SANDBOX,
+        remote_server_id="zenodo_sandbox",
     )
 
     alice_token = store.get_token("alice")
     assert alice_token is not None
     assert alice_token.access_token == "alice-token"
     assert alice_token.access_token_valid is True
-    assert alice_token.remote_server_id == RemoteServerId.ZENODO_PRODUCTION
+    assert alice_token.remote_server_id == "zenodo_production"
     assert alice_token.zenodo_user_id == "123"
 
     bob_token = store.get_token("bob")
     assert bob_token is not None
     assert bob_token.access_token == "bob-token"
     assert bob_token.access_token_valid is False
-    assert bob_token.remote_server_id == RemoteServerId.ZENODO_SANDBOX
+    assert bob_token.remote_server_id == "zenodo_sandbox"
 
     assert json.loads(path.read_text()) == {
         "tokens": {
@@ -57,8 +62,8 @@ def test_file_token_store_returns_none_for_missing_file(tmp_path):
 def test_file_token_store_removes_one_token(tmp_path):
     path = tmp_path / "tokens.json"
     store = FileTokenStore(path)
-    store.set_token("alice", "alice-token", True)
-    store.set_token("bob", "bob-token", True)
+    store.set_token("alice", "alice-token", True, "production")
+    store.set_token("bob", "bob-token", True, "sandbox")
 
     store.remove_token("alice")
 
@@ -70,7 +75,7 @@ def test_file_token_store_removes_one_token(tmp_path):
 def test_file_token_store_removes_file_after_last_token(tmp_path):
     path = tmp_path / "tokens.json"
     store = FileTokenStore(path)
-    store.set_token("user", "token", True)
+    store.set_token("user", "token", True, "production")
 
     store.remove_token("user")
 
@@ -86,7 +91,7 @@ def test_bounded_token_store_uses_single_bound_token(tmp_path):
     store.set_token(
         "token",
         True,
-        remote_server_id=RemoteServerId.ZENODO_SANDBOX,
+        remote_server_id="zenodo_sandbox",
         zenodo_user_id="456",
     )
 
@@ -94,6 +99,6 @@ def test_bounded_token_store_uses_single_bound_token(tmp_path):
     assert token is not None
     assert token.access_token == "token"
     assert token.access_token_valid is True
-    assert token.remote_server_id == RemoteServerId.ZENODO_SANDBOX
+    assert token.remote_server_id == "zenodo_sandbox"
     assert token.zenodo_user_id == "456"
     assert multi_store.get_token("local-user") == token

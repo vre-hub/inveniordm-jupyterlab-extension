@@ -16,7 +16,7 @@ TOKEN_STORE_PATH_ENV_VAR = "ZENODO_JUPYTERLAB_TOKEN_STORE"
 class StoredToken:
     access_token: str
     access_token_valid: bool
-    remote_server_id: RemoteServerId = RemoteServerId.ZENODO_PRODUCTION
+    remote_server_id: RemoteServerId
     zenodo_user_id: str | None = None
 
 
@@ -31,7 +31,7 @@ class MultiTokenStore(ABC):
         token_id: str,
         access_token: str,
         access_token_valid: bool,
-        remote_server_id: RemoteServerId = RemoteServerId.ZENODO_PRODUCTION,
+        remote_server_id: RemoteServerId,
         zenodo_user_id: str | None = None,
     ) -> None:
         pass
@@ -53,7 +53,7 @@ class BoundedTokenStore:
         self,
         access_token: str,
         access_token_valid: bool,
-        remote_server_id: RemoteServerId = RemoteServerId.ZENODO_PRODUCTION,
+        remote_server_id: RemoteServerId,
         zenodo_user_id: str | None = None,
     ) -> None:
         self.multi_store.set_token(
@@ -92,7 +92,7 @@ class FileTokenStore(MultiTokenStore):
         return StoredToken(
             access_token=token_data["access_token"],
             access_token_valid=bool(token_data.get("access_token_valid", True)),
-            remote_server_id=RemoteServerId(token_data["remote_server_id"]),
+            remote_server_id=token_data["remote_server_id"],
             zenodo_user_id=token_data.get("zenodo_user_id"),
         )
 
@@ -101,7 +101,7 @@ class FileTokenStore(MultiTokenStore):
         token_id: str,
         access_token: str,
         access_token_valid: bool,
-        remote_server_id: RemoteServerId = RemoteServerId.ZENODO_PRODUCTION,
+        remote_server_id: RemoteServerId,
         zenodo_user_id: str | None = None,
     ) -> None:
         data = self._read_tokens()

@@ -9,6 +9,7 @@ import tornado
 from jupyter_core.paths import jupyter_data_dir
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
+from zenodo_auth.remote_servers import RemoteServerRegistry
 
 from zenodo_jupyterlab.user_settings import (
     ZenodoUserSettings,
@@ -999,12 +1000,18 @@ class ZenodoDownloadLocationSettingHandler(APIHandler):
         )
 
 
-def setup_route_handlers(web_app):
+def setup_route_handlers(
+    web_app,
+    remote_servers: RemoteServerRegistry,
+):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
     event_bus = EventBus()
     job_manager = JobManager()
-    zenodo_requests_factory = create_zenodo_requests_factory("local")
+    zenodo_requests_factory = create_zenodo_requests_factory(
+        remote_servers,
+        "local",
+    )
 
     def get_zenodo_requests(handler: APIHandler) -> ZenodoRequests:
         return zenodo_requests_factory.create_zenodo_requests(handler)

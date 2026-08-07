@@ -26,7 +26,10 @@ export ZENODO_CLIENT_SECRET="..."
 python -m zenodo_api_proxy
 ```
 
-In order to run two proxy servers, one for prod, one for sandbox, set the other config values accordingly. Default is sandbox.
+Each proxy deployment supplies these values independently; it does not read the
+JupyterLab extension's remote-server configuration. The proxy defaults to the
+Zenodo sandbox; set `ZENODO_BASE_URL` and `ZENODO_PROXY_SESSION_COOKIE_NAME` to
+target another server.
 
 Then start login in the browser:
 

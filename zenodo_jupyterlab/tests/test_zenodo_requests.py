@@ -26,12 +26,13 @@ class Response:
             raise AssertionError(f"Unexpected HTTP status {self.status_code}")
 
 
-def test_local_factory_passes_stored_zenodo_user_id(tmp_path):
-    factory = LocalZenodoRequestsFactory()
+def test_local_factory_passes_stored_zenodo_user_id(tmp_path, remote_servers):
+    factory = LocalZenodoRequestsFactory(remote_servers)
     factory.token_store = BoundedTokenStore(FileTokenStore(tmp_path / "tokens.json"))
     factory.token_store.set_token(
         "token",
         True,
+        remote_server_id="zenodo_production",
         zenodo_user_id="123",
     )
 

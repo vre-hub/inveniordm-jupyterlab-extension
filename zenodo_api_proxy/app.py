@@ -16,7 +16,6 @@ import tornado.ioloop
 import tornado.web
 
 from zenodo_auth import OAuthCallback, OAuthClientConfig
-from zenodo_auth.remote_servers import get_remote_server_by_url
 from zenodo_auth.token_store import FileTokenStore, MultiTokenStore
 from zenodo_auth.tornado_oauth import (
     begin_zenodo_oauth_login,
@@ -30,6 +29,8 @@ from .helpers import is_allowed_return_to
 from .logout_handler import LogoutHandler
 from .status_handler import StatusHandler
 from .types import ProxyState
+
+PROXY_TOKEN_REMOTE_SERVER_ID = "REMOTE"
 
 
 class HealthHandler(BaseProxyHandler):
@@ -80,7 +81,7 @@ def complete_proxy_login(
         callback.zenodo_user_id,
         callback.access_token,
         True,
-        remote_server_id=get_remote_server_by_url(config.zenodo_base_url).id,
+        remote_server_id=PROXY_TOKEN_REMOTE_SERVER_ID,
     )
 
     session_id = secrets.token_urlsafe(32)

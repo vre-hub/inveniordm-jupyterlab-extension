@@ -9,6 +9,7 @@ except ImportError:
     warnings.warn("Importing 'zenodo_jupyterlab' outside a proper installation.")
     __version__ = "dev"
 from .routes import setup_route_handlers
+from .config import ZenodoJupyterLab
 
 
 def _jupyter_labextension_paths():
@@ -27,6 +28,10 @@ def _load_jupyter_server_extension(server_app):
     server_app: jupyterlab.labapp.LabApp
         JupyterLab application instance
     """
-    setup_route_handlers(server_app.web_app)
+    extension_config = ZenodoJupyterLab(parent=server_app)
+    setup_route_handlers(
+        server_app.web_app,
+        extension_config.remote_server_registry(),
+    )
     name = "zenodo_jupyterlab"
     server_app.log.info(f"Registered {name} server extension")
