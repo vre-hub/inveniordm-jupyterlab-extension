@@ -51,8 +51,16 @@ export function ZenodoVersionedRecordBase({
     return renderRecordDeleted;
   }
 
+  if (!record) {
+    return renderLoading;
+  }
+
+  if ('error' in record) {
+    return renderLoadingError(record.error);
+  }
+
   const renderProps: ZenodoRecordRendererProps = {
-    record: record as ZenodoRecordData,
+    record,
     recordIdentifier,
     versions,
     selectRecord
@@ -60,9 +68,7 @@ export function ZenodoVersionedRecordBase({
 
   return (
     <>
-      {record && !('error' in record)
-        ? renderRecord(renderProps)
-        : renderLoadingError(record?.error || 'Unknown error')}
+      {renderRecord(renderProps)}
       {isLoading && renderLoading}
     </>
   );
