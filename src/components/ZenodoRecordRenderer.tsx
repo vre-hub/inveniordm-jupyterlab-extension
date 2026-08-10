@@ -72,6 +72,9 @@ export const ZenodoRecordRendererHeader: React.FC<
   return (
     <RecordActionProvider>
       <div>
+        <div className="m-0 mb-1 pr-8 text-sm font-semibold text-foreground">
+          {record.metadata?.title || 'Untitled Draft'}
+        </div>
         <div className="mb-2 flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <VersionDropdown
@@ -89,11 +92,6 @@ export const ZenodoRecordRendererHeader: React.FC<
             refresh={refresh}
           />
         </div>
-        {record.metadata?.title && (
-          <div className="m-0 mb-1 pr-8 text-sm font-semibold text-foreground">
-            {record.metadata?.title}
-          </div>
-        )}
         <div className="mb-1 text-xs text-muted">
           <div>ID: {record.id}</div>
           <div>Created: {new Date(record.created).toLocaleString()}</div>
@@ -101,6 +99,8 @@ export const ZenodoRecordRendererHeader: React.FC<
           {record.pids?.doi?.identifier ? (
             <div>DOI: {record.pids.doi.identifier}</div>
           ) : null}
+          {`${record.files?.count ?? 0} file${record.files?.count === 1 ? '' : 's'}`}{' '}
+          in this record.
         </div>
       </div>
       <RecordActionStatus />

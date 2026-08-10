@@ -50,3 +50,5 @@ def include_zenodo_file(
     if isinstance(entries, list):
         files["entries"] = {entry["key"]: entry for entry in entries}
     item["files"] = files
+    if item.get("files", dict()).get("count") is None:
+        item["files"]["count"] = len(entries) if entries else 0

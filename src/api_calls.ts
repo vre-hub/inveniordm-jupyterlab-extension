@@ -584,7 +584,7 @@ export type ZenodoRecordData = {
       identifier?: string;
     };
   };
-  files?: { entries?: Record<string, ZenodoFile> };
+  files?: { entries?: Record<string, ZenodoFile>; count: number };
   links: {
     self_html: string;
   };
