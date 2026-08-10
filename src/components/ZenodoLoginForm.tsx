@@ -71,6 +71,7 @@ export const ZenodoLoginForm: React.FC = () => {
             </div>
           )}
           <LoginButton remoteServerId={loginRemoteServer} />
+          <LogoutButton remoteServerId={loginRemoteServer} />
         </div>
       )}
       {loggedIn && (

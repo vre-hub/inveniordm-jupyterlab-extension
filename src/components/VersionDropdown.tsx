@@ -1,11 +1,12 @@
 import React from 'react';
-import { ChevronDown } from 'lucide-react';
 
 import {
   ZenodoRecordIdentifier,
   ZenodoRecordVersion,
   zenodoRecordIdentifierFromRecord
 } from '../api_calls';
+import { Dropdown, DropdownOption } from './Dropdown';
+import { ZenodoRecordStatus } from './ZenodoRecordStatus';
 
 /** Return a stable UI key for a record representation. */
 export function recordIdentifierKey(
@@ -36,48 +37,45 @@ export function VersionDropdown({
   versions: ZenodoRecordVersion[];
   onChange: (identifier: ZenodoRecordIdentifier) => void;
 }): JSX.Element {
+  const selectedKey = recordIdentifierKey(recordIdentifier);
+
   return (
-    <div className="relative inline-block max-w-full">
-      <select
-        aria-label="Record version"
-        className="box-border max-w-full appearance-none rounded-md border border-border-strong bg-surface py-2 pl-3 pr-9 text-sm text-foreground-secondary shadow-sm transition-colors hover:border-border-hover focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-        onChange={event => {
-          const selectedIdentifier = findRecordIdentifier(
-            versions,
-            event.target.value
-          );
-          if (selectedIdentifier) {
-            onChange(selectedIdentifier);
-          }
-        }}
-        value={recordIdentifierKey(recordIdentifier)}
-      >
-        {versions.map(version => (
-          <VersionDropdownOption
-            version={version}
-            key={recordIdentifierKey(zenodoRecordIdentifierFromRecord(version))}
-          />
-        ))}
-      </select>
-      <ChevronDown
-        aria-hidden="true"
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
-        size={16}
-      />
-    </div>
+    <Dropdown
+      ariaLabel="Record version"
+      emptyLabel="No versions"
+      listboxLabel="Record versions"
+      onChange={value => {
+        const selectedIdentifier = findRecordIdentifier(versions, value);
+        if (selectedIdentifier) {
+          onChange(selectedIdentifier);
+        }
+      }}
+      value={selectedKey}
+    >
+      {versions.map(version => {
+        const identifier = zenodoRecordIdentifierFromRecord(version);
+        const value = recordIdentifierKey(identifier);
+
+        return (
+          <DropdownOption key={value} value={value}>
+            <VersionDropdownContent version={version} />
+          </DropdownOption>
+        );
+      })}
+    </Dropdown>
   );
 }
 
-function VersionDropdownOption({
+function VersionDropdownContent({
   version
 }: {
   version: ZenodoRecordVersion;
 }): JSX.Element {
   const versionNumber = version.versions.index;
-  const isDraft = version.is_draft;
-  const id = version.id;
-  const identifier = zenodoRecordIdentifierFromRecord(version);
-  const label =
-    `Version ${versionNumber} (${id})` + (isDraft ? ' (Draft)' : '');
-  return <option value={recordIdentifierKey(identifier)}>{label}</option>;
+  return (
+    <>
+      <span className="font-semibold text-foreground">{`Version ${versionNumber}`}</span>
+      <ZenodoRecordStatus status={version.status} />
+    </>
+  );
 }

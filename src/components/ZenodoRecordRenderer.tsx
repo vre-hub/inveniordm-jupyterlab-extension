@@ -10,7 +10,6 @@ import { VersionDropdown } from './VersionDropdown';
 import { ZenodoRecordActions } from './ZenodoRecordActions';
 import { ZenodoRecordFileUpload } from './ZenodoRecordFileUpload';
 import { RecordActionProvider, RecordActionStatus } from './RecordActionStatus';
-import { ZenodoRecordStatus } from './ZenodoRecordStatus';
 
 export type ZenodoRecordRendererProps = {
   record: ZenodoRecordData;
@@ -65,9 +64,6 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
             {record.pids?.doi?.identifier ? (
               <div>DOI: {record.pids.doi.identifier}</div>
             ) : null}
-          </div>
-          <div className="mb-2">
-            <ZenodoRecordStatus status={record.status} />
           </div>
           <div className="mt-2">
             {files.map(file => (
