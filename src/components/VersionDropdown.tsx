@@ -75,7 +75,7 @@ function VersionDropdownContent({
   return (
     <>
       <span className="font-semibold text-foreground">{`Version ${versionNumber}`}</span>
-      <ZenodoRecordStatus status={version.status} />
+      <ZenodoRecordStatus status={version.status} is_draft={version.is_draft} />
     </>
   );
 }

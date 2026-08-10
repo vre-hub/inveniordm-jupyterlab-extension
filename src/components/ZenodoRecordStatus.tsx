@@ -2,8 +2,13 @@ import React from 'react';
 
 import type { ZenodoRecordData } from '../api_calls';
 
+type published_but_being_edited = 'published_but_being_edited';
+
+type RecordStatusToDisplay =
+  ZenodoRecordData['status'] | published_but_being_edited;
+
 const STATUS_STYLES: Record<
-  ZenodoRecordData['status'],
+  RecordStatusToDisplay,
   { label: string; className: string }
 > = {
   published: {
@@ -17,15 +22,24 @@ const STATUS_STYLES: Record<
   new_version_draft: {
     label: 'New version draft',
     className: 'bg-primary-subtle text-primary-hover'
+  },
+  published_but_being_edited: {
+    label: 'Edit published version',
+    className: 'bg-warning-surface text-warning-strong'
   }
 };
 
 export const ZenodoRecordStatus: React.FC<{
   status: ZenodoRecordData['status'];
-}> = ({ status }) => {
+  is_draft: boolean;
+}> = ({ status, is_draft }) => {
+  // If the record is a draft but the status is "published", we want to display that info
+  const displayStatus: RecordStatusToDisplay =
+    is_draft && status === 'published' ? 'published_but_being_edited' : status;
+
   const { label, className } = Object.entries(STATUS_STYLES).find(
-    ([key]) => key === status
-  )?.[1] ?? { label: status, className: 'bg-muted text-muted-strong' };
+    ([key]) => key === displayStatus
+  )?.[1] ?? { label: displayStatus, className: 'bg-muted text-muted-strong' };
 
   return (
     <span
