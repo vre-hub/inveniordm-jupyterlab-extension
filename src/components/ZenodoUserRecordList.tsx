@@ -50,7 +50,7 @@ export const ZenodoUserRecordList: React.FC = () => {
     );
   });
 
-  if (selectedUserRecordIdentifier && selectedRecord) {
+  if (selectedUserRecordIdentifier) {
     return (
       <div>
         <button
@@ -72,28 +72,31 @@ export const ZenodoUserRecordList: React.FC = () => {
   return (
     <div>
       {records?.map(record => {
-        const recordIdentifier = zenodoRecordIdentifierFromRecord(record);
+        const initialRecordIdentifier =
+          zenodoRecordIdentifierFromRecord(record);
         return (
-          <div
-            key={`${recordIdentifier.record_status}:${recordIdentifier.record_id}`}
-            onClick={event => {
-              // Keep controls in the preview usable without opening the record.
-              const element = event.target as HTMLElement;
-              if (element.closest('button, a, input, select, textarea')) {
-                return;
-              }
-              setSelectedUserRecordIdentifier(recordIdentifier);
-            }}
-          >
-            <ZenodoVersionedRecord
-              initialRecordIdentifier={recordIdentifier}
-              initialRecordValue={record}
-              include_drafts_in_version_dropdown={true}
-              renderRecord={zenodoRecordRendererProps => (
+          <ZenodoVersionedRecord
+            key={`${initialRecordIdentifier.record_status}:${initialRecordIdentifier.record_id}`}
+            initialRecordIdentifier={initialRecordIdentifier}
+            initialRecordValue={record}
+            include_drafts_in_version_dropdown={true}
+            renderRecord={zenodoRecordRendererProps => (
+              <div
+                onClick={event => {
+                  // Keep controls in the preview usable without opening the record.
+                  const element = event.target as HTMLElement;
+                  if (element.closest('button, a, input, select, textarea')) {
+                    return;
+                  }
+                  setSelectedUserRecordIdentifier(
+                    zenodoRecordRendererProps.recordIdentifier
+                  );
+                }}
+              >
                 <ZenodoUserRecordPreview {...zenodoRecordRendererProps} />
-              )}
-            />
-          </div>
+              </div>
+            )}
+          />
         );
       })}
     </div>
