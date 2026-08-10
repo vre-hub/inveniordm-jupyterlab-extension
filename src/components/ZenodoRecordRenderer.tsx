@@ -75,6 +75,14 @@ export const ZenodoRecordRendererHeader: React.FC<
         <div className="m-0 mb-1 pr-8 text-sm font-semibold text-foreground">
           {record.metadata?.title || 'Untitled Draft'}
         </div>
+        <div className="absolute right-2 top-2">
+          <ZenodoRecordActions
+            record={record}
+            versions={versions}
+            hasEditingRights={hasEditingRights}
+            refresh={refresh}
+          />
+        </div>
         <div className="mb-2 flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <VersionDropdown
@@ -85,12 +93,6 @@ export const ZenodoRecordRendererHeader: React.FC<
               }}
             />
           </div>
-          <ZenodoRecordActions
-            record={record}
-            versions={versions}
-            hasEditingRights={hasEditingRights}
-            refresh={refresh}
-          />
         </div>
         <div className="mb-1 text-xs text-muted">
           <div>ID: {record.id}</div>
