@@ -7,7 +7,7 @@ from zenodo_auth.remote_servers import RemoteServerRegistry
 
 DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
     "zenodo_production": {
-        "label": "Production",
+        "label": "Zenodo",
         "base_url": "https://zenodo.org",
         "oauth_client_id": "HaWBPRb7lsif7cqTypUNeFni9PJOoTm5IcjTJrtt",
         "proxy_url": "http://127.0.0.1:8003",
