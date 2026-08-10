@@ -72,7 +72,7 @@ export const ZenodoRecordRendererHeader: React.FC<
   return (
     <RecordActionProvider>
       <div>
-        <div className="m-0 mb-1 pr-8 text-sm font-semibold text-foreground">
+        <div className="m-0 mb-1 pr-8 text-lg font-semibold text-foreground">
           {record.metadata?.title || 'Untitled Draft'}
         </div>
         <div className="absolute right-2 top-2">
