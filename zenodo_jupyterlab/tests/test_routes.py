@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 
 from zenodo_jupyterlab.routes import (
+    ZenodoCurrentRemoteServerHandler,
     ZenodoFileImportCellHandler,
     ZenodoRecordCollectionHandler,
     ZenodoRecordPermissionHandler,
@@ -30,6 +31,29 @@ async def test_hello(jp_fetch):
             " This is the '/zenodo-jupyterlab/hello' endpoint."
             " Try visiting me in your browser!"
         ),
+    }
+
+
+def test_get_current_remote_server(remote_servers):
+    responses = []
+    zenodo_requests = Mock()
+    factory = SimpleNamespace(
+        create_zenodo_requests=Mock(return_value=zenodo_requests),
+        get_remote_server_id=Mock(return_value=remote_servers.default.id),
+        remote_servers=remote_servers,
+    )
+    handler = SimpleNamespace(
+        zenodo_requests_factory=factory,
+        finish=responses.append,
+    )
+
+    ZenodoCurrentRemoteServerHandler.get.__wrapped__(handler)
+
+    factory.create_zenodo_requests.assert_called_once_with(handler)
+    factory.get_remote_server_id.assert_called_once_with(zenodo_requests)
+    assert json.loads(responses[0]) == {
+        "id": remote_servers.default.id,
+        "display_name": remote_servers.default.label,
     }
 
 

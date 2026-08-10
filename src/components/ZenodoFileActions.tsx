@@ -6,6 +6,7 @@ import type {
   ZenodoFileIdentifier
 } from '../api_calls';
 import {
+  useCurrentRemoteServer,
   useDeleteDownload,
   useDeleteZenodoFile,
   useInsertImportCell
@@ -19,6 +20,8 @@ export const ZenodoFileActions: React.FC<{
   download: () => Promise<void>;
 }> = ({ fileId, status, editable, download }) => {
   const { deleteDownload } = useDeleteDownload(fileId);
+  const remoteServer = useCurrentRemoteServer();
+  const remoteName = remoteServer?.display_name ?? 'remote repository';
   const { insertImportCell } = useInsertImportCell(fileId);
   const { deleteFile, isDeleting } = useDeleteZenodoFile(fileId);
 
@@ -65,8 +68,8 @@ export const ZenodoFileActions: React.FC<{
     ...(editable
       ? [
           {
-            label: isDeleting ? 'Deleting…' : 'Delete from Zenodo',
-            hint: 'Permanently remove this file from the Zenodo record.',
+            label: isDeleting ? 'Deleting…' : `Delete from ${remoteName}`,
+            hint: `Permanently remove this file from the ${remoteName} record.`,
             icon: <Trash2 size={16} />,
             onClick: deleteFile,
             disabled: isDeleting,

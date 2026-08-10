@@ -15,6 +15,7 @@ import { ZenodoRecordSearch } from '../components/ZenodoRecordSearch';
 import { setCurrentTabID, useCurrentTabID } from '../store';
 import { Settings } from '../components/Settings';
 import { ZenodoRecordDraftUpload } from '../components/ZenodoRecordDraftUpload';
+import { useCurrentRemoteServer } from '../core';
 
 const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
 const TAB_PANEL_ID = 'zenodo-tab-panel';
@@ -56,8 +57,15 @@ const TABS: SidebarTab[] = [
 ];
 const DEFAULT_TAB_ID = 'account';
 
-const Panel: React.FC = () => {
+const Panel: React.FC<{
+  onRemoteNameChanged: (displayName: string | undefined) => void;
+}> = ({ onRemoteNameChanged }) => {
   const currentTabID = useCurrentTabID();
+  const remoteServer = useCurrentRemoteServer();
+
+  React.useEffect(() => {
+    onRemoteNameChanged(remoteServer?.display_name);
+  }, [onRemoteNameChanged, remoteServer?.display_name]);
   const selectedTab =
     TABS.find(tab => tab.id === currentTabID) ??
     TABS.find(tab => tab.id === DEFAULT_TAB_ID)!;
@@ -88,12 +96,21 @@ export class SidebarPanel extends VDomRenderer {
   constructor() {
     super();
     super.addClass(PANEL_CLASS);
-    super.title.label = 'Zenodo';
-    super.title.caption = 'Zenodo Integration';
+    super.title.label = 'Repository';
+    super.title.caption = 'Remote repository integration';
     super.title.closable = true;
   }
 
   render(): React.ReactElement {
-    return <Panel />;
+    return (
+      <Panel
+        onRemoteNameChanged={displayName => {
+          this.title.label = displayName ?? 'InvenioRDM';
+          this.title.caption = displayName
+            ? `${displayName} integration`
+            : 'InvenioRDM integration';
+        }}
+      />
+    );
   }
 }

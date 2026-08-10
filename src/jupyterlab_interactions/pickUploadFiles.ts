@@ -7,7 +7,7 @@ export async function pickUploadFiles(
   const result = await FileDialog.getOpenFiles({
     manager: docManager,
     title: 'Select files',
-    label: 'Choose files to upload to Zenodo',
+    label: `Choose files to upload`,
     filter: model => {
       return model.type === 'file' ? {} : null;
     }

@@ -40,7 +40,7 @@ export const ZenodoRemoteServerDropdown: React.FC<
 > = ({
   value,
   onChange,
-  ariaLabel = 'Zenodo remote server',
+  ariaLabel = 'Remote server',
   defaultOptionLabel = 'Default',
   useDefaultOption = true,
   className

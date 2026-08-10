@@ -18,7 +18,7 @@ export function Settings(): JSX.Element {
               Download directory
             </h2>
             <p className="mb-0 mt-1 text-xs leading-5 text-muted">
-              Choose where downloaded Zenodo files are saved.
+              Choose where downloaded files are saved.
             </p>
           </div>
         </div>

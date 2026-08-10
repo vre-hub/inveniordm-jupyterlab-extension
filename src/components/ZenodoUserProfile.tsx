@@ -25,7 +25,7 @@ export const ZenodoUserProfile: React.FC = () => {
       </div>
       <div className="min-w-0 flex-1">
         <p className="m-0 text-xs font-medium uppercase tracking-wide text-primary-hover">
-          Signed in to Zenodo
+          Signed in as
         </p>
         <p className="m-0 mt-1 flex min-w-0 items-center gap-1.5 text-sm font-semibold text-foreground">
           <Mail aria-hidden="true" className="size-3.5 shrink-0 text-muted" />

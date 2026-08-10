@@ -29,7 +29,7 @@ export const ZenodoLoginForm: React.FC = () => {
   const showDropdown = useShouldShowRemoteServerDropdownForLogin();
 
   if (!accessStatus) {
-    return <LoadingPanel text="Checking Zenodo login status…" />;
+    return <LoadingPanel text={`Checking login status…`} />;
   }
 
   const loggedIn =
@@ -45,7 +45,7 @@ export const ZenodoLoginForm: React.FC = () => {
             <KeyRound aria-hidden="true" className="size-5" />
           </div>
           <h2 className="m-0 text-sm font-semibold text-foreground">
-            Connect your Zenodo account
+            Connect your Account
           </h2>
           <p className="mb-5 mt-1.5 text-sm leading-5 text-muted-strong">
             Log in to access your account, manage records, and upload files.
@@ -54,14 +54,14 @@ export const ZenodoLoginForm: React.FC = () => {
             <div className="mb-4">
               <label className="block">
                 <span className="block text-sm font-medium text-foreground-secondary">
-                  Zenodo environment
+                  Select environment
                 </span>
                 <span className="mt-1 block text-xs leading-5 text-muted">
                   Choose the environment to log into for this session.
                 </span>
                 <div className="mt-2">
                   <ZenodoRemoteServerDropdown
-                    ariaLabel="Zenodo login environment"
+                    ariaLabel={`Login environment`}
                     onChange={setLoginRemoteServer}
                     value={loginRemoteServer}
                     useDefaultOption={false}
@@ -71,7 +71,6 @@ export const ZenodoLoginForm: React.FC = () => {
             </div>
           )}
           <LoginButton remoteServerId={loginRemoteServer} />
-          <LogoutButton remoteServerId={loginRemoteServer} />
         </div>
       )}
       {loggedIn && (

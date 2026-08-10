@@ -3,10 +3,12 @@ import { LoaderCircle, Search } from 'lucide-react';
 
 import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
 import { ZenodoRecordRenderer } from './ZenodoRecordRenderer';
-import { useZenodoRecordSearch } from '../core';
+import { useCurrentRemoteServer, useZenodoRecordSearch } from '../core';
 
 export const ZenodoRecordSearch: React.FC = () => {
   const [query, setQuery] = React.useState('');
+  const remoteServer = useCurrentRemoteServer();
+  const remoteName = remoteServer?.display_name ?? 'remote repository';
 
   const { isSearching, error, hits, search } = useZenodoRecordSearch();
 
@@ -24,16 +26,18 @@ export const ZenodoRecordSearch: React.FC = () => {
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted"
           />
           <input
-            aria-label="Search Zenodo"
+            aria-label={`Search ${remoteName}`}
             className="box-border w-full rounded-md border border-border-strong bg-surface py-2 pl-9 pr-3 text-sm text-foreground shadow-sm transition-colors placeholder:text-muted hover:border-border-hover focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             onChange={event => setQuery(event.target.value)}
-            placeholder="Search Zenodo"
+            placeholder={`Search ${remoteName}`}
             type="search"
             value={query}
           />
         </div>
         <button
-          aria-label={isSearching ? 'Searching Zenodo' : 'Search Zenodo'}
+          aria-label={
+            isSearching ? `Searching ${remoteName}` : `Search ${remoteName}`
+          }
           className="box-border inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-primary bg-primary text-on-primary shadow-sm transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSearching}
           type="submit"

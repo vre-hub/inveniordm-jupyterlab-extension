@@ -7,7 +7,7 @@ export async function pickDownloadDirectory(
   const result = await FileDialog.getExistingDirectory({
     manager: docManager,
     title: 'Select download directory',
-    label: 'Choose a directory for Zenodo downloads'
+    label: `Choose a directory for downloads`
   });
 
   if (!result.button.accept || !result.value || result.value.length === 0) {

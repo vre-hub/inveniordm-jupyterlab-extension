@@ -8,7 +8,11 @@ import {
 } from 'lucide-react';
 
 import { ZenodoRecordData, ZenodoRecordVersion } from '../api_calls';
-import { useCreateNewVersion, useDiscardDraft } from '../core';
+import {
+  useCreateNewVersion,
+  useCurrentRemoteServer,
+  useDiscardDraft
+} from '../core';
 import { OverflowMenu, OverflowMenuItem } from './OverflowMenu';
 import { useRecordAction } from './RecordActionStatus';
 
@@ -19,6 +23,8 @@ export const ZenodoRecordActions: React.FC<{
   refresh: () => void;
 }> = ({ record, versions, hasEditingRights, refresh }) => {
   const { setRecordAction } = useRecordAction();
+  const remoteServer = useCurrentRemoteServer();
+  const remoteName = remoteServer?.display_name ?? 'remote repository';
   const editable = record.is_draft && hasEditingRights;
   const {
     createVersion,
@@ -56,14 +62,14 @@ export const ZenodoRecordActions: React.FC<{
 
   const actions: OverflowMenuItem[] = [
     {
-      label: editable ? 'Edit Record Metadata' : 'Open Record on Zenodo',
+      label: editable ? 'Edit Record Metadata' : `Open Record on ${remoteName}`,
       icon: <ExternalLink size={16} />,
       onClick: openRecord
     },
     {
       label: 'Refresh',
       icon: <RefreshCw size={16} />,
-      hint: 'Reload the record from Zenodo',
+      hint: `Reload the record from ${remoteName}`,
       onClick: refresh
     },
     ...(hasEditingRights

@@ -21,6 +21,11 @@ export type RemoteServerOption = {
   label: string;
 };
 
+export type CurrentRemoteServer = {
+  id: RemoteServerId;
+  display_name: string;
+};
+
 export async function getRemoteServers(
   serverSettings: ServerConnection.ISettings
 ): Promise<RemoteServerOption[]> {
@@ -35,6 +40,15 @@ export async function getRemoteServersDefault(
 ): Promise<RemoteServerOption> {
   return await requestAPI<RemoteServerOption>(
     'remote-servers/default',
+    serverSettings
+  );
+}
+
+export async function getCurrentRemoteServer(
+  serverSettings: ServerConnection.ISettings
+): Promise<CurrentRemoteServer> {
+  return await requestAPI<CurrentRemoteServer>(
+    'remote-servers/current',
     serverSettings
   );
 }

@@ -2,6 +2,7 @@
  * Core hooks and utilities used by the extension's UI components.
  */
 export * from './useCreateNewVersion';
+export * from './useCurrentRemoteServer';
 export * from './useDeleteDownload';
 export * from './useDeleteZenodoFile';
 export * from './useDiscardDraft';

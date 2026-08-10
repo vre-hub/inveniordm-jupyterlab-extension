@@ -79,7 +79,7 @@ function RecordDeleted(): JSX.Element | null {
           Record deleted
         </div>
         <div className="text-xs text-muted">
-          This Zenodo record is no longer available.
+          This record is no longer available.
         </div>
       </div>
       <button

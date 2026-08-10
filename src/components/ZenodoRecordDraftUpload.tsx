@@ -3,9 +3,11 @@ import React from 'react';
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 import { OpenRecordButton } from './OpenRecordButton';
-import { useZenodoRecordDraftUpload } from '../core';
+import { useCurrentRemoteServer, useZenodoRecordDraftUpload } from '../core';
 
 export const ZenodoRecordDraftUpload: React.FC = () => {
+  const remoteServer = useCurrentRemoteServer();
+  const remoteName = remoteServer?.display_name;
   const {
     isCreatingDraft,
     uploadId,
@@ -18,12 +20,16 @@ export const ZenodoRecordDraftUpload: React.FC = () => {
     cancelUploadJob
   } = useZenodoRecordDraftUpload(); // TODO maybe unify this with useZenodoRecordFileUpload
 
+  if (!remoteName) {
+    return <p>Loading...</p>;
+  }
+
   return (
     <div>
       <h2 className="m-0 text-sm font-semibold text-foreground">Upload</h2>
       <p>
-        Upload files to a Zenodo draft. You will be able to edit the draft
-        metadata and publish it on Zenodo after the upload.
+        Upload files to a draft on {remoteName}. You will be able to edit the
+        draft metadata and publish it on {remoteName} after the upload.
       </p>
       <PickFilesButton
         buttonText={isCreatingDraft ? 'Uploading files...' : 'Select files'}
