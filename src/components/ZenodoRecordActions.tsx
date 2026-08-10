@@ -56,7 +56,7 @@ export const ZenodoRecordActions: React.FC<{
 
   const actions: OverflowMenuItem[] = [
     {
-      label: editable ? 'Edit Record' : 'Open Record',
+      label: editable ? 'Edit Record Metadata' : 'Open Record on Zenodo',
       icon: <ExternalLink size={16} />,
       onClick: openRecord
     },

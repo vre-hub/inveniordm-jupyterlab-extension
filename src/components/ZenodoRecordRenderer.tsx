@@ -29,59 +29,81 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
   const isDraft = record.is_draft;
   const editable = isDraft && hasEditingRights;
   const files = Object.values(record.files?.entries ?? {});
+
+  return (
+    <div className="relative mb-3 rounded-lg border border-border bg-surface px-2 py-3 shadow-sm">
+      <section>
+        <ZenodoRecordRendererHeader
+          record={record}
+          hasEditingRights={hasEditingRights}
+          versions={versions}
+          recordIdentifier={recordIdentifier}
+          selectRecord={selectRecord}
+        />
+        <div className="mt-2">
+          {files.map(file => (
+            <ZenodoFileInfo
+              file={file}
+              key={file.key}
+              recordId={record.id}
+              isDraft={record.is_draft}
+              editable={editable}
+            />
+          ))}
+        </div>
+        {editable && <ZenodoRecordFileUpload recordId={record.id} />}
+      </section>
+    </div>
+  );
+};
+
+export const ZenodoRecordRendererHeader: React.FC<
+  ZenodoRecordRendererProps
+> = ({
+  record,
+  hasEditingRights = false,
+  versions,
+  recordIdentifier,
+  selectRecord
+}) => {
   const refresh = (): void => {
     selectRecord(recordIdentifier);
   };
-
   return (
     <RecordActionProvider>
-      <div className="relative mb-3 rounded-lg border border-border bg-surface px-2 py-3 shadow-sm">
-        <section>
-          <div className="mb-2 flex items-center gap-2">
-            <div className="min-w-0 flex-1">
-              <VersionDropdown
-                versions={versions}
-                recordIdentifier={recordIdentifier}
-                onChange={identifier => {
-                  selectRecord(identifier);
-                }}
-              />
-            </div>
-            <ZenodoRecordActions
-              record={record}
+      <div>
+        <div className="mb-2 flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <VersionDropdown
               versions={versions}
-              hasEditingRights={hasEditingRights}
-              refresh={refresh}
+              recordIdentifier={recordIdentifier}
+              onChange={identifier => {
+                selectRecord(identifier);
+              }}
             />
           </div>
-          {record.metadata?.title && (
-            <div className="m-0 mb-1 pr-8 text-sm font-semibold text-foreground">
-              {record.metadata?.title}
-            </div>
-          )}
-          <div className="mb-1 text-xs text-muted">
-            <div>ID: {record.id}</div>
-            <div>Created: {new Date(record.created).toLocaleString()}</div>
-            <div>Modified: {new Date(record.updated).toLocaleString()}</div>
-            {record.pids?.doi?.identifier ? (
-              <div>DOI: {record.pids.doi.identifier}</div>
-            ) : null}
+          <ZenodoRecordActions
+            record={record}
+            versions={versions}
+            hasEditingRights={hasEditingRights}
+            refresh={refresh}
+          />
+        </div>
+        {record.metadata?.title && (
+          <div className="m-0 mb-1 pr-8 text-sm font-semibold text-foreground">
+            {record.metadata?.title}
           </div>
-          <div className="mt-2">
-            {files.map(file => (
-              <ZenodoFileInfo
-                file={file}
-                key={file.key}
-                recordId={record.id}
-                isDraft={record.is_draft}
-                editable={editable}
-              />
-            ))}
-          </div>
-          {editable && <ZenodoRecordFileUpload recordId={record.id} />}
-          <RecordActionStatus />
-        </section>
+        )}
+        <div className="mb-1 text-xs text-muted">
+          <div>ID: {record.id}</div>
+          <div>Created: {new Date(record.created).toLocaleString()}</div>
+          <div>Modified: {new Date(record.updated).toLocaleString()}</div>
+          {record.pids?.doi?.identifier ? (
+            <div>DOI: {record.pids.doi.identifier}</div>
+          ) : null}
+        </div>
       </div>
+      <RecordActionStatus />
     </RecordActionProvider>
   );
 };
