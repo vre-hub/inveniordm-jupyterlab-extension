@@ -61,6 +61,8 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
           )}
           <div className="mb-1 text-xs text-muted">
             <div>ID: {record.id}</div>
+            <div>Created: {new Date(record.created).toLocaleString()}</div>
+            <div>Modified: {new Date(record.updated).toLocaleString()}</div>
             {record.pids?.doi?.identifier ? (
               <div>DOI: {record.pids.doi.identifier}</div>
             ) : null}

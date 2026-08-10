@@ -563,6 +563,8 @@ export type ZenodoRecordData = {
   metadata?: {
     title?: string;
   };
+  created: string; // format e.g. "2025-04-07T13:20:56.868888+00:00"
+  updated: string;
   pids?: {
     doi?: {
       identifier?: string;
