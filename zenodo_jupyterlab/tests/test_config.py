@@ -35,8 +35,12 @@ def test_reads_remote_servers_from_jupyter_config():
 
     registry = ZenodoJupyterLab(config=config).remote_server_registry()
 
+    assert {server.id for server in registry.all()} == {
+        "zenodo_production",
+        "cds_repository",
+        "inveniordm_local",
+    }
     assert registry.get("zenodo_production").label == "Production"
-    assert registry.get("zenodo_sandbox").base_url == "https://sandbox.zenodo.org"
     assert registry.get("inveniordm_local").proxy_url == "http://127.0.0.1:8006"
     assert registry.default.id == "zenodo_production"
 
