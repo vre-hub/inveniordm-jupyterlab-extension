@@ -22,7 +22,6 @@ from inveniordm_jupyterlab.util.job_manager import JobContext, JobManager
 from inveniordm_jupyterlab.util.job_types import JobProgress
 
 from .cell_actions import make_inveniordm_import_cell_action
-from .util.sse import EventBus, stream_user_events
 from .inveniordm_auth.auth_controller import InvenioRDMAuthController
 from .inveniordm_download_manager import InvenioRDMDownloadManager
 from .inveniordm_file_identifier import (
@@ -39,6 +38,7 @@ from .inveniordm_requests.inveniordm_requests_factory import InvenioRDMRequestsF
 from .inveniordm_requests.inveniordm_requests_factory_create import (
     create_inveniordm_requests_factory,
 )
+from .util.sse import EventBus, stream_user_events
 
 
 class APIHandler(JupyterAPIHandler):
@@ -1087,6 +1087,7 @@ class InvenioRDMDownloadLocationSettingHandler(APIHandler):
 def setup_route_handlers(
     web_app,
     remote_servers: RemoteServerRegistry,
+    request_mode: str,
 ):
     host_pattern = ".*$"
     base_url = web_app.settings["base_url"]
@@ -1094,7 +1095,7 @@ def setup_route_handlers(
     job_manager = JobManager()
     inveniordm_requests_factory = create_inveniordm_requests_factory(
         remote_servers,
-        "local",
+        request_mode,
     )
 
     def get_inveniordm_requests(handler: APIHandler) -> InvenioRDMRequests:

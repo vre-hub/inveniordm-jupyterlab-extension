@@ -23,9 +23,17 @@ DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
 }
 
 remote_servers_modes = ["extend", "replace"]
+request_modes = ["local", "proxy"]
 
 
 class InvenioRDMJupyterLab(Configurable):
+    request_mode = Enum(
+        request_modes,
+        default_value="local",
+        config=True,
+        help="Mode used for InvenioRDM API requests.",
+    )
+
     remote_servers_mode = Enum(
         remote_servers_modes,
         default_value="replace",

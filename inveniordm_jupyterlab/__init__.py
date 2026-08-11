@@ -32,6 +32,7 @@ def _load_jupyter_server_extension(server_app):
     setup_route_handlers(
         server_app.web_app,
         extension_config.remote_server_registry(),
+        extension_config.request_mode,
     )
     name = "inveniordm_jupyterlab"
     server_app.log.info(f"Registered {name} server extension")

@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from inveniordm_jupyterlab import routes
 from inveniordm_jupyterlab.routes import (
     InvenioRDMCurrentRemoteServerHandler,
     InvenioRDMFileImportCellHandler,
@@ -18,6 +19,20 @@ from inveniordm_jupyterlab.inveniordm_file_identifier import InvenioRDMFileIdent
 from inveniordm_jupyterlab.inveniordm_record_identifier import (
     InvenioRDMRecordIdentifier,
 )
+
+
+def test_setup_route_handlers_uses_configured_request_mode(monkeypatch, remote_servers):
+    factory = Mock()
+    create_factory = Mock(return_value=factory)
+    monkeypatch.setattr(routes, "create_inveniordm_requests_factory", create_factory)
+    web_app = SimpleNamespace(
+        settings={"base_url": "/"},
+        add_handlers=Mock(),
+    )
+
+    routes.setup_route_handlers(web_app, remote_servers, "proxy")
+
+    create_factory.assert_called_once_with(remote_servers, "proxy")
 
 
 async def test_hello(jp_fetch):

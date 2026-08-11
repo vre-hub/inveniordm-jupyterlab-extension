@@ -48,6 +48,16 @@ def test_reads_remote_servers_from_jupyter_config():
     assert registry.default.id == "inveniordm_production"
 
 
+def test_request_mode_defaults_to_local():
+    assert InvenioRDMJupyterLab().request_mode == "local"
+
+
+def test_reads_request_mode_from_jupyter_config():
+    config = Config({"InvenioRDMJupyterLab": {"request_mode": "proxy"}})
+
+    assert InvenioRDMJupyterLab(config=config).request_mode == "proxy"
+
+
 def test_replaces_remote_servers_from_jupyter_config():
     config = Config(
         {
