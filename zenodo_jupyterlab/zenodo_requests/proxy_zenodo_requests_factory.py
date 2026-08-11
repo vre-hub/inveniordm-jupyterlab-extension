@@ -51,7 +51,7 @@ class ProxyZenodoRequestsFactory(ZenodoRequestsFactory):
 
         if remote_server_override is not None:
             return self._create_requests_for_server(
-                remote_server_override, cookies[remote_server_override]
+                remote_server_override, cookies.get(remote_server_override)
             )
 
         for server in self.remote_servers.all():

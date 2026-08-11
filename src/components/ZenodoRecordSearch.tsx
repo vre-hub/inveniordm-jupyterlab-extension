@@ -10,7 +10,7 @@ import { useCurrentRemoteServer, useZenodoRecordSearch } from '../core';
 
 export const ZenodoRecordSearch: React.FC = () => {
   const [query, setQuery] = React.useState('');
-  const remoteServer = useCurrentRemoteServer();
+  const { remoteServer } = useCurrentRemoteServer();
   const remoteName = remoteServer?.display_name ?? 'remote repository';
 
   const { isSearching, error, hits, search } = useZenodoRecordSearch();

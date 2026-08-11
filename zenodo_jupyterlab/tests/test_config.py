@@ -1,7 +1,7 @@
 import pytest
 from traitlets.config import Config
 
-from zenodo_auth.remote_servers import RemoteServerRegistry
+from zenodo_auth.remote_servers import RemoteServerRegistry, UnknownRemoteServerError
 from zenodo_jupyterlab.config import ZenodoJupyterLab
 
 REMOTE_SERVERS = {
@@ -122,3 +122,10 @@ def test_remote_server_registry_accepts_config_only_id():
     )
 
     assert registry.default.id == "custom_repository"
+
+
+def test_remote_server_registry_rejects_unknown_id():
+    registry = RemoteServerRegistry(REMOTE_SERVERS)
+
+    with pytest.raises(UnknownRemoteServerError, match="removed-server"):
+        registry.get("removed-server")

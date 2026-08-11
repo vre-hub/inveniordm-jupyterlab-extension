@@ -5,6 +5,15 @@ from typing import Any, TypeAlias
 RemoteServerId: TypeAlias = str
 
 
+class UnknownRemoteServerError(LookupError):
+    def __init__(self, remote_server_id: RemoteServerId):
+        self.remote_server_id = remote_server_id
+        super().__init__(remote_server_id)
+
+    def __str__(self) -> str:
+        return f"Unknown remote server: {self.remote_server_id}"
+
+
 @dataclass(frozen=True)
 class RemoteServer:
     id: RemoteServerId
@@ -78,7 +87,10 @@ class RemoteServerRegistry:
         return next(iter(self._servers.values()))
 
     def get(self, server_id: RemoteServerId) -> RemoteServer:
-        return self._servers[server_id]
+        try:
+            return self._servers[server_id]
+        except KeyError as error:
+            raise UnknownRemoteServerError(server_id) from error
 
     def all(self) -> tuple[RemoteServer, ...]:
         return tuple(self._servers.values())

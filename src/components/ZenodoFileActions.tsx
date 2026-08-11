@@ -20,7 +20,7 @@ export const ZenodoFileActions: React.FC<{
   download: () => Promise<void>;
 }> = ({ fileId, status, editable, download }) => {
   const { deleteDownload } = useDeleteDownload(fileId);
-  const remoteServer = useCurrentRemoteServer();
+  const { remoteServer } = useCurrentRemoteServer();
   const remoteName = remoteServer?.display_name ?? 'remote repository';
   const { insertImportCell } = useInsertImportCell(fileId);
   const { deleteFile, isDeleting } = useDeleteZenodoFile(fileId);

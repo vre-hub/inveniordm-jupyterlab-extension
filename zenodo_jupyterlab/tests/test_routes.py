@@ -34,6 +34,28 @@ async def test_hello(jp_fetch):
     }
 
 
+@pytest.mark.parametrize(
+    "path",
+    [
+        ("access-token",),
+        ("me",),
+        ("user", "records"),
+    ],
+)
+async def test_unknown_remote_server_returns_bad_request(jp_fetch, path):
+    response = await jp_fetch(
+        "zenodo-jupyterlab",
+        *path,
+        params={"remote_server": "removed-server"},
+        raise_error=False,
+    )
+
+    assert response.code == 400
+    assert json.loads(response.body)["message"] == (
+        "Unknown remote server: removed-server"
+    )
+
+
 def test_get_current_remote_server(remote_servers):
     responses = []
     zenodo_requests = Mock()

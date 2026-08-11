@@ -1,6 +1,7 @@
 import pytest
 import requests as requests_library
 
+from zenodo_auth.remote_servers import UnknownRemoteServerError
 from zenodo_auth.token_store import BoundedTokenStore, FileTokenStore
 from zenodo_jupyterlab.util.job_types import JobCancelled
 from zenodo_jupyterlab.zenodo_file_identifier import ZenodoFileIdentifier
@@ -32,7 +33,7 @@ def test_local_factory_passes_stored_zenodo_user_id(tmp_path, remote_servers):
     factory.token_store.set_token(
         "token",
         True,
-        remote_server_id="zenodo_production",
+        remote_server_id=remote_servers.default.id,
         zenodo_user_id="123",
     )
 
@@ -43,6 +44,40 @@ def test_local_factory_passes_stored_zenodo_user_id(tmp_path, remote_servers):
     requests = factory.create_zenodo_requests(Handler())
 
     assert requests.zenodo_user_id == "123"
+
+
+def test_local_factory_rejects_unknown_remote_server_override(remote_servers):
+    factory = LocalZenodoRequestsFactory(remote_servers)
+
+    class Handler:
+        def get_query_argument(self, name, default=None):
+            return "removed-server" if name == "remote_server" else default
+
+    with pytest.raises(UnknownRemoteServerError) as raised:
+        factory.create_zenodo_requests(Handler())
+
+    assert raised.value.remote_server_id == "removed-server"
+
+
+def test_local_factory_rejects_token_for_unknown_remote_server(
+    tmp_path, remote_servers
+):
+    factory = LocalZenodoRequestsFactory(remote_servers)
+    factory.token_store = BoundedTokenStore(FileTokenStore(tmp_path / "tokens.json"))
+    factory.token_store.set_token(
+        "token",
+        True,
+        remote_server_id="removed-server",
+    )
+
+    class Handler:
+        def get_query_argument(self, name, default=None):
+            return default
+
+    with pytest.raises(UnknownRemoteServerError) as raised:
+        factory.create_zenodo_requests(Handler())
+
+    assert raised.value.remote_server_id == "removed-server"
 
 
 def test_upload_record_files_passes_record_id(monkeypatch, tmp_path):

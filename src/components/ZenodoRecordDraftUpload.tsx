@@ -6,7 +6,11 @@ import { OpenRecordButton } from './OpenRecordButton';
 import { useCurrentRemoteServer, useZenodoRecordDraftUpload } from '../core';
 
 export const ZenodoRecordDraftUpload: React.FC = () => {
-  const remoteServer = useCurrentRemoteServer();
+  const {
+    remoteServer,
+    isLoading: isLoadingRemoteServer,
+    error: remoteServerError
+  } = useCurrentRemoteServer();
   const remoteName = remoteServer?.display_name;
   const {
     isCreatingDraft,
@@ -20,8 +24,16 @@ export const ZenodoRecordDraftUpload: React.FC = () => {
     cancelUploadJob
   } = useZenodoRecordDraftUpload(); // TODO maybe unify this with useZenodoRecordFileUpload
 
-  if (!remoteName) {
+  if (isLoadingRemoteServer) {
     return <p>Loading...</p>;
+  }
+
+  if (remoteServerError) {
+    return <p>{remoteServerError}</p>;
+  }
+
+  if (!remoteName) {
+    return <p>Remote server unavailable.</p>;
   }
 
   return (

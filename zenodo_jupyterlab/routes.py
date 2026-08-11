@@ -7,10 +7,10 @@ from urllib.parse import quote
 import requests
 import tornado
 from jupyter_core.paths import jupyter_data_dir
-from jupyter_server.base.handlers import APIHandler
+from jupyter_server.base.handlers import APIHandler as JupyterAPIHandler
 from jupyter_server.utils import url_path_join
 
-from zenodo_auth.remote_servers import RemoteServerRegistry
+from zenodo_auth.remote_servers import RemoteServerRegistry, UnknownRemoteServerError
 from zenodo_jupyterlab.user_settings import (
     ZenodoUserSettings,
     ZenodoUserSettingsFromFile,
@@ -36,6 +36,18 @@ from .zenodo_requests.zenodo_requests_factory import ZenodoRequestsFactory
 from .zenodo_requests.zenodo_requests_factory_create import (
     create_zenodo_requests_factory,
 )
+
+
+class APIHandler(JupyterAPIHandler):
+    def write_error(self, status_code: int, **kwargs) -> None:
+        exc_info = kwargs.get("exc_info")
+        if exc_info and isinstance(exc_info[1], UnknownRemoteServerError):
+            self.set_status(400)
+            self.set_header("Content-Type", "application/json")
+            self.finish(json.dumps({"message": str(exc_info[1])}))
+            return
+        super().write_error(status_code, **kwargs)
+
 
 GetZenodoRequests = Callable[[APIHandler], ZenodoRequests]
 GetZenodoDownloadManager = Callable[[APIHandler], ZenodoDownloadManager]

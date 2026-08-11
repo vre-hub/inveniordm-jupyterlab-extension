@@ -23,7 +23,7 @@ export const ZenodoRecordActions: React.FC<{
   refresh: () => void;
 }> = ({ record, versions, hasEditingRights, refresh }) => {
   const { setRecordAction } = useRecordAction();
-  const remoteServer = useCurrentRemoteServer();
+  const { remoteServer } = useCurrentRemoteServer();
   const remoteName = remoteServer?.display_name ?? 'remote repository';
   const editable = record.is_draft && hasEditingRights;
   const {

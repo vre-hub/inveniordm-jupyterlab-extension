@@ -61,7 +61,7 @@ const Panel: React.FC<{
   onRemoteNameChanged: (displayName: string | undefined) => void;
 }> = ({ onRemoteNameChanged }) => {
   const currentTabID = useCurrentTabID();
-  const remoteServer = useCurrentRemoteServer();
+  const { remoteServer } = useCurrentRemoteServer();
 
   React.useEffect(() => {
     onRemoteNameChanged(remoteServer?.display_name);

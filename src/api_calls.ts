@@ -16,6 +16,12 @@ export type AccessTokenResponse = {
   remote_server_base_url: string;
 };
 
+export type AccessTokenStatus =
+  | AccessTokenResponse
+  | {
+      error: string;
+    };
+
 export type RemoteServerOption = {
   id: RemoteServerId;
   label: string;
@@ -53,17 +59,18 @@ export async function getCurrentRemoteServer(
   );
 }
 
-export function useAccessTokenStatus(): AccessTokenResponse | undefined {
+export function useAccessTokenStatus(): AccessTokenStatus | undefined {
   const serverSettings = useServerSettings();
-  const [status, setStatus] = React.useState<AccessTokenResponse>();
+  const [status, setStatus] = React.useState<AccessTokenStatus>();
 
   const updateStatus = React.useCallback(async (): Promise<void> => {
-    setStatus(
-      await await requestAPI<AccessTokenResponse>(
-        'access-token',
-        serverSettings
-      )
-    );
+    try {
+      setStatus(
+        await requestAPI<AccessTokenResponse>('access-token', serverSettings)
+      );
+    } catch (reason) {
+      setStatus({ error: String(reason) });
+    }
   }, [serverSettings]);
 
   React.useEffect(() => {
