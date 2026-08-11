@@ -57,6 +57,14 @@ export const ZenodoRecordRenderer: React.FC<ZenodoRecordRendererProps> = ({
   );
 };
 
+export const ZenodoRecordPreview: React.FC<
+  ZenodoRecordRendererProps
+> = props => (
+  <div className="relative mb-3 cursor-pointer rounded-lg border border-border bg-surface px-2 py-3 shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md active:shadow-sm">
+    <ZenodoRecordRendererHeader {...props} />
+  </div>
+);
+
 export const ZenodoRecordRendererHeader: React.FC<
   ZenodoRecordRendererProps
 > = ({

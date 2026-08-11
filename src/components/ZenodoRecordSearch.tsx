@@ -1,8 +1,11 @@
 import React from 'react';
 import { LoaderCircle, Search } from 'lucide-react';
 
-import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
-import { ZenodoRecordRenderer } from './ZenodoRecordRenderer';
+import {
+  ZenodoRecordPreview,
+  ZenodoRecordRenderer
+} from './ZenodoRecordRenderer';
+import { ZenodoRecordList } from './ZenodoRecordList';
 import { useCurrentRemoteServer, useZenodoRecordSearch } from '../core';
 
 export const ZenodoRecordSearch: React.FC = () => {
@@ -50,20 +53,12 @@ export const ZenodoRecordSearch: React.FC = () => {
         </button>
       </form>
       {error}
-      {hits.map(result => (
-        <ZenodoVersionedRecord
-          key={result.id}
-          initialRecordIdentifier={{
-            record_id: result.id,
-            record_status: 'published'
-          }}
-          initialRecordValue={result}
-          include_drafts_in_version_dropdown={false}
-          renderRecord={zenodoRecordRendererProps => (
-            <ZenodoRecordRenderer {...zenodoRecordRendererProps} />
-          )}
-        />
-      ))}
+      <ZenodoRecordList
+        records={hits}
+        includeDrafts={false}
+        renderPreview={props => <ZenodoRecordPreview {...props} />}
+        renderDetails={props => <ZenodoRecordRenderer {...props} />}
+      />
     </div>
   );
 };

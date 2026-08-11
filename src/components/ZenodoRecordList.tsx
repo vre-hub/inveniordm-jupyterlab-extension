@@ -1,0 +1,99 @@
+import React from 'react';
+import { ArrowLeft } from 'lucide-react';
+
+import {
+  ZenodoRecordData,
+  ZenodoRecordIdentifier,
+  zenodoRecordIdentifierFromRecord
+} from '../api_calls';
+import { ZenodoRecordRendererProps } from './ZenodoRecordRenderer';
+import { ZenodoVersionedRecord } from './ZenodoVersionedRecord';
+
+type ZenodoRecordListProps = {
+  records: ZenodoRecordData[];
+  includeDrafts: boolean;
+  renderPreview: (props: ZenodoRecordRendererProps) => JSX.Element;
+  renderDetails: (props: ZenodoRecordRendererProps) => JSX.Element;
+};
+
+/**
+ * Show record headers first, then replace the list with the selected record's
+ * file details. Both public search results and a user's records use this flow.
+ */
+export const ZenodoRecordList: React.FC<ZenodoRecordListProps> = ({
+  records,
+  includeDrafts,
+  renderPreview,
+  renderDetails
+}) => {
+  const [selectedIdentifier, setSelectedIdentifier] = React.useState<
+    ZenodoRecordIdentifier | undefined
+  >();
+
+  const selectedRecord = records.find(record => {
+    const identifier = zenodoRecordIdentifierFromRecord(record);
+    return (
+      identifier.record_id === selectedIdentifier?.record_id &&
+      identifier.record_status === selectedIdentifier.record_status
+    );
+  });
+
+  React.useEffect(() => {
+    if (selectedIdentifier && !selectedRecord) {
+      setSelectedIdentifier(undefined);
+    }
+  }, [selectedIdentifier, selectedRecord]);
+
+  if (selectedIdentifier && selectedRecord) {
+    return (
+      <div>
+        <button
+          className="mb-3 inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-medium text-muted-strong shadow-sm transition-colors hover:border-primary hover:bg-primary-subtle hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          onClick={() => setSelectedIdentifier(undefined)}
+          type="button"
+        >
+          <ArrowLeft aria-hidden="true" className="size-3.5" />
+          Back to records
+        </button>
+        <ZenodoVersionedRecord
+          initialRecordIdentifier={selectedIdentifier}
+          initialRecordValue={selectedRecord}
+          include_drafts_in_version_dropdown={includeDrafts}
+          renderRecord={renderDetails}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {records.map(record => {
+        const initialRecordIdentifier =
+          zenodoRecordIdentifierFromRecord(record);
+
+        return (
+          <ZenodoVersionedRecord
+            key={`${initialRecordIdentifier.record_status}:${initialRecordIdentifier.record_id}`}
+            initialRecordIdentifier={initialRecordIdentifier}
+            initialRecordValue={record}
+            include_drafts_in_version_dropdown={includeDrafts}
+            renderRecord={props => (
+              <div
+                onClick={event => {
+                  // Keep controls in the header usable without opening details.
+                  const element = event.target as HTMLElement;
+                  if (element.closest('button, a, input, select, textarea')) {
+                    return;
+                  }
+                  setSelectedIdentifier(props.recordIdentifier);
+                }}
+              >
+                {renderPreview(props)}
+              </div>
+            )}
+          />
+        );
+      })}
+    </div>
+  );
+};
