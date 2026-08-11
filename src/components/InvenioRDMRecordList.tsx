@@ -26,38 +26,28 @@ export const InvenioRDMRecordList: React.FC<InvenioRDMRecordListProps> = ({
   renderPreview,
   renderDetails
 }) => {
-  const [selectedIdentifier, setSelectedIdentifier] = React.useState<
-    InvenioRDMRecordIdentifier | undefined
+  const [selection, setSelection] = React.useState<
+    | {
+        identifier: InvenioRDMRecordIdentifier;
+        record: InvenioRDMRecordData;
+      }
+    | undefined
   >();
 
-  const selectedRecord = records.find(record => {
-    const identifier = inveniordmRecordIdentifierFromRecord(record);
-    return (
-      identifier.record_id === selectedIdentifier?.record_id &&
-      identifier.record_status === selectedIdentifier.record_status
-    );
-  });
-
-  React.useEffect(() => {
-    if (selectedIdentifier && !selectedRecord) {
-      setSelectedIdentifier(undefined);
-    }
-  }, [selectedIdentifier, selectedRecord]);
-
-  if (selectedIdentifier && selectedRecord) {
+  if (selection) {
     return (
       <div>
         <button
           className="mb-3 inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-medium text-muted-strong shadow-sm transition-colors hover:border-primary hover:bg-primary-subtle hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          onClick={() => setSelectedIdentifier(undefined)}
+          onClick={() => setSelection(undefined)}
           type="button"
         >
           <ArrowLeft aria-hidden="true" className="size-3.5" />
           Back to records
         </button>
         <InvenioRDMVersionedRecord
-          initialRecordIdentifier={selectedIdentifier}
-          initialRecordValue={selectedRecord}
+          initialRecordIdentifier={selection.identifier}
+          initialRecordValue={selection.record}
           include_drafts_in_version_dropdown={includeDrafts}
           renderRecord={renderDetails}
         />
@@ -85,7 +75,10 @@ export const InvenioRDMRecordList: React.FC<InvenioRDMRecordListProps> = ({
                   if (element.closest('button, a, input, select, textarea')) {
                     return;
                   }
-                  setSelectedIdentifier(props.recordIdentifier);
+                  setSelection({
+                    identifier: props.recordIdentifier,
+                    record: props.record
+                  });
                 }}
               >
                 {renderPreview(props)}
