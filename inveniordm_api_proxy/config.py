@@ -3,14 +3,15 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-DEFAULT_INVENIORDM_BASE_URL = "https://sandbox.inveniordm.org"
+DEFAULT_INVENIORDM_BASE_URL = "https://sandbox.zenodo.org"
 DEFAULT_PROXY_HOST = "127.0.0.1"
 DEFAULT_PROXY_PORT = 8001
 DEFAULT_PROXY_PUBLIC_URL = "http://127.0.0.1:8001"
 DEFAULT_SCOPE = "user:email"
 DEFAULT_ALLOWED_RETURN_HOSTS = ("localhost", "127.0.0.1", "::1")
 DEFAULT_ALLOWED_CORS_ORIGINS = ("http://localhost:8888", "http://127.0.0.1:8888")
-DEFAULT_SESSION_COOKIE_NAME = "inveniordm_sandbox_proxy_session"
+DEFAULT_SESSION_COOKIE_NAME = "zenodo_sandbox_proxy_session"
+DEFAULT_CLIENT_ID = "ca8NzRHmqp6tVA0IE9XUlmbL74cGm9RqguC9DZlU"
 
 
 @dataclass(frozen=True)
@@ -37,7 +38,7 @@ class Config:
     @classmethod
     def from_environment(cls) -> "Config":
         return cls(
-            client_id=_required_env("INVENIORDM_CLIENT_ID"),
+            client_id=os.environ.get("INVENIORDM_CLIENT_ID", DEFAULT_CLIENT_ID),
             inveniordm_base_url=os.environ.get(
                 "INVENIORDM_BASE_URL",
                 DEFAULT_INVENIORDM_BASE_URL,
