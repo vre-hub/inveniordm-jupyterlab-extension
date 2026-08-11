@@ -29,7 +29,9 @@ class InvenioRDMRequestsFactory(ABC):
     def create_inveniordm_requests(self, handler: APIHandler) -> InvenioRDMRequests:
         pass
 
-    def get_remote_server_id(self, inveniordm_requests: InvenioRDMRequests) -> RemoteServerId:
+    def get_remote_server_id(
+        self, inveniordm_requests: InvenioRDMRequests
+    ) -> RemoteServerId:
         return self.remote_servers.by_url(inveniordm_requests.url).id
 
     def get_access_token_status(self, handler: APIHandler) -> AccessTokenStatus:

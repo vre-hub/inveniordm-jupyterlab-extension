@@ -15,7 +15,9 @@ from inveniordm_jupyterlab.routes import (
 )
 from inveniordm_jupyterlab.util.sse import EventBus
 from inveniordm_jupyterlab.inveniordm_file_identifier import InvenioRDMFileIdentifier
-from inveniordm_jupyterlab.inveniordm_record_identifier import InvenioRDMRecordIdentifier
+from inveniordm_jupyterlab.inveniordm_record_identifier import (
+    InvenioRDMRecordIdentifier,
+)
 
 
 async def test_hello(jp_fetch):
@@ -242,7 +244,10 @@ def test_delete_user_record_discards_draft():
         "versions": {"index": 1},
     }
     draft = {"id": "draft-1", "is_draft": True, "versions": {"index": 1}}
-    inveniordm_requests.list_inveniordm_record_versions.return_value = [published, draft]
+    inveniordm_requests.list_inveniordm_record_versions.return_value = [
+        published,
+        draft,
+    ]
     event_bus = EventBus()
     events = event_bus.subscribe("alice")
     responses = []
@@ -263,7 +268,9 @@ def test_delete_user_record_discards_draft():
     inveniordm_requests.list_inveniordm_record_versions.assert_called_once_with(
         "draft-1", include_drafts=True
     )
-    inveniordm_requests.delete_inveniordm_record_draft.assert_called_once_with("draft-1")
+    inveniordm_requests.delete_inveniordm_record_draft.assert_called_once_with(
+        "draft-1"
+    )
     event = events.get_nowait()
     assert event.topic == "record.versions.changed"
     assert event.data == {
@@ -413,7 +420,9 @@ def test_create_version_event_contains_new_draft():
     inveniordm_requests.list_inveniordm_record_versions.assert_called_once_with(
         "record-1", include_drafts=True
     )
-    inveniordm_requests.create_inveniordm_record_version.assert_called_once_with("record-1")
+    inveniordm_requests.create_inveniordm_record_version.assert_called_once_with(
+        "record-1"
+    )
     event = events.get_nowait()
     assert event.topic == "record.versions.changed"
     assert event.data == {

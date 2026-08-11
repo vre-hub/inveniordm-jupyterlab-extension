@@ -12,7 +12,10 @@ from inveniordm_jupyterlab.inveniordm_requests.inveniordm_helpers import (
 from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
 from ..util.progress_reporting_reader import ProgressReportingReader
 from ..inveniordm_file_identifier import InvenioRDMFileIdentifier
-from ..inveniordm_record_identifier import InvenioRDMRecordIdentifier, InvenioRDMRecordStatus
+from ..inveniordm_record_identifier import (
+    InvenioRDMRecordIdentifier,
+    InvenioRDMRecordStatus,
+)
 from .inveniordm import (
     InvenioRDMFileResponse,
     InvenioRDMPermission,

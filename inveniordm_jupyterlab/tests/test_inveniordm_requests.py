@@ -5,13 +5,19 @@ from inveniordm_auth.remote_servers import UnknownRemoteServerError
 from inveniordm_auth.token_store import BoundedTokenStore, FileTokenStore
 from inveniordm_jupyterlab.util.job_types import JobCancelled
 from inveniordm_jupyterlab.inveniordm_file_identifier import InvenioRDMFileIdentifier
-from inveniordm_jupyterlab.inveniordm_record_identifier import InvenioRDMRecordIdentifier
+from inveniordm_jupyterlab.inveniordm_record_identifier import (
+    InvenioRDMRecordIdentifier,
+)
 from inveniordm_jupyterlab.inveniordm_requests import inveniordm as inveniordm_module
-from inveniordm_jupyterlab.inveniordm_requests import inveniordm_requests as inveniordm_requests_module
+from inveniordm_jupyterlab.inveniordm_requests import (
+    inveniordm_requests as inveniordm_requests_module,
+)
 from inveniordm_jupyterlab.inveniordm_requests.local_inveniordm_requests_factory import (
     LocalInvenioRDMRequestsFactory,
 )
-from inveniordm_jupyterlab.inveniordm_requests.inveniordm_requests import InvenioRDMRequests
+from inveniordm_jupyterlab.inveniordm_requests.inveniordm_requests import (
+    InvenioRDMRequests,
+)
 
 
 class Response:
@@ -83,7 +89,9 @@ def test_local_factory_rejects_token_for_unknown_remote_server(
 def test_upload_record_files_passes_record_id(monkeypatch, tmp_path):
     file_path = tmp_path / "results.csv"
     file_path.write_bytes(b"content")
-    requests = InvenioRDMRequests("https://sandbox.inveniordm.org", {"Authorization": "x"})
+    requests = InvenioRDMRequests(
+        "https://sandbox.inveniordm.org", {"Authorization": "x"}
+    )
     calls = []
     monkeypatch.setattr(
         inveniordm_requests_module,
@@ -92,7 +100,9 @@ def test_upload_record_files_passes_record_id(monkeypatch, tmp_path):
     )
 
     assert (
-        requests.upload_inveniordm_record_files(record_id="draft-1", file_paths=[file_path])
+        requests.upload_inveniordm_record_files(
+            record_id="draft-1", file_paths=[file_path]
+        )
         is None
     )
     assert calls[0][0] == ("draft-1",)
@@ -102,7 +112,9 @@ def test_upload_record_files_passes_record_id(monkeypatch, tmp_path):
 
 
 def test_delete_record_file_passes_file_identifier(monkeypatch):
-    requests = InvenioRDMRequests("https://sandbox.inveniordm.org", {"Authorization": "x"})
+    requests = InvenioRDMRequests(
+        "https://sandbox.inveniordm.org", {"Authorization": "x"}
+    )
     calls = []
     monkeypatch.setattr(
         inveniordm_requests_module,
@@ -153,7 +165,9 @@ def test_delete_record_draft_uses_authenticated_request(monkeypatch):
 
 def test_create_draft_with_files_passes_only_created_record_id(monkeypatch):
     draft = {"id": "draft-1", "is_published": False}
-    requests = InvenioRDMRequests("https://sandbox.inveniordm.org", {"Authorization": "x"})
+    requests = InvenioRDMRequests(
+        "https://sandbox.inveniordm.org", {"Authorization": "x"}
+    )
     calls = []
     monkeypatch.setattr(
         inveniordm_requests_module,
@@ -270,7 +284,8 @@ def test_record_without_grants_uses_edit_permission_workaround(
     )
 
     assert (
-        requests.get_inveniordm_record_permission("123", "published") == expected_permission
+        requests.get_inveniordm_record_permission("123", "published")
+        == expected_permission
     )
     assert workaround_calls == [
         {
@@ -369,7 +384,9 @@ def test_get_inveniordm_record_variant_fetches_requested_record_status(monkeypat
 
 
 @pytest.mark.parametrize("include_files", [True, False])
-def test_list_inveniordm_user_records_optionally_includes_files(monkeypatch, include_files):
+def test_list_inveniordm_user_records_optionally_includes_files(
+    monkeypatch, include_files
+):
     records = [
         {"id": "draft-123", "is_draft": True},
         {
@@ -399,7 +416,9 @@ def test_list_inveniordm_user_records_optionally_includes_files(monkeypatch, inc
 
 
 @pytest.mark.parametrize("include_files", [True, False])
-def test_search_inveniordm_records_optionally_includes_files(monkeypatch, include_files):
+def test_search_inveniordm_records_optionally_includes_files(
+    monkeypatch, include_files
+):
     records = {
         "hits": {
             "hits": [
@@ -885,7 +904,9 @@ def test_upload_inveniordm_draft_file_initializes_uploads_and_commits(monkeypatc
     )
 
     assert result["status"] == "completed"
-    assert post_calls[0][0] == ("https://inveniordm.org/api/records/draft-1/draft/files",)
+    assert post_calls[0][0] == (
+        "https://inveniordm.org/api/records/draft-1/draft/files",
+    )
     assert post_calls[0][1]["json"] == [{"key": "results 2026.csv"}]
     assert put_calls[0][0] == (
         "https://inveniordm.org/api/records/draft-1/draft/files/results%202026.csv/content",

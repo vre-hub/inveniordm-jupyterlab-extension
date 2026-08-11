@@ -35,7 +35,9 @@ PROXY_TOKEN_REMOTE_SERVER_ID = "REMOTE"
 
 class HealthHandler(BaseProxyHandler):
     def get(self) -> None:
-        self.write_json({"ok": True, "inveniordm_base_url": self.config.inveniordm_base_url})
+        self.write_json(
+            {"ok": True, "inveniordm_base_url": self.config.inveniordm_base_url}
+        )
 
 
 class LoginHandler(BaseProxyHandler):

@@ -10,7 +10,10 @@ from jupyter_core.paths import jupyter_data_dir
 from jupyter_server.base.handlers import APIHandler as JupyterAPIHandler
 from jupyter_server.utils import url_path_join
 
-from inveniordm_auth.remote_servers import RemoteServerRegistry, UnknownRemoteServerError
+from inveniordm_auth.remote_servers import (
+    RemoteServerRegistry,
+    UnknownRemoteServerError,
+)
 from inveniordm_jupyterlab.user_settings import (
     InvenioRDMUserSettings,
     InvenioRDMUserSettingsFromFile,
@@ -184,7 +187,9 @@ class InvenioRDMCurrentRemoteServerHandler(APIHandler):
 
     @tornado.web.authenticated
     def get(self):
-        inveniordm_requests = self.inveniordm_requests_factory.create_inveniordm_requests(self)
+        inveniordm_requests = (
+            self.inveniordm_requests_factory.create_inveniordm_requests(self)
+        )
         remote_server_id = self.inveniordm_requests_factory.get_remote_server_id(
             inveniordm_requests
         )
@@ -449,7 +454,9 @@ class InvenioRDMRecordPermissionHandler(APIHandler):
             return
         except (KeyError, TypeError) as error:
             self.set_status(502)
-            self.finish(json.dumps({"message": f"Invalid InvenioRDM response: {error}"}))
+            self.finish(
+                json.dumps({"message": f"Invalid InvenioRDM response: {error}"})
+            )
             return
         except requests.RequestException as error:
             self.set_status(getattr(error.response, "status_code", 502))
@@ -804,7 +811,9 @@ class JobsHandler(APIHandler):
             except KeyError as error:
                 self.set_status(502)
                 self.finish(
-                    json.dumps({"message": f"Missing field in InvenioRDM profile: {error}"})
+                    json.dumps(
+                        {"message": f"Missing field in InvenioRDM profile: {error}"}
+                    )
                 )
                 return
             except requests.RequestException as error:
@@ -994,7 +1003,9 @@ class InvenioRDMFileImportCellHandler(APIHandler):
             return
 
         try:
-            destination = self.get_inveniordm_download_manager(self).get_download_location(
+            destination = self.get_inveniordm_download_manager(
+                self
+            ).get_download_location(
                 file_id=file_id,
             )
             if not destination.exists():
@@ -1102,7 +1113,9 @@ def setup_route_handlers(
     def get_user_settings(handler: APIHandler) -> InvenioRDMUserSettings:
         return InvenioRDMUserSettingsFromFile(_contents_root(handler))
 
-    def get_inveniordm_download_manager(handler: APIHandler) -> InvenioRDMDownloadManager:
+    def get_inveniordm_download_manager(
+        handler: APIHandler,
+    ) -> InvenioRDMDownloadManager:
         settings = get_user_settings(handler)
         inveniordm_requests = get_inveniordm_requests(handler)
         return InvenioRDMDownloadManager(

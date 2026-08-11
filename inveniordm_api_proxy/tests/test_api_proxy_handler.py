@@ -73,7 +73,9 @@ class TestApiProxyHandler(AsyncHTTPTestCase):
             "application/octet-stream",
         )
 
-        with patch("inveniordm_api_proxy.api_proxy_handler.urlopen", return_value=response):
+        with patch(
+            "inveniordm_api_proxy.api_proxy_handler.urlopen", return_value=response
+        ):
             result = self.fetch(
                 "/api/records/1/files/data/content",
                 headers=self.auth_headers,
@@ -91,7 +93,9 @@ class TestApiProxyHandler(AsyncHTTPTestCase):
             upstream_urls.append(request.full_url)
             return _Response([b"file contents"], "application/pdf")
 
-        with patch("inveniordm_api_proxy.api_proxy_handler.urlopen", side_effect=urlopen):
+        with patch(
+            "inveniordm_api_proxy.api_proxy_handler.urlopen", side_effect=urlopen
+        ):
             result = self.fetch(
                 "/api/records/541036/draft/files/"
                 "FINAL%20REPORT_Results%20%281%29.pdf?download=1",
@@ -111,7 +115,9 @@ class TestApiProxyHandler(AsyncHTTPTestCase):
             received.extend(request.data)
             return _Response([b"{}"], "application/json")
 
-        with patch("inveniordm_api_proxy.api_proxy_handler.urlopen", side_effect=urlopen):
+        with patch(
+            "inveniordm_api_proxy.api_proxy_handler.urlopen", side_effect=urlopen
+        ):
             result = self.fetch(
                 "/api/records/1/draft/files/data/content",
                 method="PUT",

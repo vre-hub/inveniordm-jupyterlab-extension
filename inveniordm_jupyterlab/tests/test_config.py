@@ -1,7 +1,10 @@
 import pytest
 from traitlets.config import Config
 
-from inveniordm_auth.remote_servers import RemoteServerRegistry, UnknownRemoteServerError
+from inveniordm_auth.remote_servers import (
+    RemoteServerRegistry,
+    UnknownRemoteServerError,
+)
 from inveniordm_jupyterlab.config import InvenioRDMJupyterLab
 
 REMOTE_SERVERS = {
