@@ -1,13 +1,13 @@
 import React from 'react';
 
-import { ZenodoRecordVersion } from '../api_calls';
+import { InvenioRDMRecordVersion } from '../api_calls';
 import { useCreateNewVersion } from '../core';
 
 export function CreateNewVersionButton({
   versions,
   allowedToCreateNewVersion
 }: {
-  versions: ZenodoRecordVersion[];
+  versions: InvenioRDMRecordVersion[];
   allowedToCreateNewVersion: boolean;
 }): JSX.Element {
   const { createVersion, isLoading, error, disable, hint } =

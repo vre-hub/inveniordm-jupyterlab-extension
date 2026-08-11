@@ -1,0 +1,7 @@
+{
+  "ServerApp": {
+    "jpserver_extensions": {
+      "inveniordm_jupyterlab": true
+    }
+  }
+}

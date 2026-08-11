@@ -1,31 +1,31 @@
 import React from 'react';
 
 import {
-  ZenodoRecordIdentifier,
-  ZenodoRecordVersion,
-  zenodoRecordIdentifierFromRecord
+  InvenioRDMRecordIdentifier,
+  InvenioRDMRecordVersion,
+  inveniordmRecordIdentifierFromRecord
 } from '../api_calls';
 import { Dropdown, DropdownOption } from './Dropdown';
-import { ZenodoRecordStatus } from './ZenodoRecordStatus';
+import { InvenioRDMRecordStatus } from './InvenioRDMRecordStatus';
 
 /** Return a stable UI key for a record representation. */
 export function recordIdentifierKey(
-  identifier: ZenodoRecordIdentifier
+  identifier: InvenioRDMRecordIdentifier
 ): string {
   return `${identifier.record_status}:${identifier.record_id}`;
 }
 
 /** Resolve a dropdown key to the corresponding record identifier. */
 export function findRecordIdentifier(
-  versions: ZenodoRecordVersion[],
+  versions: InvenioRDMRecordVersion[],
   identifierKey: string
-): ZenodoRecordIdentifier | undefined {
+): InvenioRDMRecordIdentifier | undefined {
   const version = versions.find(
     candidate =>
-      recordIdentifierKey(zenodoRecordIdentifierFromRecord(candidate)) ===
+      recordIdentifierKey(inveniordmRecordIdentifierFromRecord(candidate)) ===
       identifierKey
   );
-  return version ? zenodoRecordIdentifierFromRecord(version) : undefined;
+  return version ? inveniordmRecordIdentifierFromRecord(version) : undefined;
 }
 
 export function VersionDropdown({
@@ -33,9 +33,9 @@ export function VersionDropdown({
   versions,
   onChange
 }: {
-  recordIdentifier: ZenodoRecordIdentifier;
-  versions: ZenodoRecordVersion[];
-  onChange: (identifier: ZenodoRecordIdentifier) => void;
+  recordIdentifier: InvenioRDMRecordIdentifier;
+  versions: InvenioRDMRecordVersion[];
+  onChange: (identifier: InvenioRDMRecordIdentifier) => void;
 }): JSX.Element {
   const selectedKey = recordIdentifierKey(recordIdentifier);
 
@@ -53,7 +53,7 @@ export function VersionDropdown({
       value={selectedKey}
     >
       {versions.map(version => {
-        const identifier = zenodoRecordIdentifierFromRecord(version);
+        const identifier = inveniordmRecordIdentifierFromRecord(version);
         const value = recordIdentifierKey(identifier);
 
         return (
@@ -69,13 +69,13 @@ export function VersionDropdown({
 function VersionDropdownContent({
   version
 }: {
-  version: ZenodoRecordVersion;
+  version: InvenioRDMRecordVersion;
 }): JSX.Element {
   const versionNumber = version.versions.index;
   return (
     <>
       <span className="font-semibold text-foreground">{`Version ${versionNumber}`}</span>
-      <ZenodoRecordStatus status={version.status} is_draft={version.is_draft} />
+      <InvenioRDMRecordStatus status={version.status} is_draft={version.is_draft} />
     </>
   );
 }

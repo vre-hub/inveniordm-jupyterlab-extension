@@ -14,6 +14,6 @@ def jp_server_config(jp_server_config):
     ).load_config()
     return {
         **jp_server_config,
-        "ServerApp": {"jpserver_extensions": {"zenodo_jupyterlab": True}},
-        "ZenodoJupyterLab": config["ZenodoJupyterLab"],
+        "ServerApp": {"jpserver_extensions": {"inveniordm_jupyterlab": True}},
+        "InvenioRDMJupyterLab": config["InvenioRDMJupyterLab"],
     }

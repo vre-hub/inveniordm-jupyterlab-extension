@@ -1,4 +1,4 @@
-export { insertZenodoCell } from './insertCell';
-export type { InsertZenodoCellAction } from './insertCell';
+export { insertInvenioRDMCell } from './insertCell';
+export type { InsertInvenioRDMCellAction } from './insertCell';
 export { pickDownloadDirectory } from './pickDownloadDirectory';
 export { pickUploadFiles } from './pickUploadFiles';

@@ -1,7 +1,7 @@
 {
-  "name": "zenodo_jupyterlab-ui-tests",
+  "name": "inveniordm_jupyterlab-ui-tests",
   "version": "1.0.0",
-  "description": "JupyterLab zenodo_jupyterlab Integration Tests",
+  "description": "JupyterLab inveniordm_jupyterlab Integration Tests",
   "private": true,
   "scripts": {
     "start": "jupyter lab --config jupyter_server_test_config.py",

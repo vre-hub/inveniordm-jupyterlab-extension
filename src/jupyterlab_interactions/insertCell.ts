@@ -1,30 +1,30 @@
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { JSONExt, PartialJSONObject } from '@lumino/coreutils';
 
-type InsertZenodoCellAction = {
+type InsertInvenioRDMCellAction = {
   cell_type: 'code' | 'markdown';
   source: string;
-  metadata_zenodo_jupyterlab?: PartialJSONObject;
+  metadata_inveniordm_jupyterlab?: PartialJSONObject;
 };
 
-export function insertZenodoCell(
-  action: InsertZenodoCellAction,
+export function insertInvenioRDMCell(
+  action: InsertInvenioRDMCellAction,
   notebooks: INotebookTracker
 ): void {
   const model = notebooks.currentWidget?.model;
 
   // If a cell with the same metadata already exists, do not insert a new cell.
   const existingCell = model?.sharedModel.cells.find(cell => {
-    const metadata = cell.getMetadata('zenodo_jupyterlab');
+    const metadata = cell.getMetadata('inveniordm_jupyterlab');
     return (
       metadata &&
-      action.metadata_zenodo_jupyterlab &&
-      JSONExt.deepEqual(metadata, action.metadata_zenodo_jupyterlab)
+      action.metadata_inveniordm_jupyterlab &&
+      JSONExt.deepEqual(metadata, action.metadata_inveniordm_jupyterlab)
     );
   });
   if (existingCell) {
     console.log(
-      'A cell with the same Zenodo metadata already exists. Not inserting a new cell.'
+      'A cell with the same InvenioRDM metadata already exists. Not inserting a new cell.'
     );
     return;
   }
@@ -35,9 +35,9 @@ export function insertZenodoCell(
     cell_type: action.cell_type,
     source: action.source,
     metadata: {
-      zenodo_jupyterlab: action.metadata_zenodo_jupyterlab
+      inveniordm_jupyterlab: action.metadata_inveniordm_jupyterlab
     }
   });
 }
 
-export type { InsertZenodoCellAction };
+export type { InsertInvenioRDMCellAction };

@@ -1,9 +1,9 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import { FolderOpen, RotateCcw } from 'lucide-react';
 import {
-  useSetZenodoDownloadDirectory,
-  useUnsetZenodoDownloadDirectory,
-  useZenodoDownloadDirectory
+  useSetInvenioRDMDownloadDirectory,
+  useUnsetInvenioRDMDownloadDirectory,
+  useInvenioRDMDownloadDirectory
 } from '../core';
 import { usePickDownloadDirectory } from '../store';
 
@@ -12,12 +12,12 @@ const SELECT_DIRECTORY_LABEL = 'Select download directory';
 const RESET_DIRECTORY_LABEL = 'Reset to default download directory';
 
 /**
- * Allows the user to select a download directory for Zenodo downloads.
+ * Allows the user to select a download directory for InvenioRDM downloads.
  */
 export function SelectDownloadDirectory() {
-  const { setDownloadDirectory } = useSetZenodoDownloadDirectory();
-  const { unsetDownloadDirectory } = useUnsetZenodoDownloadDirectory();
-  const { downloadDirectory, reload } = useZenodoDownloadDirectory();
+  const { setDownloadDirectory } = useSetInvenioRDMDownloadDirectory();
+  const { unsetDownloadDirectory } = useUnsetInvenioRDMDownloadDirectory();
+  const { downloadDirectory, reload } = useInvenioRDMDownloadDirectory();
   const pickDownloadDirectory = usePickDownloadDirectory();
   const pathInputRef = useRef<HTMLInputElement>(null);
 

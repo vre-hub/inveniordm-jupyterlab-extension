@@ -1,4 +1,4 @@
-import { constructZenodoAuthUrl } from '../api_calls';
+import { constructInvenioRDMAuthUrl } from '../api_calls';
 import { RemoteServerId } from '../remoteServers';
 import { useServerSettings, useRemoteServerOverride } from '../store';
 
@@ -9,7 +9,7 @@ export const useOpenAuth = (
   const remoteServerOverride = useRemoteServerOverride();
 
   return (action: 'login' | 'logout'): void => {
-    window.location.href = constructZenodoAuthUrl(
+    window.location.href = constructInvenioRDMAuthUrl(
       serverSettings,
       action,
       window.location.href,

@@ -1,6 +1,6 @@
 c = get_config()  # noqa: F821
-c.ZenodoJupyterLab.remote_servers_mode = "extend"
-c.ZenodoJupyterLab.remote_servers = {
+c.InvenioRDMJupyterLab.remote_servers_mode = "extend"
+c.InvenioRDMJupyterLab.remote_servers = {
     "zenodo_sandbox": {
         "label": "Zenodo Sandbox",
         "base_url": "https://sandbox.zenodo.org",

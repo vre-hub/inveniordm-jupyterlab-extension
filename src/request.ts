@@ -33,7 +33,7 @@ export async function requestAPI<T>(
   // Make request to Jupyter API
   const requestUrl = URLExt.join(
     serverSettings.baseUrl,
-    'zenodo-jupyterlab', // our server extension's API namespace
+    'inveniordm-jupyterlab', // our server extension's API namespace
     endPointWithRemoteServerOverride
   );
 

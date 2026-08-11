@@ -1,7 +1,0 @@
-{
-  "ServerApp": {
-    "jpserver_extensions": {
-      "zenodo_jupyterlab": true
-    }
-  }
-}

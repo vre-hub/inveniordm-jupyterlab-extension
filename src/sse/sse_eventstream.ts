@@ -1,17 +1,17 @@
 import { ServerConnection } from '@jupyterlab/services';
-import { subscribeToEvents, ZenodoEvent } from './sse_events';
+import { subscribeToEvents, InvenioRDMEvent } from './sse_events';
 
-type ZenodoEventListener = (event: ZenodoEvent) => void;
+type InvenioRDMEventListener = (event: InvenioRDMEvent) => void;
 
 class SharedEventStream {
   private consecutiveNetworkFailures = 0;
   private controller: AbortController | null = null;
-  private listeners = new Set<ZenodoEventListener>();
+  private listeners = new Set<InvenioRDMEventListener>();
   private restartTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private readonly serverSettings: ServerConnection.ISettings) {}
 
-  subscribe(listener: ZenodoEventListener): () => void {
+  subscribe(listener: InvenioRDMEventListener): () => void {
     this.listeners.add(listener);
     this.ensureConnected();
 
@@ -71,12 +71,12 @@ class SharedEventStream {
         if (reason instanceof ServerConnection.NetworkError) {
           this.consecutiveNetworkFailures += 1;
           if (this.consecutiveNetworkFailures === 3) {
-            console.error('Zenodo event stream failed repeatedly.', reason);
+            console.error('InvenioRDM event stream failed repeatedly.', reason);
           }
           return;
         }
 
-        console.error('Zenodo event stream failed.', reason);
+        console.error('InvenioRDM event stream failed.', reason);
       })
       .finally(() => {
         if (this.controller !== controller) {
@@ -90,12 +90,12 @@ class SharedEventStream {
       });
   }
 
-  private dispatch(event: ZenodoEvent): void {
+  private dispatch(event: InvenioRDMEvent): void {
     for (const listener of [...this.listeners]) {
       try {
         listener(event);
       } catch (error) {
-        console.error('Zenodo event listener failed.', error);
+        console.error('InvenioRDM event listener failed.', error);
       }
     }
   }
@@ -107,11 +107,11 @@ const sharedEventStreams = new WeakMap<
 >();
 
 /**
- * Subscribe to Zenodo events through a shared SSE connection.
+ * Subscribe to InvenioRDM events through a shared SSE connection.
  */
 export function subscribeToEventStream(
   serverSettings: ServerConnection.ISettings,
-  listener: ZenodoEventListener
+  listener: InvenioRDMEventListener
 ): () => void {
   let stream = sharedEventStreams.get(serverSettings);
   if (!stream) {

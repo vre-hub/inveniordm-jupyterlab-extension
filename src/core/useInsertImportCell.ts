@@ -1,14 +1,14 @@
 import React from 'react';
-import { ZenodoFileIdentifier, getZenodoFileImportCell } from '../api_calls';
-import { useServerSettings, useInsertZenodoCell } from '../store';
+import { InvenioRDMFileIdentifier, getInvenioRDMFileImportCell } from '../api_calls';
+import { useServerSettings, useInsertInvenioRDMCell } from '../store';
 
-export function useInsertImportCell(fileId: ZenodoFileIdentifier) {
+export function useInsertImportCell(fileId: InvenioRDMFileIdentifier) {
   const serverSettings = useServerSettings();
-  const insertZenodoCell = useInsertZenodoCell();
+  const insertInvenioRDMCell = useInsertInvenioRDMCell();
 
   const insertImportCell = React.useCallback(async (): Promise<void> => {
-    insertZenodoCell(await getZenodoFileImportCell(serverSettings, fileId));
-  }, [fileId, insertZenodoCell, serverSettings]);
+    insertInvenioRDMCell(await getInvenioRDMFileImportCell(serverSettings, fileId));
+  }, [fileId, insertInvenioRDMCell, serverSettings]);
 
   return { insertImportCell };
 }

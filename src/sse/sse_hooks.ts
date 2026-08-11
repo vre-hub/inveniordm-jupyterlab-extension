@@ -1,17 +1,17 @@
 import React from 'react';
 import { useServerSettings } from '../store';
-import { ZenodoEvent } from './sse_events';
+import { InvenioRDMEvent } from './sse_events';
 import { subscribeToEventStream } from './sse_eventstream';
 
 /**
- * Subscribe to a Zenodo extension SSE event topic and call onEvent for each event received.
+ * Subscribe to a InvenioRDM extension SSE event topic and call onEvent for each event received.
  *
  * @param topic - The event topic to subscribe to.
  * @param onEvent - The callback to call for each event received.
  */
 export function useEventListener(
   topic: string,
-  onEvent: (event: ZenodoEvent) => void
+  onEvent: (event: InvenioRDMEvent) => void
 ): void {
   const serverSettings = useServerSettings();
   const onEventRef = React.useRef(onEvent);
@@ -39,7 +39,7 @@ export function useEventListener(
 }
 
 /**
- * Subscribe to a Zenodo extension SSE event topic and return the latest data for that topic.
+ * Subscribe to a InvenioRDM extension SSE event topic and return the latest data for that topic.
  *
  * @param topic - The event topic to subscribe to.
  * @param initialData - The initial data to return before any events are received.

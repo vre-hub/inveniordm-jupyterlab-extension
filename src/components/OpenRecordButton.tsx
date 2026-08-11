@@ -1,20 +1,20 @@
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
 
-type ZenodoRecordLink = {
+type InvenioRDMRecordLink = {
   links: {
     self_html: string;
   };
 };
 
 /**
- * A button that opens a Zenodo record in a new tab.
+ * A button that opens a InvenioRDM record in a new tab.
  */
 export function OpenRecordButton({
   record,
   text
 }: {
-  record: ZenodoRecordLink;
+  record: InvenioRDMRecordLink;
   text: string;
 }): JSX.Element {
   const url = record.links.self_html;

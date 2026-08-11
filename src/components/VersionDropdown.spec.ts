@@ -1,8 +1,8 @@
-import { ZenodoRecordVersion } from '../api_calls';
+import { InvenioRDMRecordVersion } from '../api_calls';
 import { findRecordIdentifier, recordIdentifierKey } from './VersionDropdown';
 
 describe('VersionDropdown identifiers', () => {
-  const versions: ZenodoRecordVersion[] = [
+  const versions: InvenioRDMRecordVersion[] = [
     {
       id: 'record-1',
       status: 'published',

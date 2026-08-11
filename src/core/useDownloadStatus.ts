@@ -1,8 +1,8 @@
 import React from 'react';
 import {
-  ZenodoFileIdentifier,
-  ZenodoFileDownloadStatusResponse,
-  getZenodoFileDownloadStatus
+  InvenioRDMFileIdentifier,
+  InvenioRDMFileDownloadStatusResponse,
+  getInvenioRDMFileDownloadStatus
 } from '../api_calls';
 import { useEventListener } from '../sse';
 import { useServerSettings } from '../store';
@@ -14,7 +14,7 @@ function encodeTopicPart(value: string): string {
   );
 }
 
-function downloadStatusChangedTopic(fileId: ZenodoFileIdentifier): string {
+function downloadStatusChangedTopic(fileId: InvenioRDMFileIdentifier): string {
   return [
     'file.download-status.changed',
     encodeTopicPart(fileId.record_id),
@@ -23,13 +23,13 @@ function downloadStatusChangedTopic(fileId: ZenodoFileIdentifier): string {
   ].join('.');
 }
 
-export function useDownloadStatus(fileId: ZenodoFileIdentifier) {
+export function useDownloadStatus(fileId: InvenioRDMFileIdentifier) {
   const serverSettings = useServerSettings();
   const [status, setStatus] =
-    React.useState<ZenodoFileDownloadStatusResponse | null>(null);
+    React.useState<InvenioRDMFileDownloadStatusResponse | null>(null);
 
   const reloadStatus = React.useCallback(async (): Promise<void> => {
-    setStatus(await getZenodoFileDownloadStatus(serverSettings, fileId));
+    setStatus(await getInvenioRDMFileDownloadStatus(serverSettings, fileId));
   }, [fileId, serverSettings]);
 
   React.useEffect(() => {

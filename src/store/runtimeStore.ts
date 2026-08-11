@@ -1,107 +1,107 @@
 import { ServerConnection } from '@jupyterlab/services';
 import { create } from 'zustand';
 
-import type { InsertZenodoCellAction } from '../jupyterlab_interactions';
+import type { InsertInvenioRDMCellAction } from '../jupyterlab_interactions';
 
-interface IZenodoRuntimeState {
-  insertZenodoCell: ((action: InsertZenodoCellAction) => void) | undefined;
+interface IInvenioRDMRuntimeState {
+  insertInvenioRDMCell: ((action: InsertInvenioRDMCellAction) => void) | undefined;
   pickDownloadDirectory: (() => Promise<string | null>) | undefined;
   pickUploadFiles: (() => Promise<string[] | null>) | undefined;
   serverSettings: unknown;
 }
 
-const useZenodoRuntimeStore = create<IZenodoRuntimeState>()(() => ({
-  insertZenodoCell: undefined,
+const useInvenioRDMRuntimeStore = create<IInvenioRDMRuntimeState>()(() => ({
+  insertInvenioRDMCell: undefined,
   pickDownloadDirectory: undefined,
   pickUploadFiles: undefined,
   serverSettings: undefined
 }));
 
-function setInsertZenodoCell(
-  insertZenodoCell: (action: InsertZenodoCellAction) => void
+function setInsertInvenioRDMCell(
+  insertInvenioRDMCell: (action: InsertInvenioRDMCellAction) => void
 ): void {
-  useZenodoRuntimeStore.setState({ insertZenodoCell });
+  useInvenioRDMRuntimeStore.setState({ insertInvenioRDMCell });
 }
 
 function setServerSettings(serverSettings: ServerConnection.ISettings): void {
-  useZenodoRuntimeStore.setState({ serverSettings });
+  useInvenioRDMRuntimeStore.setState({ serverSettings });
 }
 
 function setPickDownloadDirectory(
   pickDownloadDirectory: () => Promise<string | null>
 ): void {
-  useZenodoRuntimeStore.setState({ pickDownloadDirectory });
+  useInvenioRDMRuntimeStore.setState({ pickDownloadDirectory });
 }
 
 function setPickUploadFiles(
   pickUploadFiles: () => Promise<string[] | null>
 ): void {
-  useZenodoRuntimeStore.setState({ pickUploadFiles });
+  useInvenioRDMRuntimeStore.setState({ pickUploadFiles });
 }
 
-function initializeZenodoStore(options: {
-  insertZenodoCell: (action: InsertZenodoCellAction) => void;
+function initializeInvenioRDMStore(options: {
+  insertInvenioRDMCell: (action: InsertInvenioRDMCellAction) => void;
   pickDownloadDirectory: () => Promise<string | null>;
   pickUploadFiles: () => Promise<string[] | null>;
   serverSettings: ServerConnection.ISettings;
 }): void {
-  setInsertZenodoCell(options.insertZenodoCell);
+  setInsertInvenioRDMCell(options.insertInvenioRDMCell);
   setPickDownloadDirectory(options.pickDownloadDirectory);
   setPickUploadFiles(options.pickUploadFiles);
   setServerSettings(options.serverSettings);
 }
 
 function useServerSettings(): ServerConnection.ISettings {
-  const serverSettings = useZenodoRuntimeStore(state => state.serverSettings);
+  const serverSettings = useInvenioRDMRuntimeStore(state => state.serverSettings);
 
   if (!serverSettings) {
-    throw new Error('Zenodo server settings have not been initialized.');
+    throw new Error('InvenioRDM server settings have not been initialized.');
   }
 
   return serverSettings as ServerConnection.ISettings;
 }
 
-function useInsertZenodoCell(): (action: InsertZenodoCellAction) => void {
-  const insertZenodoCell = useZenodoRuntimeStore(
-    state => state.insertZenodoCell
+function useInsertInvenioRDMCell(): (action: InsertInvenioRDMCellAction) => void {
+  const insertInvenioRDMCell = useInvenioRDMRuntimeStore(
+    state => state.insertInvenioRDMCell
   );
 
-  if (!insertZenodoCell) {
-    throw new Error('Zenodo cell insertion has not been initialized.');
+  if (!insertInvenioRDMCell) {
+    throw new Error('InvenioRDM cell insertion has not been initialized.');
   }
 
-  return insertZenodoCell;
+  return insertInvenioRDMCell;
 }
 
 function usePickDownloadDirectory(): () => Promise<string | null> {
-  const pickDownloadDirectory = useZenodoRuntimeStore(
+  const pickDownloadDirectory = useInvenioRDMRuntimeStore(
     state => state.pickDownloadDirectory
   );
 
   if (!pickDownloadDirectory) {
-    throw new Error('Zenodo directory picker has not been initialized.');
+    throw new Error('InvenioRDM directory picker has not been initialized.');
   }
 
   return pickDownloadDirectory;
 }
 
 function usePickUploadFiles(): () => Promise<string[] | null> {
-  const pickUploadFiles = useZenodoRuntimeStore(state => state.pickUploadFiles);
+  const pickUploadFiles = useInvenioRDMRuntimeStore(state => state.pickUploadFiles);
 
   if (!pickUploadFiles) {
-    throw new Error('Zenodo file picker has not been initialized.');
+    throw new Error('InvenioRDM file picker has not been initialized.');
   }
 
   return pickUploadFiles;
 }
 
 export {
-  initializeZenodoStore,
-  setInsertZenodoCell,
+  initializeInvenioRDMStore,
+  setInsertInvenioRDMCell,
   setPickDownloadDirectory,
   setPickUploadFiles,
   setServerSettings,
-  useInsertZenodoCell,
+  useInsertInvenioRDMCell,
   usePickDownloadDirectory,
   usePickUploadFiles,
   useServerSettings

@@ -1,10 +1,10 @@
-import { ZenodoFileIdentifier, deleteZenodoFileDownload } from '../api_calls';
+import { InvenioRDMFileIdentifier, deleteInvenioRDMFileDownload } from '../api_calls';
 import { useServerSettings } from '../store';
 
-export function useDeleteDownload(fileId: ZenodoFileIdentifier) {
+export function useDeleteDownload(fileId: InvenioRDMFileIdentifier) {
   const serverSettings = useServerSettings();
   const deleteDownload = async (): Promise<void> => {
-    await deleteZenodoFileDownload(serverSettings, fileId);
+    await deleteInvenioRDMFileDownload(serverSettings, fileId);
   };
   return { deleteDownload };
 }

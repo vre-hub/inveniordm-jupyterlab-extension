@@ -1,16 +1,16 @@
 import React from 'react';
-import { ZenodoRecordVersion, createZenodoRecordVersion } from '../api_calls';
+import { InvenioRDMRecordVersion, createInvenioRDMRecordVersion } from '../api_calls';
 import { useServerSettings } from '../store';
 
 /**
- * Custom hook to create a new version of a Zenodo record.
+ * Custom hook to create a new version of a InvenioRDM record.
  *
  * @param versions - The list of versions of the record.
  * @param allowedToCreateNewVersion - Whether the user is allowed to create a new version.
  * @returns An object containing the createVersion function, loading state, error state, disable state, and hint message.
  */
 export function useCreateNewVersion(
-  versions: ZenodoRecordVersion[],
+  versions: InvenioRDMRecordVersion[],
   allowedToCreateNewVersion: boolean
 ) {
   // check if the latest version is a draft or not. If it is, disable button
@@ -46,7 +46,7 @@ export function useCreateNewVersion(
           'No record versions available to create a new version from.'
         );
       }
-      await createZenodoRecordVersion(serverSettings, latestVersion.id);
+      await createInvenioRDMRecordVersion(serverSettings, latestVersion.id);
     } catch (reason) {
       setError(String(reason));
     } finally {

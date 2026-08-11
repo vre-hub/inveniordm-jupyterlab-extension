@@ -3,6 +3,6 @@ node_modules
 **/lib
 **/package.json
 !/package.json
-zenodo_jupyterlab
+inveniordm_jupyterlab
 eslint.config.mjs
 .venv

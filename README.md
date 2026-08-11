@@ -1,11 +1,11 @@
-# zenodo_jupyterlab
+# inveniordm_jupyterlab
 
-[![Github Actions Status](https://github.com/ejuet/zenodo-jupyterlab-extension-prototype/workflows/Build/badge.svg)](https://github.com/ejuet/zenodo-jupyterlab-extension-prototype/actions/workflows/build.yml)
+[![Github Actions Status](https://github.com/ejuet/inveniordm-jupyterlab-extension-prototype/workflows/Build/badge.svg)](https://github.com/ejuet/inveniordm-jupyterlab-extension-prototype/actions/workflows/build.yml)
 
-Integrates Zenodo into JupyterLab.
+Integrates InvenioRDM into JupyterLab.
 
-This extension is composed of a Python package named `zenodo_jupyterlab`
-for the server extension and a NPM package named `zenodo_jupyterlab`
+This extension is composed of a Python package named `inveniordm_jupyterlab`
+for the server extension and a NPM package named `inveniordm_jupyterlab`
 for the frontend extension.
 
 ## Requirements
@@ -17,7 +17,7 @@ for the frontend extension.
 To install the extension, execute:
 
 ```bash
-pip install zenodo_jupyterlab
+pip install inveniordm_jupyterlab
 ```
 
 ## Uninstall
@@ -25,7 +25,7 @@ pip install zenodo_jupyterlab
 To remove the extension, execute:
 
 ```bash
-pip uninstall zenodo_jupyterlab
+pip uninstall inveniordm_jupyterlab
 ```
 
 ## Troubleshoot
@@ -47,9 +47,9 @@ jupyter labextension list
 ## Remote server configuration
 
 The server extension reads its available remote servers from
-`ZenodoJupyterLab.remote_servers` in the Jupyter Server configuration.
+`InvenioRDMJupyterLab.remote_servers` in the Jupyter Server configuration.
 
-For development, the config in `lab_cwd` provides Zenodo production and
+For development, the config in `lab_cwd` provides InvenioRDM production and
 sandbox, CDS production and sandbox, and the local InvenioRDM server. Start Lab
 from that directory with:
 

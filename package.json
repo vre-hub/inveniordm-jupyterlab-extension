@@ -1,15 +1,15 @@
 {
-    "name": "zenodo_jupyterlab",
+    "name": "inveniordm_jupyterlab",
     "version": "0.1.0",
-    "description": "Integrates Zenodo into JupyterLab.",
+    "description": "Integrates InvenioRDM into JupyterLab.",
     "keywords": [
         "jupyter",
         "jupyterlab",
         "jupyterlab-extension"
     ],
-    "homepage": "https://github.com/ejuet/zenodo-jupyterlab-extension-prototype",
+    "homepage": "https://github.com/ejuet/inveniordm-jupyterlab-extension-prototype",
     "bugs": {
-        "url": "https://github.com/ejuet/zenodo-jupyterlab-extension-prototype/issues"
+        "url": "https://github.com/ejuet/inveniordm-jupyterlab-extension-prototype/issues"
     },
     "license": "BSD-3-Clause",
     "author": {
@@ -26,7 +26,7 @@
     "style": "style/index.css",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ejuet/zenodo-jupyterlab-extension-prototype.git"
+        "url": "https://github.com/ejuet/inveniordm-jupyterlab-extension-prototype.git"
     },
     "scripts": {
         "build": "jlpm build:lib && jlpm build:labextension:dev",
@@ -38,7 +38,7 @@
         "clean": "jlpm clean:lib",
         "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
         "clean:lintcache": "rimraf .eslintcache .stylelintcache",
-        "clean:labextension": "rimraf zenodo_jupyterlab/labextension zenodo_jupyterlab/_version.py",
+        "clean:labextension": "rimraf inveniordm_jupyterlab/labextension inveniordm_jupyterlab/_version.py",
         "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
         "eslint": "jlpm eslint:check --fix",
         "eslint:check": "eslint . --cache",
@@ -115,12 +115,12 @@
                     "pip"
                 ],
                 "base": {
-                    "name": "zenodo_jupyterlab"
+                    "name": "inveniordm_jupyterlab"
                 }
             }
         },
         "extension": true,
-        "outputDir": "zenodo_jupyterlab/labextension"
+        "outputDir": "inveniordm_jupyterlab/labextension"
     },
     "prettier": {
         "singleQuote": true,

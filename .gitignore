@@ -7,9 +7,9 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
-zenodo_jupyterlab/labextension
+inveniordm_jupyterlab/labextension
 # Version file is handled by hatchling
-zenodo_jupyterlab/_version.py
+inveniordm_jupyterlab/_version.py
 
 # Integration tests
 ui-tests/test-results/

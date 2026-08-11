@@ -1,5 +1,5 @@
 import React from 'react';
-import { deleteZenodoRecordDraft } from '../api_calls';
+import { deleteInvenioRDMRecordDraft } from '../api_calls';
 import { useServerSettings } from '../store';
 
 export function useDiscardDraft(id: string, allowedToDiscardDraft: boolean) {
@@ -15,7 +15,7 @@ export function useDiscardDraft(id: string, allowedToDiscardDraft: boolean) {
     setError(null);
 
     try {
-      await deleteZenodoRecordDraft(serverSettings, id);
+      await deleteInvenioRDMRecordDraft(serverSettings, id);
     } catch (reason) {
       setError(String(reason));
     } finally {

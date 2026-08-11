@@ -2,19 +2,19 @@ import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 
 /**
- * Get the URL for the Zenodo extension SSE event stream.
+ * Get the URL for the InvenioRDM extension SSE event stream.
  */
 function eventSourceUrl(serverSettings: ServerConnection.ISettings): string {
-  return URLExt.join(serverSettings.baseUrl, 'zenodo-jupyterlab', 'events');
+  return URLExt.join(serverSettings.baseUrl, 'inveniordm-jupyterlab', 'events');
 }
 
-export type ZenodoEvent = {
+export type InvenioRDMEvent = {
   topic: string;
   data?: unknown;
 };
 
 /**
- * Subscribe to a Zenodo extension SSE event stream
+ * Subscribe to a InvenioRDM extension SSE event stream
  * and call onEvent for each event received.
  *
  * @param serverSettings - The server settings to use for the request.
@@ -26,7 +26,7 @@ export type ZenodoEvent = {
  */
 export async function subscribeToEvents(
   serverSettings: ServerConnection.ISettings,
-  onEvent: (event: ZenodoEvent) => void,
+  onEvent: (event: InvenioRDMEvent) => void,
   signal: AbortSignal,
   onConnected?: () => void
 ): Promise<void> {
@@ -67,7 +67,7 @@ export async function subscribeToEvents(
 
 function parseEventBuffer(
   buffer: string,
-  onEvent: (event: ZenodoEvent) => void
+  onEvent: (event: InvenioRDMEvent) => void
 ): string {
   while (true) {
     const delimiter = buffer.match(/\r?\n\r?\n/);
@@ -83,7 +83,7 @@ function parseEventBuffer(
 
 function parseRawEvent(
   rawEvent: string,
-  onEvent: (event: ZenodoEvent) => void
+  onEvent: (event: InvenioRDMEvent) => void
 ): void {
   let topic = 'message';
   const data: string[] = [];

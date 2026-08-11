@@ -9,16 +9,16 @@ import {
 } from 'lucide-react';
 
 import { Tabs, TabItem } from '../components/Tabs';
-import { ZenodoUserRecordList } from '../components/ZenodoUserRecordList';
-import { ZenodoLoginForm } from '../components/ZenodoLoginForm';
-import { ZenodoRecordSearch } from '../components/ZenodoRecordSearch';
+import { InvenioRDMUserRecordList } from '../components/InvenioRDMUserRecordList';
+import { InvenioRDMLoginForm } from '../components/InvenioRDMLoginForm';
+import { InvenioRDMRecordSearch } from '../components/InvenioRDMRecordSearch';
 import { setCurrentTabID, useCurrentTabID } from '../store';
 import { Settings } from '../components/Settings';
-import { ZenodoRecordDraftUpload } from '../components/ZenodoRecordDraftUpload';
+import { InvenioRDMRecordDraftUpload } from '../components/InvenioRDMRecordDraftUpload';
 import { useCurrentRemoteServer } from '../core';
 
-const PANEL_CLASS = 'jp-ZenodoExtensionPanel';
-const TAB_PANEL_ID = 'zenodo-tab-panel';
+const PANEL_CLASS = 'jp-InvenioRDMExtensionPanel';
+const TAB_PANEL_ID = 'inveniordm-tab-panel';
 
 type SidebarTab = TabItem<string> & {
   Component: React.FC;
@@ -29,25 +29,25 @@ const TABS: SidebarTab[] = [
     id: 'search',
     label: 'Search',
     icon: Search,
-    Component: ZenodoRecordSearch
+    Component: InvenioRDMRecordSearch
   },
   {
     id: 'upload',
     label: 'Upload',
     icon: Upload,
-    Component: ZenodoRecordDraftUpload
+    Component: InvenioRDMRecordDraftUpload
   },
   {
     id: 'user-records',
     label: 'My Records',
     icon: Library,
-    Component: ZenodoUserRecordList
+    Component: InvenioRDMUserRecordList
   },
   {
     id: 'account',
     label: 'Account',
     icon: CircleUser,
-    Component: ZenodoLoginForm
+    Component: InvenioRDMLoginForm
   },
   {
     id: 'settings',

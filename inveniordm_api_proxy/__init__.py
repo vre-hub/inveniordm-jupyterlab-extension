@@ -1,0 +1,1 @@
+"""InvenioRDM API proxy."""

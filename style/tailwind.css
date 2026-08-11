@@ -42,7 +42,7 @@
   --color-danger-subtle: var(--color-red-50);
 }
 
-.jp-ZenodoExtensionPanel {
+.jp-InvenioRDMExtensionPanel {
   height: 100%;
   min-height: 0;
 }

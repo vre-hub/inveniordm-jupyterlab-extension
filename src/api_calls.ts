@@ -2,7 +2,7 @@ import React from 'react';
 import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 
-import type { InsertZenodoCellAction } from './jupyterlab_interactions';
+import type { InsertInvenioRDMCellAction } from './jupyterlab_interactions';
 import { requestAPI } from './request';
 import { useEventData, useEventListener } from './sse';
 import { useServerSettings } from './store';
@@ -88,35 +88,35 @@ export function useAccessTokenEventListener(onEvent: () => void): void {
   return useEventListener('auth.status.changed', onEvent);
 }
 
-export type ZenodoMeResponse = {
+export type InvenioRDMMeResponse = {
   email: string;
   id: number;
 };
 
-export async function getZenodoMe(
+export async function getInvenioRDMMe(
   serverSettings: ServerConnection.ISettings
-): Promise<ZenodoMeResponse> {
-  return await requestAPI<ZenodoMeResponse>('me', serverSettings);
+): Promise<InvenioRDMMeResponse> {
+  return await requestAPI<InvenioRDMMeResponse>('me', serverSettings);
 }
 
-export type SetZenodoDownloadDirectoryResponse = {
+export type SetInvenioRDMDownloadDirectoryResponse = {
   downloads_dir: string;
 };
 
-export async function getZenodoDownloadDirectory(
+export async function getInvenioRDMDownloadDirectory(
   serverSettings: ServerConnection.ISettings
-): Promise<SetZenodoDownloadDirectoryResponse> {
-  return await requestAPI<SetZenodoDownloadDirectoryResponse>(
+): Promise<SetInvenioRDMDownloadDirectoryResponse> {
+  return await requestAPI<SetInvenioRDMDownloadDirectoryResponse>(
     'settings/downloads-directory',
     serverSettings
   );
 }
 
-export async function setZenodoDownloadDirectory(
+export async function setInvenioRDMDownloadDirectory(
   serverSettings: ServerConnection.ISettings,
   downloadsDir: string
-): Promise<SetZenodoDownloadDirectoryResponse> {
-  return await requestAPI<SetZenodoDownloadDirectoryResponse>(
+): Promise<SetInvenioRDMDownloadDirectoryResponse> {
+  return await requestAPI<SetInvenioRDMDownloadDirectoryResponse>(
     'settings/downloads-directory',
     serverSettings,
     {
@@ -127,10 +127,10 @@ export async function setZenodoDownloadDirectory(
   );
 }
 
-export async function unsetZenodoDownloadDirectory(
+export async function unsetInvenioRDMDownloadDirectory(
   serverSettings: ServerConnection.ISettings
-): Promise<SetZenodoDownloadDirectoryResponse> {
-  return await requestAPI<SetZenodoDownloadDirectoryResponse>(
+): Promise<SetInvenioRDMDownloadDirectoryResponse> {
+  return await requestAPI<SetInvenioRDMDownloadDirectoryResponse>(
     'settings/downloads-directory',
     serverSettings,
     { method: 'DELETE' }
@@ -138,7 +138,7 @@ export async function unsetZenodoDownloadDirectory(
 }
 
 /**
- * Construct the URL for Zenodo authentication (login or logout),
+ * Construct the URL for InvenioRDM authentication (login or logout),
  * with the correct return URL and remote server parameter.
  *
  * @param serverSettings - The server settings for the JupyterLab server.
@@ -147,7 +147,7 @@ export async function unsetZenodoDownloadDirectory(
  * @param remoteServerId - The remote server to use.
  * @returns The constructed authentication URL.
  */
-export function constructZenodoAuthUrl(
+export function constructInvenioRDMAuthUrl(
   serverSettings: ServerConnection.ISettings,
   action: 'login' | 'logout',
   returnTo: string,
@@ -162,12 +162,12 @@ export function constructZenodoAuthUrl(
   }
 
   return (
-    URLExt.join(serverSettings.baseUrl, 'zenodo-jupyterlab', 'auth', action) +
+    URLExt.join(serverSettings.baseUrl, 'inveniordm-jupyterlab', 'auth', action) +
     `?${params.toString()}`
   );
 }
 
-export async function searchZenodoRecords(
+export async function searchInvenioRDMRecords(
   serverSettings: ServerConnection.ISettings,
   query: string
 ): Promise<unknown> {
@@ -175,20 +175,20 @@ export async function searchZenodoRecords(
   return await requestAPI(`records?${params.toString()}`, serverSettings);
 }
 
-export async function getZenodoRecordVariant(
+export async function getInvenioRDMRecordVariant(
   serverSettings: ServerConnection.ISettings,
-  identifier: ZenodoRecordIdentifier
-): Promise<ZenodoRecordData> {
+  identifier: InvenioRDMRecordIdentifier
+): Promise<InvenioRDMRecordData> {
   const params = new URLSearchParams({
     record_status: identifier.record_status
   });
-  return await requestAPI<ZenodoRecordData>(
+  return await requestAPI<InvenioRDMRecordData>(
     `record-variants/${encodeURIComponent(identifier.record_id)}?${params.toString()}`,
     serverSettings
   );
 }
 
-export async function listZenodoUserRecords(
+export async function listInvenioRDMUserRecords(
   serverSettings: ServerConnection.ISettings
 ): Promise<unknown> {
   const params = new URLSearchParams();
@@ -201,7 +201,7 @@ export async function listZenodoUserRecords(
   );
 }
 
-export type ZenodoRecordDraftResponse = {
+export type InvenioRDMRecordDraftResponse = {
   id: string;
   links: {
     self_html: string;
@@ -210,7 +210,7 @@ export type ZenodoRecordDraftResponse = {
   is_published?: boolean;
 };
 
-export async function deleteZenodoRecordDraft(
+export async function deleteInvenioRDMRecordDraft(
   serverSettings: ServerConnection.ISettings,
   recordId: string
 ): Promise<void> {
@@ -221,10 +221,10 @@ export async function deleteZenodoRecordDraft(
   );
 }
 
-//TODO check if this is just ZenodoRecordData or if it is different
-export type ZenodoRecordVersion = {
+//TODO check if this is just InvenioRDMRecordData or if it is different
+export type InvenioRDMRecordVersion = {
   id: string;
-  status: ZenodoRecordStatus;
+  status: InvenioRDMRecordStatus;
   is_draft: boolean;
   parent?: {
     id?: string | null;
@@ -234,29 +234,29 @@ export type ZenodoRecordVersion = {
   };
 };
 
-export async function listZenodoRecordVersions(
+export async function listInvenioRDMRecordVersions(
   serverSettings: ServerConnection.ISettings,
   recordId: string,
   includeDrafts: boolean
-): Promise<ZenodoRecordVersion[]> {
+): Promise<InvenioRDMRecordVersion[]> {
   const params = new URLSearchParams({
     include_drafts: includeDrafts.toString()
   });
-  return await requestAPI<ZenodoRecordVersion[]>(
+  return await requestAPI<InvenioRDMRecordVersion[]>(
     `records/${encodeURIComponent(recordId)}/versions?${params.toString()}`,
     serverSettings
   );
 }
 
-export type CreateZenodoRecordVersionResponse = {
-  draft: ZenodoRecordDraftResponse;
+export type CreateInvenioRDMRecordVersionResponse = {
+  draft: InvenioRDMRecordDraftResponse;
 };
 
-export async function createZenodoRecordVersion(
+export async function createInvenioRDMRecordVersion(
   serverSettings: ServerConnection.ISettings,
   recordId: string
-): Promise<CreateZenodoRecordVersionResponse> {
-  return await requestAPI<CreateZenodoRecordVersionResponse>(
+): Promise<CreateInvenioRDMRecordVersionResponse> {
+  return await requestAPI<CreateInvenioRDMRecordVersionResponse>(
     `records/${encodeURIComponent(recordId)}/versions`,
     serverSettings,
     { method: 'POST' }
@@ -271,7 +271,7 @@ export type JobStatus =
   'pending' | 'running' | 'canceling' | 'canceled' | 'done' | 'error';
 
 export type JobResult = {
-  draft?: ZenodoRecordDraftResponse;
+  draft?: InvenioRDMRecordDraftResponse;
   path?: string;
 };
 
@@ -291,23 +291,23 @@ export type FindJobsResponse = {
   job_ids: string[];
 };
 
-export type ZenodoRecordIdentifier = {
+export type InvenioRDMRecordIdentifier = {
   record_id: string;
   record_status: 'draft' | 'published';
 };
 
 /** Derive the identifier for a record's draft or published representation. */
-export function zenodoRecordIdentifierFromRecord(record: {
+export function inveniordmRecordIdentifierFromRecord(record: {
   id: string;
   is_draft: boolean;
-}): ZenodoRecordIdentifier {
+}): InvenioRDMRecordIdentifier {
   return {
     record_id: record.id,
     record_status: record.is_draft ? 'draft' : 'published'
   };
 }
 
-export type ZenodoFileIdentifier = ZenodoRecordIdentifier & {
+export type InvenioRDMFileIdentifier = InvenioRDMRecordIdentifier & {
   file_key: string;
 };
 
@@ -318,7 +318,7 @@ type ActiveJobIdentifier =
     }
   | {
       jobType: 'download';
-      fileId: ZenodoFileIdentifier;
+      fileId: InvenioRDMFileIdentifier;
     };
 
 export async function getLatestActiveJobId(
@@ -347,7 +347,7 @@ export async function getLatestActiveJobId(
   return response.job_ids[0] ?? null;
 }
 
-export async function createZenodoRecordDraftWithFiles(
+export async function createInvenioRDMRecordDraftWithFiles(
   serverSettings: ServerConnection.ISettings,
   filePaths: string[]
 ): Promise<StartJobResponse> {
@@ -362,7 +362,7 @@ export async function createZenodoRecordDraftWithFiles(
   );
 }
 
-export async function uploadZenodoRecordFiles(
+export async function uploadInvenioRDMRecordFiles(
   serverSettings: ServerConnection.ISettings,
   recordId: string,
   filePaths: string[]
@@ -378,15 +378,15 @@ export async function uploadZenodoRecordFiles(
   );
 }
 
-export type DeleteZenodoRecordFileResponse = {
+export type DeleteInvenioRDMRecordFileResponse = {
   deleted_key: string;
 };
 
-export async function deleteZenodoRecordFile(
+export async function deleteInvenioRDMRecordFile(
   serverSettings: ServerConnection.ISettings,
-  fileId: ZenodoFileIdentifier
-): Promise<DeleteZenodoRecordFileResponse> {
-  return await requestAPI<DeleteZenodoRecordFileResponse>(
+  fileId: InvenioRDMFileIdentifier
+): Promise<DeleteInvenioRDMRecordFileResponse> {
+  return await requestAPI<DeleteInvenioRDMRecordFileResponse>(
     `user/records/${encodeURIComponent(fileId.record_id)}/files`,
     serverSettings,
     {
@@ -422,19 +422,19 @@ export async function cancelJob(
   );
 }
 
-export type ZenodoFileDownloadStatusResponse = {
+export type InvenioRDMFileDownloadStatusResponse = {
   downloaded: boolean;
   path: string | null;
 };
 
-export type DeleteZenodoFileDownloadResponse = {
+export type DeleteInvenioRDMFileDownloadResponse = {
   deleted: boolean;
   path: string | null;
 };
 
-export async function downloadZenodoFile(
+export async function downloadInvenioRDMFile(
   serverSettings: ServerConnection.ISettings,
-  fileId: ZenodoFileIdentifier
+  fileId: InvenioRDMFileIdentifier
 ): Promise<StartJobResponse> {
   return await requestAPI<StartJobResponse>('files/download', serverSettings, {
     method: 'POST',
@@ -443,11 +443,11 @@ export async function downloadZenodoFile(
   });
 }
 
-export async function getZenodoFileDownloadStatus(
+export async function getInvenioRDMFileDownloadStatus(
   serverSettings: ServerConnection.ISettings,
-  fileId: ZenodoFileIdentifier
-): Promise<ZenodoFileDownloadStatusResponse> {
-  return await requestAPI<ZenodoFileDownloadStatusResponse>(
+  fileId: InvenioRDMFileIdentifier
+): Promise<InvenioRDMFileDownloadStatusResponse> {
+  return await requestAPI<InvenioRDMFileDownloadStatusResponse>(
     'files/status',
     serverSettings,
     {
@@ -458,11 +458,11 @@ export async function getZenodoFileDownloadStatus(
   );
 }
 
-export async function deleteZenodoFileDownload(
+export async function deleteInvenioRDMFileDownload(
   serverSettings: ServerConnection.ISettings,
-  fileId: ZenodoFileIdentifier
-): Promise<DeleteZenodoFileDownloadResponse> {
-  return await requestAPI<DeleteZenodoFileDownloadResponse>(
+  fileId: InvenioRDMFileIdentifier
+): Promise<DeleteInvenioRDMFileDownloadResponse> {
+  return await requestAPI<DeleteInvenioRDMFileDownloadResponse>(
     'files/download',
     serverSettings,
     {
@@ -473,11 +473,11 @@ export async function deleteZenodoFileDownload(
   );
 }
 
-export async function getZenodoFileImportCell(
+export async function getInvenioRDMFileImportCell(
   serverSettings: ServerConnection.ISettings,
-  fileId: ZenodoFileIdentifier
-): Promise<InsertZenodoCellAction> {
-  return await requestAPI<InsertZenodoCellAction>(
+  fileId: InvenioRDMFileIdentifier
+): Promise<InsertInvenioRDMCellAction> {
+  return await requestAPI<InsertInvenioRDMCellAction>(
     'files/import-cell',
     serverSettings,
     {
@@ -488,33 +488,33 @@ export async function getZenodoFileImportCell(
   );
 }
 
-export type ZenodoRecordPermission = 'manage' | 'edit' | 'preview' | 'view';
+export type InvenioRDMRecordPermission = 'manage' | 'edit' | 'preview' | 'view';
 
-export async function getZenodoRecordPermission(
+export async function getInvenioRDMRecordPermission(
   serverSettings: ServerConnection.ISettings,
   recordId: string,
-  recordStatus: ZenodoFileIdentifier['record_status']
-): Promise<ZenodoRecordPermission> {
+  recordStatus: InvenioRDMFileIdentifier['record_status']
+): Promise<InvenioRDMRecordPermission> {
   const params = new URLSearchParams({ record_status: recordStatus });
-  return await requestAPI<ZenodoRecordPermission>(
+  return await requestAPI<InvenioRDMRecordPermission>(
     `records/${encodeURIComponent(recordId)}/permission?${params.toString()}`,
     serverSettings
   );
 }
 
-export function useZenodoRecordPermission(
+export function useInvenioRDMRecordPermission(
   id: string,
-  recordStatus: ZenodoFileIdentifier['record_status']
-): ZenodoRecordPermission | null {
+  recordStatus: InvenioRDMFileIdentifier['record_status']
+): InvenioRDMRecordPermission | null {
   const serverSettings = useServerSettings();
   const [userPermission, setUserPermission] =
-    React.useState<ZenodoRecordPermission | null>(null);
+    React.useState<InvenioRDMRecordPermission | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
 
     const fetchUserPermission = async () => {
-      const permission = await getZenodoRecordPermission(
+      const permission = await getInvenioRDMRecordPermission(
         serverSettings,
         id,
         recordStatus
@@ -534,25 +534,25 @@ export function useZenodoRecordPermission(
   return userPermission;
 }
 
-export type ZenodoRecordVersionsChangedEventData = {
+export type InvenioRDMRecordVersionsChangedEventData = {
   type: 'version_created' | 'draft_discarded';
   record_id: string;
   discarded_draft_id?: string;
   parent_id?: string | null;
-  record?: ZenodoRecordData;
-  versions: ZenodoRecordVersion[];
+  record?: InvenioRDMRecordData;
+  versions: InvenioRDMRecordVersion[];
 };
 
-export function useZenodoRecordVersions(
+export function useInvenioRDMRecordVersions(
   recordId: string,
   includeDrafts: boolean
-): ZenodoRecordVersion[] {
+): InvenioRDMRecordVersion[] {
   const serverSettings = useServerSettings();
-  const [versions, setVersions] = React.useState<ZenodoRecordVersion[]>([]);
+  const [versions, setVersions] = React.useState<InvenioRDMRecordVersion[]>([]);
 
   React.useEffect(() => {
-    void listZenodoRecordVersions(serverSettings, recordId, includeDrafts).then(
-      (versions: ZenodoRecordVersion[]) => {
+    void listInvenioRDMRecordVersions(serverSettings, recordId, includeDrafts).then(
+      (versions: InvenioRDMRecordVersion[]) => {
         const sortedVersions = versions.sort(
           (a, b) => a.versions.index - b.versions.index
         );
@@ -566,7 +566,7 @@ export function useZenodoRecordVersions(
 
 // TODO check if these fields exist/ if they are always present
 
-export type ZenodoFile = {
+export type InvenioRDMFile = {
   key: string;
   size?: number;
   links?: {
@@ -574,13 +574,13 @@ export type ZenodoFile = {
     download?: string;
   };
 };
-type ZenodoRecordStatus = 'new_version_draft' | 'draft' | 'published' | string;
+type InvenioRDMRecordStatus = 'new_version_draft' | 'draft' | 'published' | string;
 // TODO check if these fields exist/ if they are always present
 
-export type ZenodoRecordData = {
+export type InvenioRDMRecordData = {
   id: string;
   is_draft: boolean;
-  status: ZenodoRecordStatus;
+  status: InvenioRDMRecordStatus;
   metadata?: {
     title?: string;
   };
@@ -591,7 +591,7 @@ export type ZenodoRecordData = {
       identifier?: string;
     };
   };
-  files?: { entries?: Record<string, ZenodoFile>; count: number };
+  files?: { entries?: Record<string, InvenioRDMFile>; count: number };
   links: {
     self_html: string;
   };
