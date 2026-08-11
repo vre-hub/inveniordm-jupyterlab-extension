@@ -11,6 +11,5 @@ kind: frontend-and-server
 labextension_name: inveniordm_jupyterlab
 project_short_description: Integrates InvenioRDM into JupyterLab.
 python_name: inveniordm_jupyterlab
-repository: https://github.com/ejuet/inveniordm-jupyterlab-extension-prototype
+repository: https://github.com/vre-hub/inveniordm-jupyterlab-extension
 test: true
-
