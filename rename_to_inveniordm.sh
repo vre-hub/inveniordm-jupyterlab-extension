@@ -6,10 +6,12 @@ set -euo pipefail
 # searches for the branding being replaced. Binary files are not rewritten.
 readonly FROM_LOWER='zen''odo'
 readonly FROM_UPPER='Zen''odo'
+readonly FROM_CAPS='ZEN''ODO'
 readonly TO_LOWER='inveniordm'
 readonly TO_UPPER='InvenioRDM'
+readonly TO_CAPS='INVENIORDM'
 readonly REPOSITORY_ROOT="$(cd "$(dirname "$0")" && pwd -P)"
-export FROM_LOWER FROM_UPPER TO_LOWER TO_UPPER
+export FROM_LOWER FROM_UPPER FROM_CAPS TO_LOWER TO_UPPER TO_CAPS
 
 # Directories with any of these names are excluded wherever they occur in the
 # repository. Add or remove entries here to adjust the scope of the rename.
@@ -46,7 +48,8 @@ destinations=()
 while IFS= read -r -d '' source; do
   directory=${source%/*}
   basename=${source##*/}
-  renamed_basename=${basename//$FROM_UPPER/$TO_UPPER}
+  renamed_basename=${basename//$FROM_CAPS/$TO_CAPS}
+  renamed_basename=${renamed_basename//$FROM_UPPER/$TO_UPPER}
   renamed_basename=${renamed_basename//$FROM_LOWER/$TO_LOWER}
   destination="$directory/$renamed_basename"
 
@@ -61,13 +64,16 @@ while IFS= read -r -d '' source; do
 done < <(
   find . \
     -type d \( "${find_exclusions[@]}" \) -prune -o \
-    \( -name "*$FROM_UPPER*" -o -name "*$FROM_LOWER*" \) -print0
+    \( -name "*$FROM_CAPS*" -o -name "*$FROM_UPPER*" -o \
+       -name "*$FROM_LOWER*" \) -print0
 )
 
 content_count=0
 while IFS= read -r -d '' file; do
-  if LC_ALL=C grep -IFq -e "$FROM_UPPER" -e "$FROM_LOWER" -- "$file"; then
+  if LC_ALL=C grep -IFq \
+    -e "$FROM_CAPS" -e "$FROM_UPPER" -e "$FROM_LOWER" -- "$file"; then
     perl -pi -e '
+      s/\Q$ENV{FROM_CAPS}\E/$ENV{TO_CAPS}/g;
       s/\Q$ENV{FROM_UPPER}\E/$ENV{TO_UPPER}/g;
       s/\Q$ENV{FROM_LOWER}\E/$ENV{TO_LOWER}/g;
     ' -- "$file"
