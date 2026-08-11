@@ -58,6 +58,45 @@ def test_reads_request_mode_from_jupyter_config():
     assert InvenioRDMJupyterLab(config=config).request_mode == "proxy"
 
 
+def test_local_request_mode_does_not_require_proxy_settings():
+    config = Config(
+        {
+            "InvenioRDMJupyterLab": {
+                "request_mode": "local",
+                "remote_servers": {
+                    "inveniordm_local": {
+                        "label": "InvenioRDM Local",
+                        "base_url": "http://127.0.0.1:80",
+                        "oauth_client_id": "jupyterlab-extension",
+                    }
+                },
+            }
+        }
+    )
+
+    server = InvenioRDMJupyterLab(config=config).remote_server_registry().default
+
+    assert server.proxy_url == ""
+    assert server.proxy_session_cookie_name == ""
+
+
+@pytest.mark.parametrize("missing_field", ["proxy_url", "proxy_session_cookie_name"])
+def test_proxy_request_mode_requires_proxy_settings(missing_field):
+    remote_server = dict(REMOTE_SERVERS["inveniordm_sandbox"])
+    del remote_server[missing_field]
+    config = Config(
+        {
+            "InvenioRDMJupyterLab": {
+                "request_mode": "proxy",
+                "remote_servers": {"inveniordm_sandbox": remote_server},
+            }
+        }
+    )
+
+    with pytest.raises(ValueError, match=missing_field):
+        InvenioRDMJupyterLab(config=config).remote_server_registry()
+
+
 def test_replaces_remote_servers_from_jupyter_config():
     config = Config(
         {

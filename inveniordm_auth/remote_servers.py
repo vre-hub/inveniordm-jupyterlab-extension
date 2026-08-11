@@ -54,20 +54,29 @@ class RemoteServerRegistry:
             self._default_server_id = None
 
     @staticmethod
-    def _from_config(server_id: str, settings: Mapping[str, Any]) -> RemoteServer:
-        required_fields = (
+    def _from_config(
+        server_id: str,
+        settings: Mapping[str, Any],
+    ) -> RemoteServer:
+        required_fields = [
             "label",
             "base_url",
             "oauth_client_id",
-            "proxy_url",
-            "proxy_session_cookie_name",
-        )
+        ]
         values: dict[str, str] = {}
         for field in required_fields:
             value = settings.get(field)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(
                     f"Remote server {server_id!r} requires a non-empty {field!r}"
+                )
+            values[field] = value.strip()
+
+        for field in ("proxy_url", "proxy_session_cookie_name"):
+            value = settings.get(field, "")
+            if not isinstance(value, str):
+                raise ValueError(
+                    f"Remote server {server_id!r} requires {field!r} to be a string"
                 )
             values[field] = value.strip()
 
@@ -95,9 +104,21 @@ class RemoteServerRegistry:
     def all(self) -> tuple[RemoteServer, ...]:
         return tuple(self._servers.values())
 
+    def validate_proxy_configuration(self) -> None:
+        for server in self._servers.values():
+            for field in ("proxy_url", "proxy_session_cookie_name"):
+                if not getattr(server, field):
+                    raise ValueError(
+                        f"Remote server {server.id!r} requires a non-empty {field!r} "
+                        "in proxy request mode"
+                    )
+
     def by_url(self, url: str) -> RemoteServer:
         normalized_url = url.rstrip("/")
         for server in self._servers.values():
-            if normalized_url in {server.base_url, server.proxy_url}:
+            known_urls = {server.base_url}
+            if server.proxy_url:
+                known_urls.add(server.proxy_url)
+            if normalized_url in known_urls:
                 return server
         raise ValueError(f"Unknown remote server URL: {url}")

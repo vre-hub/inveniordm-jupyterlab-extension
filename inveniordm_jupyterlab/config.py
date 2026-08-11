@@ -10,15 +10,11 @@ DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
         "label": "Zenodo",
         "base_url": "https://zenodo.org",
         "oauth_client_id": "HaWBPRb7lsif7cqTypUNeFni9PJOoTm5IcjTJrtt",
-        "proxy_url": "http://127.0.0.1:8003",
-        "proxy_session_cookie_name": "zenodo_production_proxy_session",
     },
     "cds_repository": {
         "label": "CDS",
         "base_url": "https://repository.cern",
         "oauth_client_id": "q4szrkotZqAuRA6HhGeajJsqTqEd6t6lTHHGLWD4",
-        "proxy_url": "http://127.0.0.1:8004",
-        "proxy_session_cookie_name": "cds_repository_proxy_session",
     },
 }
 
@@ -81,7 +77,10 @@ class InvenioRDMJupyterLab(Configurable):
         if default_remote_server_id == "":
             default_remote_server_id = None
 
-        return RemoteServerRegistry(
+        registry = RemoteServerRegistry(
             configured_servers,
             default_server_id=default_remote_server_id,
         )
+        if self.request_mode == "proxy":
+            registry.validate_proxy_configuration()
+        return registry
