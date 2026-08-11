@@ -18,7 +18,7 @@ DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
     },
 }
 
-remote_servers_modes = ["extend", "replace"]
+remote_servers_modes = ["extend", "replace", "prepend"]
 request_modes = ["local", "proxy"]
 
 
@@ -63,6 +63,11 @@ class InvenioRDMJupyterLab(Configurable):
             )
         if self.remote_servers_mode == "extend":
             configured_servers: dict[str, dict[str, Any]] = {
+                **DEFAULT_REMOTE_SERVERS,
+                **self.remote_servers,
+            }
+        elif self.remote_servers_mode == "prepend":
+            configured_servers = {
                 **self.remote_servers,
                 **DEFAULT_REMOTE_SERVERS,
             }
