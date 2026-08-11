@@ -2,8 +2,7 @@
 
 This document describes the Jupyter Server routes registered below
 `<jupyter-base-url>/inveniordm-jupyterlab`, the requests they make to the configured
-InvenioRDM instance, and why those requests are needed. The configured instance is
-either `https://inveniordm.org` or `https://sandbox.inveniordm.org`.
+InvenioRDM instance, and why those requests are needed. The configured instance can be e.g. `https://zenodo.org` or `https://sandbox.zenodo.org`.
 
 All extension routes require an authenticated Jupyter user. That is separate
 from InvenioRDM authentication: calls to public InvenioRDM APIs can be made without a
@@ -59,17 +58,17 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 
 ## Route summary
 
-| Extension route                                  | Frontend call                      | InvenioRDM traffic                                                                                       |
-| ------------------------------------------------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `GET /hello`                                     | —                                  | None                                                                                                 |
-| `GET /access-token`                              | `useAccessTokenStatus`             | `GET /api/me` only when a stored token is present                                                    |
+| Extension route                                  | Frontend call                          | InvenioRDM traffic                                                                                   |
+| ------------------------------------------------ | -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `GET /hello`                                     | —                                      | None                                                                                                 |
+| `GET /access-token`                              | `useAccessTokenStatus`                 | `GET /api/me` only when a stored token is present                                                    |
 | `GET /auth/login`                                | `constructInvenioRDMAuthUrl`           | Browser redirect to `/oauth/authorize`; no server-to-server API call                                 |
-| `GET /auth/callback`                             | —                                  | `POST /oauth/token`                                                                                  |
+| `GET /auth/callback`                             | —                                      | `POST /oauth/token`                                                                                  |
 | `GET /auth/logout`                               | `constructInvenioRDMAuthUrl`           | None; removes the locally stored token                                                               |
 | `GET /records`                                   | `searchInvenioRDMRecords`              | `GET /api/records`                                                                                   |
 | `GET /record-variants/:id?record_status=:status` | `getInvenioRDMRecordVariant`           | `GET /api/records/:id` or `GET /api/records/:id/draft`                                               |
 | `GET /me`                                        | `getInvenioRDMMe`                      | `GET /api/me`                                                                                        |
-| `GET /events`                                    | `subscribeToEvents`                | None; local server-sent event stream                                                                 |
+| `GET /events`                                    | `subscribeToEvents`                    | None; local server-sent event stream                                                                 |
 | `GET /user/records`                              | `listInvenioRDMUserRecords`            | `GET /api/user/records`, optionally followed by one linked files request per draft or restricted hit |
 | `DELETE /user/records/:id`                       | `deleteInvenioRDMRecordDraft`          | `DELETE /api/records/:id/draft`                                                                      |
 | `GET /records/:id/permission`                    | `getInvenioRDMRecordPermission`        | Direct draft or published record lookup, optionally followed by an edit-permission user-record query |
@@ -78,18 +77,18 @@ The fixed verbs are `get`, `list`, `search`, `create`, `upload`, `delete`,
 | `POST /user/records/draft-with-files`            | `createInvenioRDMRecordDraftWithFiles` | Create a draft, then initialize, upload, and commit every file                                       |
 | `POST /user/records/:id/files`                   | `uploadInvenioRDMRecordFiles`          | Require an editable draft, then upload every file                                                    |
 | `DELETE /user/records/:id/files`                 | `deleteInvenioRDMRecordFile`           | Require an editable draft, then delete the named draft file                                          |
-| `GET /jobs`                                      | `getLatestActiveJobId`             | None                                                                                                 |
-| `GET /jobs/:id`                                  | `getJobProgress`                   | None                                                                                                 |
-| `POST /jobs/:id/cancel`                          | `cancelJob`                        | None directly; cancellation cleanup can delete an initialized draft file                             |
+| `GET /jobs`                                      | `getLatestActiveJobId`                 | None                                                                                                 |
+| `GET /jobs/:id`                                  | `getJobProgress`                       | None                                                                                                 |
+| `POST /jobs/:id/cancel`                          | `cancelJob`                            | None directly; cancellation cleanup can delete an initialized draft file                             |
 | `POST /files/download`                           | `downloadInvenioRDMFile`               | In the background: streaming `GET` to the hard-coded published or draft file-content endpoint        |
 | `DELETE /files/download`                         | `deleteInvenioRDMFileDownload`         | None                                                                                                 |
 | `POST /files/status`                             | `getInvenioRDMFileDownloadStatus`      | None                                                                                                 |
 | `POST /files/import-cell`                        | `getInvenioRDMFileImportCell`          | None                                                                                                 |
-| `GET /settings/downloads-directory`              | —                                  | None                                                                                                 |
+| `GET /settings/downloads-directory`              | —                                      | None                                                                                                 |
 | `POST /settings/downloads-directory`             | `setInvenioRDMDownloadDirectory`       | None                                                                                                 |
 | `DELETE /settings/downloads-directory`           | `unsetInvenioRDMDownloadDirectory`     | None                                                                                                 |
 
-## Details of the most problematic Routes
+## Why some routes are complex
 
 Some routes are inherently complex because of how the InvenioRDM/ InvenioRDM API works:
 
@@ -196,6 +195,8 @@ The family query is filtered by parent ID but is currently limited to the first
 25 matching user records. A draft outside that page will be omitted; the code
 has a TODO to paginate the lookup.
 
+## Details of other Routes
+
 ### `POST /user/records/:id/files`
 
 Before starting the background job, the route puts the InvenioRDM user ID cached
@@ -218,8 +219,6 @@ draft.
 
 Send `DELETE /api/records/:id/draft/files/:file-key`. The route is
 intrinsically draft-only, so it does not need a record status lookup.
-
-## Details of other Routes
 
 ### `GET /access-token`
 

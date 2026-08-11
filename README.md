@@ -1,8 +1,6 @@
 # inveniordm_jupyterlab
 
-[![Github Actions Status](https://github.com/ejuet/inveniordm-jupyterlab-extension-prototype/workflows/Build/badge.svg)](https://github.com/ejuet/inveniordm-jupyterlab-extension-prototype/actions/workflows/build.yml)
-
-Integrates InvenioRDM into JupyterLab.
+A JupyterLab extension that integrates InvenioRDM-based services like Zenodo or CDS into JupyterLab.
 
 This extension is composed of a Python package named `inveniordm_jupyterlab`
 for the server extension and a NPM package named `inveniordm_jupyterlab`
