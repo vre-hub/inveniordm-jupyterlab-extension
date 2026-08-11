@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronDown, Download, FlaskConical } from 'lucide-react';
 
 import { SelectDownloadDirectory } from './DownloadDirectoryPicker';
-import { InvenioRDMSandboxOverrideSetting } from './InvenioRDMSandboxOverrideSetting';
+import { InvenioRDMRemoteServerOverrideSetting } from './InvenioRDMRemoteServerOverrideSetting';
 
 export function Settings(): JSX.Element {
   return (
@@ -43,7 +43,7 @@ export function Settings(): JSX.Element {
           />
         </summary>
         <div className="space-y-4 border-t border-border px-2 py-4">
-          <InvenioRDMSandboxOverrideSetting />
+          <InvenioRDMRemoteServerOverrideSetting />
         </div>
       </details>
     </div>

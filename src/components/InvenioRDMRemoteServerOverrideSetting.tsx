@@ -3,7 +3,7 @@ import React from 'react';
 import { setRemoteServerOverride, useRemoteServerOverride } from '../store';
 import { InvenioRDMRemoteServerDropdown } from './InvenioRDMRemoteServerDropdown';
 
-export const InvenioRDMSandboxOverrideSetting: React.FC = () => {
+export const InvenioRDMRemoteServerOverrideSetting: React.FC = () => {
   const remoteServerOverride = useRemoteServerOverride();
 
   return (
