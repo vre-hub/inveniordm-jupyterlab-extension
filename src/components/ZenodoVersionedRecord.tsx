@@ -1,10 +1,11 @@
 import React from 'react';
-import { AlertCircle, LoaderCircle, Trash2, X } from 'lucide-react';
+import { LoaderCircle, Trash2, X } from 'lucide-react';
 
 import {
   ZenodoVersionedRecordBase,
   ZenodoVersionedRecordBaseProps
 } from '../core';
+import { ErrorPanel } from './ErrorPanel';
 
 type ZenodoVersionedRecordProps = Omit<
   ZenodoVersionedRecordBaseProps,
@@ -29,18 +30,7 @@ export function ZenodoVersionedRecord(
 }
 
 function RecordLoadingError({ error }: { error: string }): JSX.Element {
-  return (
-    <div
-      className="flex items-start gap-2 rounded-lg border border-danger-border bg-danger-subtle px-2 py-3 text-danger shadow-sm"
-      role="alert"
-    >
-      <AlertCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
-      <div className="min-w-0">
-        <div className="text-sm font-semibold">Could not load record</div>
-        <div className="mt-0.5 break-words text-sm">{error}</div>
-      </div>
-    </div>
-  );
+  return <ErrorPanel error={error} title="Could not load record" />;
 }
 
 function RecordLoading(): JSX.Element {

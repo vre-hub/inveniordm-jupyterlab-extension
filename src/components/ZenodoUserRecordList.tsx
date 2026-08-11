@@ -1,5 +1,4 @@
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
 
 import {
   ZenodoUserRecordDetails,
@@ -8,6 +7,7 @@ import {
 import { useZenodoUserRecords } from '../core';
 import { LoadingPanel } from './LoadingPanel';
 import { ZenodoRecordList } from './ZenodoRecordList';
+import { ErrorPanel } from './ErrorPanel';
 
 export const ZenodoUserRecordList: React.FC = () => {
   const { records, isLoading } = useZenodoUserRecords();
@@ -17,18 +17,7 @@ export const ZenodoUserRecordList: React.FC = () => {
   }
 
   if (records && 'error' in records) {
-    return (
-      <div
-        className="flex items-start gap-2 rounded-lg border border-danger-border bg-danger-subtle px-2 py-3 text-danger shadow-sm"
-        role="alert"
-      >
-        <AlertCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
-        <div className="min-w-0">
-          <div className="text-sm font-semibold">Could not load records</div>
-          <div className="mt-0.5 break-words text-sm">{records.error}</div>
-        </div>
-      </div>
-    );
+    return <ErrorPanel error={records.error} title="Could not load records" />;
   }
 
   return (

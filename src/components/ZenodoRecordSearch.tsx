@@ -7,6 +7,7 @@ import {
 } from './ZenodoRecordRenderer';
 import { ZenodoRecordList } from './ZenodoRecordList';
 import { useCurrentRemoteServer, useZenodoRecordSearch } from '../core';
+import { ErrorPanel } from './ErrorPanel';
 
 export const ZenodoRecordSearch: React.FC = () => {
   const [query, setQuery] = React.useState('');
@@ -52,7 +53,7 @@ export const ZenodoRecordSearch: React.FC = () => {
           )}
         </button>
       </form>
-      {error}
+      {error && <ErrorPanel error={error} title="Could not search records" />}
       <ZenodoRecordList
         records={hits}
         includeDrafts={false}

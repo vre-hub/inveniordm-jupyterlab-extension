@@ -4,6 +4,7 @@ import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 import { OpenRecordButton } from './OpenRecordButton';
 import { useCurrentRemoteServer, useZenodoRecordDraftUpload } from '../core';
+import { ErrorPanel } from './ErrorPanel';
 
 export const ZenodoRecordDraftUpload: React.FC = () => {
   const {
@@ -29,7 +30,7 @@ export const ZenodoRecordDraftUpload: React.FC = () => {
   }
 
   if (remoteServerError) {
-    return <p>{remoteServerError}</p>;
+    return <ErrorPanel error={remoteServerError} />;
   }
 
   if (!remoteName) {

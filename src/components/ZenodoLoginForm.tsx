@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, KeyRound, ShieldCheck } from 'lucide-react';
+import { KeyRound, ShieldCheck } from 'lucide-react';
 
 import { LoginButton, LogoutButton } from './AuthButtons';
 import { ZenodoRemoteServerDropdown } from './ZenodoRemoteServerDropdown';
@@ -11,6 +11,7 @@ import {
   useGetRemoteServersDefault,
   useShouldShowRemoteServerDropdownForLogin
 } from '../core';
+import { ErrorPanel } from './ErrorPanel';
 
 export const ZenodoLoginForm: React.FC = () => {
   const accessStatus = useAccessTokenStatus();
@@ -33,20 +34,7 @@ export const ZenodoLoginForm: React.FC = () => {
   }
 
   if ('error' in accessStatus) {
-    return (
-      <div
-        className="flex items-start gap-2 rounded-lg border border-danger-border bg-danger-subtle px-2 py-3 text-danger shadow-sm"
-        role="alert"
-      >
-        <AlertCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
-        <div className="min-w-0">
-          <div className="text-sm font-semibold">
-            Could not check login status
-          </div>
-          <div className="mt-0.5 break-words text-sm">{accessStatus.error}</div>
-        </div>
-      </div>
-    );
+    return <ErrorPanel error={accessStatus.error} />;
   }
 
   const loggedIn =
