@@ -11,7 +11,7 @@ DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
         "label": "Zenodo",
         "base_url": "https://zenodo.org",
     },
-    "cds_repository": {
+    "cds": {
         "label": "CDS",
         "base_url": "https://repository.cern",
     },

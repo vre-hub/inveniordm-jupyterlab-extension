@@ -61,7 +61,7 @@ def test_extends_builtin_remote_servers_from_jupyter_config():
 
     assert [server.id for server in registry.all()] == [
         "zenodo",
-        "cds_repository",
+        "cds",
         "custom_repository",
     ]
 
@@ -86,7 +86,7 @@ def test_extend_merges_configured_fields_into_builtin_remote_server():
 
     assert [server.id for server in registry.all()] == [
         "zenodo",
-        "cds_repository",
+        "cds",
     ]
     assert zenodo.label == "My Zenodo"
     assert zenodo.base_url == "https://zenodo.org"
@@ -115,7 +115,7 @@ def test_prepend_merges_builtin_server_and_uses_configured_order():
     assert [server.id for server in registry.all()] == [
         "custom_repository",
         "zenodo",
-        "cds_repository",
+        "cds",
     ]
     assert zenodo.label == "Zenodo"
     assert zenodo.base_url == "https://zenodo.org"
@@ -131,7 +131,7 @@ def test_uses_builtin_public_remote_servers_by_default():
 
     assert [server.id for server in registry.all()] == [
         "zenodo",
-        "cds_repository",
+        "cds",
     ]
     assert registry.default.base_url == "https://zenodo.org"
     assert registry.default.oauth_client_id is None
