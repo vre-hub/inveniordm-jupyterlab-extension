@@ -12,7 +12,7 @@ c.InvenioRDMJupyterLab.remote_servers = {
         "oauth_client_id": "your-institution-oauth-client-id",
     },
     # Keep this entry if you also want to use Zenodo.
-    "zenodo_production": {
+    "zenodo": {
         "label": "Zenodo",
         "base_url": "https://zenodo.org",
         "oauth_client_id": "5LkeWfl5Yvhiz42JkAYQI64UYAsyxll2opUsNdmN",

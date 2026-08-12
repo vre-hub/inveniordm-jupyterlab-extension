@@ -8,12 +8,12 @@ from inveniordm_auth.remote_servers import RemoteServerRegistry
 # The default OAuth client IDs work if jupyterlab is http://localhost:8888 or http://127.0.0.1:8888
 # TODO replace the oauth ids again once the oauth applications are created from a service account
 DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
-    "zenodo_production": {
+    "zenodo": {
         "label": "Zenodo",
         "base_url": "https://zenodo.org",
         "oauth_client_id": "5LkeWfl5Yvhiz42JkAYQI64UYAsyxll2opUsNdmN",
     },
-    "cds_repository": {
+    "cds": {
         "oauth_client_id": "BUh7Vh0IjlEbB25GIhgj2fWxKxWce824f32lpcTf",
         "label": "CDS",
         "base_url": "https://repository.cern",

@@ -50,8 +50,8 @@ def test_uses_builtin_public_remote_servers_by_default():
     registry = InvenioRDMJupyterLab().remote_server_registry()
 
     assert [server.id for server in registry.all()] == [
-        "zenodo_production",
-        "cds_repository",
+        "zenodo",
+        "cds",
     ]
     assert registry.default.base_url == "https://zenodo.org"
     assert registry.default.oauth_client_id == (
