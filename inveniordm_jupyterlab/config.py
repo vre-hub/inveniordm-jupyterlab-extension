@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import Any
 
 from traitlets import Dict, Enum, Unicode
@@ -20,6 +21,51 @@ remote_servers_modes = ["extend", "replace", "prepend"]
 request_modes = ["local", "proxy"]
 
 
+def _extend_remote_servers(
+    remote_servers: Mapping[str, Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    # built-ins first; overrides merge in place; new servers append.
+    configured_servers: dict[str, dict[str, Any]] = {
+        server_id: dict(settings)
+        for server_id, settings in DEFAULT_REMOTE_SERVERS.items()
+    }
+    for server_id, settings in remote_servers.items():
+        configured_servers[server_id] = {
+            **configured_servers.get(server_id, {}),
+            **settings,
+        }
+    return configured_servers
+
+
+def _prepend_remote_servers(
+    remote_servers: Mapping[str, Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    # configured servers first; matching built-ins supply missing fields; untouched built-ins follow.
+    configured_servers: dict[str, dict[str, Any]] = {
+        server_id: {
+            **DEFAULT_REMOTE_SERVERS.get(server_id, {}),
+            **settings,
+        }
+        for server_id, settings in remote_servers.items()
+    }
+    for server_id, settings in DEFAULT_REMOTE_SERVERS.items():
+        configured_servers.setdefault(server_id, dict(settings))
+    return configured_servers
+
+
+def _replace_remote_servers(
+    remote_servers: Mapping[str, Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    # only configured IDs are included, but matching built-ins still supply missing fields.
+    return {
+        server_id: {
+            **DEFAULT_REMOTE_SERVERS.get(server_id, {}),
+            **settings,
+        }
+        for server_id, settings in remote_servers.items()
+    }
+
+
 class InvenioRDMJupyterLab(Configurable):
     request_mode = Enum(
         request_modes,
@@ -32,7 +78,10 @@ class InvenioRDMJupyterLab(Configurable):
         remote_servers_modes,
         default_value="replace",
         config=True,
-        help="How configured remote servers should be applied to the built-in defaults.",
+        help=(
+            "Which configured and built-in remote servers to include, and in what "
+            "order. Configured fields override built-in fields for matching IDs."
+        ),
     )
 
     remote_servers = Dict(
@@ -40,7 +89,10 @@ class InvenioRDMJupyterLab(Configurable):
         value_trait=Dict(),
         default_value=DEFAULT_REMOTE_SERVERS,
         config=True,
-        help="Remote InvenioRDM servers available to the extension, keyed by ID.",
+        help=(
+            "Remote InvenioRDM server definitions keyed by ID. Definitions for "
+            "built-in IDs may contain only the fields to override or add."
+        ),
     )
 
     default_remote_server = Unicode(
@@ -55,17 +107,11 @@ class InvenioRDMJupyterLab(Configurable):
 
     def remote_server_registry(self) -> RemoteServerRegistry:
         if self.remote_servers_mode == "extend":
-            configured_servers: dict[str, dict[str, Any]] = {
-                **DEFAULT_REMOTE_SERVERS,
-                **self.remote_servers,
-            }
+            configured_servers = _extend_remote_servers(self.remote_servers)
         elif self.remote_servers_mode == "prepend":
-            configured_servers = {
-                **self.remote_servers,
-                **DEFAULT_REMOTE_SERVERS,
-            }
+            configured_servers = _prepend_remote_servers(self.remote_servers)
         else:
-            configured_servers = dict(self.remote_servers)
+            configured_servers = _replace_remote_servers(self.remote_servers)
 
         default_remote_server_id = (
             self.default_remote_server.strip()
