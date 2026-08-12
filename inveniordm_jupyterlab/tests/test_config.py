@@ -42,30 +42,6 @@ def test_reads_remote_servers_from_jupyter_config():
     assert registry.default.id == "inveniordm_local"
 
 
-def test_extends_builtin_remote_servers_from_jupyter_config():
-    config = Config(
-        {
-            "InvenioRDMJupyterLab": {
-                "remote_servers_mode": "extend",
-                "remote_servers": {
-                    "custom_repository": {
-                        "label": "Custom repository",
-                        "base_url": "https://custom.example",
-                    }
-                },
-            }
-        }
-    )
-
-    registry = InvenioRDMJupyterLab(config=config).remote_server_registry()
-
-    assert [server.id for server in registry.all()] == [
-        "zenodo_production",
-        "cds_repository",
-        "custom_repository",
-    ]
-
-
 def test_request_mode_defaults_to_local():
     assert InvenioRDMJupyterLab().request_mode == "local"
 
@@ -78,7 +54,9 @@ def test_uses_builtin_public_remote_servers_by_default():
         "cds_repository",
     ]
     assert registry.default.base_url == "https://zenodo.org"
-    assert registry.default.oauth_client_id is None
+    assert registry.default.oauth_client_id == (
+        "5LkeWfl5Yvhiz42JkAYQI64UYAsyxll2opUsNdmN"
+    )
 
 
 def test_reads_request_mode_from_jupyter_config():

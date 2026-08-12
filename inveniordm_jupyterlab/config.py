@@ -5,6 +5,8 @@ from traitlets.config import Configurable
 
 from inveniordm_auth.remote_servers import RemoteServerRegistry
 
+# The default OAuth client IDs work if jupyterlab is http://localhost:8888 or http://127.0.0.1:8888
+# TODO replace the oauth ids again once the oauth applications are created from a service account
 DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
     "zenodo_production": {
         "label": "Zenodo",
@@ -18,7 +20,6 @@ DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
     },
 }
 
-remote_servers_modes = ["extend", "replace", "prepend"]
 request_modes = ["local", "proxy"]
 
 
@@ -28,13 +29,6 @@ class InvenioRDMJupyterLab(Configurable):
         default_value="local",
         config=True,
         help="Mode used for InvenioRDM API requests.",
-    )
-
-    remote_servers_mode = Enum(
-        remote_servers_modes,
-        default_value="replace",
-        config=True,
-        help="How configured remote servers should be applied to the built-in defaults.",
     )
 
     remote_servers = Dict(
@@ -56,18 +50,10 @@ class InvenioRDMJupyterLab(Configurable):
     )
 
     def remote_server_registry(self) -> RemoteServerRegistry:
-        if self.remote_servers_mode == "extend":
-            configured_servers: dict[str, dict[str, Any]] = {
-                **DEFAULT_REMOTE_SERVERS,
-                **self.remote_servers,
-            }
-        elif self.remote_servers_mode == "prepend":
-            configured_servers = {
-                **self.remote_servers,
-                **DEFAULT_REMOTE_SERVERS,
-            }
+        if self.remote_servers is None:
+            configured_servers: dict[str, dict[str, Any]] = DEFAULT_REMOTE_SERVERS
         else:
-            configured_servers = dict(self.remote_servers)
+            configured_servers = self.remote_servers
 
         default_remote_server_id = (
             self.default_remote_server.strip()
