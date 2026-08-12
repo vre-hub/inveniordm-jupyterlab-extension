@@ -60,7 +60,7 @@ def test_extends_builtin_remote_servers_from_jupyter_config():
     registry = InvenioRDMJupyterLab(config=config).remote_server_registry()
 
     assert [server.id for server in registry.all()] == [
-        "zenodo_production",
+        "zenodo",
         "cds_repository",
         "custom_repository",
     ]
@@ -72,7 +72,7 @@ def test_extend_merges_configured_fields_into_builtin_remote_server():
             "InvenioRDMJupyterLab": {
                 "remote_servers_mode": "extend",
                 "remote_servers": {
-                    "zenodo_production": {
+                    "zenodo": {
                         "label": "My Zenodo",
                         "oauth_client_id": "client-id",
                     }
@@ -82,10 +82,10 @@ def test_extend_merges_configured_fields_into_builtin_remote_server():
     )
 
     registry = InvenioRDMJupyterLab(config=config).remote_server_registry()
-    zenodo = registry.get("zenodo_production")
+    zenodo = registry.get("zenodo")
 
     assert [server.id for server in registry.all()] == [
-        "zenodo_production",
+        "zenodo",
         "cds_repository",
     ]
     assert zenodo.label == "My Zenodo"
@@ -103,18 +103,18 @@ def test_prepend_merges_builtin_server_and_uses_configured_order():
                         "label": "Custom repository",
                         "base_url": "https://custom.example",
                     },
-                    "zenodo_production": {"oauth_client_id": "client-id"},
+                    "zenodo": {"oauth_client_id": "client-id"},
                 },
             }
         }
     )
 
     registry = InvenioRDMJupyterLab(config=config).remote_server_registry()
-    zenodo = registry.get("zenodo_production")
+    zenodo = registry.get("zenodo")
 
     assert [server.id for server in registry.all()] == [
         "custom_repository",
-        "zenodo_production",
+        "zenodo",
         "cds_repository",
     ]
     assert zenodo.label == "Zenodo"
@@ -130,7 +130,7 @@ def test_uses_builtin_public_remote_servers_by_default():
     registry = InvenioRDMJupyterLab().remote_server_registry()
 
     assert [server.id for server in registry.all()] == [
-        "zenodo_production",
+        "zenodo",
         "cds_repository",
     ]
     assert registry.default.base_url == "https://zenodo.org"
@@ -210,7 +210,7 @@ def test_replace_uses_builtin_server_as_template():
         {
             "InvenioRDMJupyterLab": {
                 "remote_servers": {
-                    "zenodo_production": {
+                    "zenodo": {
                         "label": "Institutional Zenodo",
                         "oauth_client_id": "client-id",
                     }
@@ -222,7 +222,7 @@ def test_replace_uses_builtin_server_as_template():
     registry = InvenioRDMJupyterLab(config=config).remote_server_registry()
     zenodo = registry.default
 
-    assert [server.id for server in registry.all()] == ["zenodo_production"]
+    assert [server.id for server in registry.all()] == ["zenodo"]
     assert zenodo.label == "Institutional Zenodo"
     assert zenodo.base_url == "https://zenodo.org"
     assert zenodo.oauth_client_id == "client-id"

@@ -1,6 +1,6 @@
 c = get_config()  # noqa: F821
 c.InvenioRDMJupyterLab.remote_servers = {
-    "zenodo_production": {
+    "zenodo": {
         "oauth_client_id": "HaWBPRb7lsif7cqTypUNeFni9PJOoTm5IcjTJrtt",
     },
     "cds_repository": {

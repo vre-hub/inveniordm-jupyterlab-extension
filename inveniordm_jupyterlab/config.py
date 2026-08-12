@@ -7,7 +7,7 @@ from traitlets.config import Configurable
 from inveniordm_auth.remote_servers import RemoteServerRegistry
 
 DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
-    "zenodo_production": {
+    "zenodo": {
         "label": "Zenodo",
         "base_url": "https://zenodo.org",
     },
