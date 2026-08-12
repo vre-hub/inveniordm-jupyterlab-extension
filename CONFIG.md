@@ -17,6 +17,12 @@ c.InvenioRDMJupyterLab.remote_servers = {
         "base_url": "https://zenodo.org",
         "oauth_client_id": "5LkeWfl5Yvhiz42JkAYQI64UYAsyxll2opUsNdmN",
     },
+    # Keep this entry if you also want to use CDS.
+    "cds": {
+        "oauth_client_id": "BUh7Vh0IjlEbB25GIhgj2fWxKxWce824f32lpcTf",
+        "label": "CDS",
+        "base_url": "https://repository.cern",
+    },
 }
 c.InvenioRDMJupyterLab.default_remote_server = "institution"
 ```
