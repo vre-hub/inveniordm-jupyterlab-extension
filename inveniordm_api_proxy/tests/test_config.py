@@ -12,7 +12,7 @@ def test_remote_server_can_be_configured(monkeypatch):
     assert config.session_cookie_name == "proxy_session"
 
 
-def test_remote_server_configuration_is_required(monkeypatch):
+def test_remote_server_configuration_defaults_to_zenodo_sandbox(monkeypatch):
     for name in (
         "INVENIORDM_BASE_URL",
         "INVENIORDM_CLIENT_ID",
@@ -20,12 +20,11 @@ def test_remote_server_configuration_is_required(monkeypatch):
     ):
         monkeypatch.delenv(name, raising=False)
 
-    try:
-        Config.from_environment()
-    except ValueError as error:
-        assert str(error) == "Set INVENIORDM_CLIENT_ID before starting the proxy"
-    else:
-        raise AssertionError("Expected missing proxy configuration to be rejected")
+    config = Config.from_environment()
+
+    assert config.client_id == "ca8NzRHmqp6tVA0IE9XUlmbL74cGm9RqguC9DZlU"
+    assert config.inveniordm_base_url == "https://sandbox.zenodo.org"
+    assert config.session_cookie_name == "zenodo_sandbox_proxy_session"
 
 
 def test_remote_server_configuration_defaults_to_sandbox(monkeypatch):
@@ -38,5 +37,5 @@ def test_remote_server_configuration_defaults_to_sandbox(monkeypatch):
 
     config = Config.from_environment()
 
-    assert config.inveniordm_base_url == "https://sandbox.inveniordm.org"
-    assert config.session_cookie_name == "inveniordm_sandbox_proxy_session"
+    assert config.inveniordm_base_url == "https://sandbox.zenodo.org"
+    assert config.session_cookie_name == "zenodo_sandbox_proxy_session"

@@ -3,7 +3,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from inveniordm_auth.remote_servers import UnknownRemoteServerError
+from inveniordm_auth.remote_servers import (
+    RemoteServerRegistry,
+    UnknownRemoteServerError,
+)
 from inveniordm_jupyterlab.inveniordm_requests import proxy_inveniordm_requests_factory
 from inveniordm_jupyterlab.inveniordm_requests.proxy_inveniordm_requests_factory import (
     ProxyInvenioRDMRequestsFactory,
@@ -30,9 +33,20 @@ class _Response:
         }
 
 
-def test_proxy_factory_passes_cached_inveniordm_user_id(monkeypatch, remote_servers):
+def test_proxy_factory_passes_cached_inveniordm_user_id(monkeypatch):
+    remote_servers = RemoteServerRegistry(
+        {
+            "zenodo_sandbox": {
+                "label": "Zenodo Sandbox",
+                "base_url": "https://sandbox.zenodo.org",
+                "oauth_client_id": "client-id",
+                "proxy_url": "http://127.0.0.1:8001",
+                "proxy_session_cookie_name": "zenodo_sandbox_proxy_session",
+            }
+        }
+    )
     cookies = SimpleCookie()
-    cookies["inveniordm_sandbox_proxy_session"] = "session"
+    cookies["zenodo_sandbox_proxy_session"] = "session"
     calls = []
 
     def get(url, **kwargs):
@@ -52,7 +66,7 @@ def test_proxy_factory_passes_cached_inveniordm_user_id(monkeypatch, remote_serv
         (
             "http://127.0.0.1:8001/auth/status",
             {
-                "headers": {"Cookie": "inveniordm_sandbox_proxy_session=session"},
+                "headers": {"Cookie": "zenodo_sandbox_proxy_session=session"},
                 "timeout": 5,
             },
         )

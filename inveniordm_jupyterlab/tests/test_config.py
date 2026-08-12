@@ -22,7 +22,6 @@ def test_reads_remote_servers_from_jupyter_config():
     config = Config(
         {
             "InvenioRDMJupyterLab": {
-                "remote_servers_mode": "extend",
                 "remote_servers": {
                     "inveniordm_local": {
                         "label": "InvenioRDM Local",
@@ -38,18 +37,18 @@ def test_reads_remote_servers_from_jupyter_config():
 
     registry = InvenioRDMJupyterLab(config=config).remote_server_registry()
 
-    assert {server.id for server in registry.all()} == {
-        "inveniordm_production",
-        "cds_repository",
-        "inveniordm_local",
-    }
-    assert registry.get("inveniordm_production").label == "Production"
+    assert [server.id for server in registry.all()] == ["inveniordm_local"]
     assert registry.get("inveniordm_local").proxy_url == "http://127.0.0.1:8006"
-    assert registry.default.id == "inveniordm_production"
+    assert registry.default.id == "inveniordm_local"
 
 
 def test_request_mode_defaults_to_local():
     assert InvenioRDMJupyterLab().request_mode == "local"
+
+
+def test_remote_servers_must_be_explicitly_configured():
+    with pytest.raises(ValueError, match="remote_servers must not be empty"):
+        InvenioRDMJupyterLab().remote_server_registry()
 
 
 def test_reads_request_mode_from_jupyter_config():
@@ -97,11 +96,10 @@ def test_proxy_request_mode_requires_proxy_settings(missing_field):
         InvenioRDMJupyterLab(config=config).remote_server_registry()
 
 
-def test_replaces_remote_servers_from_jupyter_config():
+def test_remote_servers_are_not_hardcoded():
     config = Config(
         {
             "InvenioRDMJupyterLab": {
-                "remote_servers_mode": "replace",
                 "remote_servers": {
                     "inveniordm_local": {
                         "label": "InvenioRDM Local",
