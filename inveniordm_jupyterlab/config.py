@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from typing import Any
 
-from traitlets import Dict, Enum, Unicode
+from traitlets import Bool, Dict, Enum, Unicode
 from traitlets.config import Configurable
 
 from inveniordm_auth.remote_servers import RemoteServerRegistry
@@ -15,6 +15,11 @@ DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
         "label": "CDS",
         "base_url": "https://repository.cern",
     },
+}
+
+BUILTIN_LOCAL_OAUTH_CLIENT_IDS = {
+    "zenodo": "5LkeWfl5Yvhiz42JkAYQI64UYAsyxll2opUsNdmN",
+    "cds": "BUh7Vh0IjlEbB25GIhgj2fWxKxWce824f32lpcTf",
 }
 
 remote_servers_modes = ["extend", "replace", "prepend"]
@@ -67,6 +72,12 @@ def _replace_remote_servers(
 
 
 class InvenioRDMJupyterLab(Configurable):
+    enable_builtin_local_oauth = Bool(
+        default_value=True,
+        config=True,
+        help="Use the built-in OAuth client IDs for supported remote servers.",
+    )
+
     request_mode = Enum(
         request_modes,
         default_value="local",
@@ -112,6 +123,13 @@ class InvenioRDMJupyterLab(Configurable):
             configured_servers = _prepend_remote_servers(self.remote_servers)
         else:
             configured_servers = _replace_remote_servers(self.remote_servers)
+
+        if self.enable_builtin_local_oauth:
+            for server_id, oauth_client_id in BUILTIN_LOCAL_OAUTH_CLIENT_IDS.items():
+                if server_id in configured_servers:
+                    configured_servers[server_id].setdefault(
+                        "oauth_client_id", oauth_client_id
+                    )
 
         default_remote_server_id = (
             self.default_remote_server.strip()

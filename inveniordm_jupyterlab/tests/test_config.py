@@ -5,7 +5,10 @@ from inveniordm_auth.remote_servers import (
     RemoteServerRegistry,
     UnknownRemoteServerError,
 )
-from inveniordm_jupyterlab.config import InvenioRDMJupyterLab
+from inveniordm_jupyterlab.config import (
+    BUILTIN_LOCAL_OAUTH_CLIENT_IDS,
+    InvenioRDMJupyterLab,
+)
 
 REMOTE_SERVERS = {
     "inveniordm_sandbox": {
@@ -135,6 +138,33 @@ def test_uses_builtin_public_remote_servers_by_default():
     ]
     assert registry.default.base_url == "https://zenodo.org"
     assert registry.default.oauth_client_id is None
+
+
+def test_enables_builtin_local_oauth_client_ids():
+    config = Config({"InvenioRDMJupyterLab": {"enable_builtin_local_oauth": True}})
+
+    registry = InvenioRDMJupyterLab(config=config).remote_server_registry()
+
+    assert (
+        registry.get("zenodo").oauth_client_id
+        == BUILTIN_LOCAL_OAUTH_CLIENT_IDS["zenodo"]
+    )
+    assert registry.get("cds").oauth_client_id == BUILTIN_LOCAL_OAUTH_CLIENT_IDS["cds"]
+
+
+def test_configured_oauth_client_id_overrides_builtin_local_oauth_client_id():
+    config = Config(
+        {
+            "InvenioRDMJupyterLab": {
+                "enable_builtin_local_oauth": True,
+                "remote_servers": {"zenodo": {"oauth_client_id": "custom-client-id"}},
+            }
+        }
+    )
+
+    registry = InvenioRDMJupyterLab(config=config).remote_server_registry()
+
+    assert registry.get("zenodo").oauth_client_id == "custom-client-id"
 
 
 def test_reads_request_mode_from_jupyter_config():

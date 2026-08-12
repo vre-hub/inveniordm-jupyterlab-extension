@@ -17,7 +17,24 @@ c.InvenioRDMJupyterLab.remote_servers = {
     },
 }
 c.InvenioRDMJupyterLab.default_remote_server = "zenodo" # default
+c.InvenioRDMJupyterLab.enable_builtin_local_oauth = True
 ```
+
+## Quickstart
+
+### Enabling Login for JupyterLab instances other than `http://localhost:8888`
+
+If your JupyterLab instance is not run under `http://localhost:8888`, the built-in OAuth client IDs for Zenodo and CDS will not work. You need to create your own OAuth client IDs for these servers and configure them in the `remote_servers` dictionary. Create a new OAuth application in the servers Web UI and use the following redirect URI: `https://<your-jupyterlab-domain>/inveniordm-jupyterlab/auth/callback` and select Client Type `public`.
+
+### Adding Remote Servers
+
+- You can add additional InvenioRDM servers by specifying them in the `remote_servers` dictionary as demonstrated above.
+- To allow the users of your JupyterLab instance to log in to the remote servers, you need to provide an OAuth client ID for each server that supports login.
+  - In your servers Web UI, navigate to "Applications" and create a new OAuth application. Use the following redirect URI: `https://<your-jupyterlab-domain>/inveniordm-jupyterlab/auth/callback` and select Client Type `public`.
+
+## List of Available Configuration Options
+
+Find detailed information about the available configuaration options below.
 
 ## Remote servers
 
@@ -25,6 +42,8 @@ c.InvenioRDMJupyterLab.default_remote_server = "zenodo" # default
 and `base_url`. `oauth_client_id` is optional and enables login in `local`
 request mode. A definition using a built-in ID (`zenodo` or `cds_repository`)
 inherits unspecified built-in fields; configured fields always take precedence.
+
+### Remote servers mode
 
 `remote_servers_mode` controls membership and order:
 
@@ -35,8 +54,16 @@ inherits unspecified built-in fields; configured fields always take precedence.
 - `replace` (default): include only configured server IDs; matching built-ins
   still supply unspecified fields.
 
+### Default remote server
+
 The first resulting server is the default unless `default_remote_server` names
 another included server.
+
+### Built-in OAuth client IDs
+
+Set `enable_builtin_local_oauth` to `True` to use the built-in OAuth client IDs
+for Zenodo and CDS. It defaults to `True`. An `oauth_client_id` configured for
+a remote server takes precedence over the built-in ID.
 
 ## Request mode
 

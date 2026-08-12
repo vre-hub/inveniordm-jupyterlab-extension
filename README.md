@@ -59,6 +59,11 @@ precedence over built-in fields. New server IDs need a `label` and `base_url`;
 `oauth_client_id` is optional and enables login for that server in local request
 mode.
 
+For a JupyterLab server running locally on the standard development URL, set
+`c.InvenioRDMJupyterLab.enable_builtin_local_oauth = True` to use the built-in
+Zenodo and CDS OAuth client IDs. Explicitly configured client IDs take
+precedence.
+
 For development, the config in `lab_cwd` provides InvenioRDM production and
 sandbox, CDS production and sandbox, and the local InvenioRDM server. Start Lab
 from that directory with:
