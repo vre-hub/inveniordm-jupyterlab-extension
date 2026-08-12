@@ -6,3 +6,4 @@ node_modules
 inveniordm_jupyterlab
 eslint.config.mjs
 .venv
+style/index.css
