@@ -1,6 +1,9 @@
 import React from 'react';
 import { useServerSettings } from '../store';
-import { InvenioRDMFileIdentifier, deleteInvenioRDMRecordFile } from '../api_calls';
+import {
+  InvenioRDMFileIdentifier,
+  deleteInvenioRDMRecordFile
+} from '../api_calls';
 
 export function useDeleteInvenioRDMFile(fileId: InvenioRDMFileIdentifier) {
   const serverSettings = useServerSettings();

@@ -8,13 +8,13 @@ Use this for the developer application registration on the InvenioRDM Instance.
 
 ### InvenioRDM Sandbox OAuth Application Form for local development
 
-| Field         | Value                                                                                                     |
-| ------------- | --------------------------------------------------------------------------------------------------------- |
-| Name          | `InvenioRDM JupyterLab Proxy Local Dev`                                                                       |
+| Field         | Value                                                                                                             |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Name          | `InvenioRDM JupyterLab Proxy Local Dev`                                                                           |
 | Description   | `Local development OAuth application for testing the InvenioRDM JupyterLab API proxy against InvenioRDM Sandbox.` |
-| Website URL   | `http://127.0.0.1:8001`                                                                                   |
-| Redirect URIs | `http://127.0.0.1:8001/auth/callback`                                                                     |
-| Client type   | `Confidential`                                                                                            |
+| Website URL   | `http://127.0.0.1:8001`                                                                                           |
+| Redirect URIs | `http://127.0.0.1:8001/auth/callback`                                                                             |
+| Client type   | `Confidential`                                                                                                    |
 
 ### Running the Proxy
 

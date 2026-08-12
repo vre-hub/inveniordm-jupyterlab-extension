@@ -75,7 +75,10 @@ function VersionDropdownContent({
   return (
     <>
       <span className="font-semibold text-foreground">{`Version ${versionNumber}`}</span>
-      <InvenioRDMRecordStatus status={version.status} is_draft={version.is_draft} />
+      <InvenioRDMRecordStatus
+        status={version.status}
+        is_draft={version.is_draft}
+      />
     </>
   );
 }

@@ -1,4 +1,7 @@
-import { useInvenioRDMRecordPermission, InvenioRDMRecordData } from '../api_calls';
+import {
+  useInvenioRDMRecordPermission,
+  InvenioRDMRecordData
+} from '../api_calls';
 
 export function useHasEditingRights(record: InvenioRDMRecordData): boolean {
   const isDraft = record.is_draft;

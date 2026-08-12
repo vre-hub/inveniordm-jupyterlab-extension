@@ -8,7 +8,9 @@ import { useServerSettings } from '../store';
 
 export function useInvenioRDMUserProfile() {
   const serverSettings = useServerSettings();
-  const [profile, setProfile] = React.useState<InvenioRDMMeResponse | null>(null);
+  const [profile, setProfile] = React.useState<InvenioRDMMeResponse | null>(
+    null
+  );
   const [error, setError] = React.useState('');
 
   async function loadProfile(): Promise<void> {
@@ -17,7 +19,6 @@ export function useInvenioRDMUserProfile() {
     } catch (reason) {
       setProfile(null);
       setError(String(reason));
-    } finally {
     }
   }
 

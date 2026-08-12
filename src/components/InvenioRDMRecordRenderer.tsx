@@ -19,7 +19,9 @@ export type InvenioRDMRecordRendererProps = {
   hasEditingRights?: boolean;
 };
 
-export const InvenioRDMRecordRenderer: React.FC<InvenioRDMRecordRendererProps> = ({
+export const InvenioRDMRecordRenderer: React.FC<
+  InvenioRDMRecordRendererProps
+> = ({
   record,
   hasEditingRights = false,
   versions,

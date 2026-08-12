@@ -3,7 +3,10 @@ import React from 'react';
 import { PickFilesButton } from './FilePicker';
 import { JobProgress } from './JobProgress';
 import { OpenRecordButton } from './OpenRecordButton';
-import { useCurrentRemoteServer, useInvenioRDMRecordDraftUpload } from '../core';
+import {
+  useCurrentRemoteServer,
+  useInvenioRDMRecordDraftUpload
+} from '../core';
 import { ErrorPanel } from './ErrorPanel';
 
 export const InvenioRDMRecordDraftUpload: React.FC = () => {

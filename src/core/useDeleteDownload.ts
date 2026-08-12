@@ -1,4 +1,7 @@
-import { InvenioRDMFileIdentifier, deleteInvenioRDMFileDownload } from '../api_calls';
+import {
+  InvenioRDMFileIdentifier,
+  deleteInvenioRDMFileDownload
+} from '../api_calls';
 import { useServerSettings } from '../store';
 
 export function useDeleteDownload(fileId: InvenioRDMFileIdentifier) {

@@ -12,7 +12,9 @@ import {
 import { useEventListener } from '../sse';
 import { useServerSettings } from '../store';
 
-function sortVersions(versions: InvenioRDMRecordVersion[]): InvenioRDMRecordVersion[] {
+function sortVersions(
+  versions: InvenioRDMRecordVersion[]
+): InvenioRDMRecordVersion[] {
   return [...versions].sort(
     (a, b) =>
       a.versions.index - b.versions.index ||
@@ -63,7 +65,10 @@ export function useInvenioRDMVersionedRecord({
       identifier: InvenioRDMRecordIdentifier = recordIdentifier
     ): Promise<void> => {
       try {
-        const record = await getInvenioRDMRecordVariant(serverSettings, identifier);
+        const record = await getInvenioRDMRecordVariant(
+          serverSettings,
+          identifier
+        );
         setRecord(record);
         console.log('Loaded record', record);
       } catch (reason) {
@@ -157,7 +162,9 @@ export function useInvenioRDMVersionedRecord({
         eventData.parent_id === parentId) &&
       eventData.record
     ) {
-      setRecordIdentifier(inveniordmRecordIdentifierFromRecord(eventData.record));
+      setRecordIdentifier(
+        inveniordmRecordIdentifierFromRecord(eventData.record)
+      );
       setRecord(eventData.record);
       return;
     }
@@ -172,7 +179,8 @@ export function useInvenioRDMVersionedRecord({
         eventData.discarded_draft_id
       );
       if (nextVersion) {
-        const nextIdentifier = inveniordmRecordIdentifierFromRecord(nextVersion);
+        const nextIdentifier =
+          inveniordmRecordIdentifierFromRecord(nextVersion);
         setRecordIdentifier(nextIdentifier);
         console.log(
           'Record discarded, switching record representation:',

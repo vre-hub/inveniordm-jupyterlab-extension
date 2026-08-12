@@ -14,7 +14,9 @@ export function useInvenioRDMUserRecords() {
 
     try {
       setRecords(
-        (await listInvenioRDMUserRecords(serverSettings)) as InvenioRDMRecordData[]
+        (await listInvenioRDMUserRecords(
+          serverSettings
+        )) as InvenioRDMRecordData[]
       );
     } catch (reason) {
       setRecords({ error: String(reason) });

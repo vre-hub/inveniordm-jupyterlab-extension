@@ -30,5 +30,7 @@ export const InvenioRDMUserRecordPreview: React.FC<
 > = props => {
   const hasEditingRights = useHasEditingRights(props.record);
 
-  return <InvenioRDMRecordPreview {...props} hasEditingRights={hasEditingRights} />;
+  return (
+    <InvenioRDMRecordPreview {...props} hasEditingRights={hasEditingRights} />
+  );
 };

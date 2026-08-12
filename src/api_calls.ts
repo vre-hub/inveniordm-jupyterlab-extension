@@ -162,8 +162,12 @@ export function constructInvenioRDMAuthUrl(
   }
 
   return (
-    URLExt.join(serverSettings.baseUrl, 'inveniordm-jupyterlab', 'auth', action) +
-    `?${params.toString()}`
+    URLExt.join(
+      serverSettings.baseUrl,
+      'inveniordm-jupyterlab',
+      'auth',
+      action
+    ) + `?${params.toString()}`
   );
 }
 
@@ -551,14 +555,16 @@ export function useInvenioRDMRecordVersions(
   const [versions, setVersions] = React.useState<InvenioRDMRecordVersion[]>([]);
 
   React.useEffect(() => {
-    void listInvenioRDMRecordVersions(serverSettings, recordId, includeDrafts).then(
-      (versions: InvenioRDMRecordVersion[]) => {
-        const sortedVersions = versions.sort(
-          (a, b) => a.versions.index - b.versions.index
-        );
-        setVersions(sortedVersions);
-      }
-    );
+    void listInvenioRDMRecordVersions(
+      serverSettings,
+      recordId,
+      includeDrafts
+    ).then((versions: InvenioRDMRecordVersion[]) => {
+      const sortedVersions = versions.sort(
+        (a, b) => a.versions.index - b.versions.index
+      );
+      setVersions(sortedVersions);
+    });
   }, [includeDrafts, recordId, serverSettings]);
 
   return versions;
@@ -574,7 +580,8 @@ export type InvenioRDMFile = {
     download?: string;
   };
 };
-type InvenioRDMRecordStatus = 'new_version_draft' | 'draft' | 'published' | string;
+type InvenioRDMRecordStatus =
+  'new_version_draft' | 'draft' | 'published' | string;
 // TODO check if these fields exist/ if they are always present
 
 export type InvenioRDMRecordData = {

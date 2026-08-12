@@ -1,5 +1,8 @@
 import React from 'react';
-import { getLatestActiveJobId, uploadInvenioRDMRecordFiles } from '../api_calls';
+import {
+  getLatestActiveJobId,
+  uploadInvenioRDMRecordFiles
+} from '../api_calls';
 import { useServerSettings } from '../store';
 
 export function useInvenioRDMRecordFileUpload(recordId: string) {

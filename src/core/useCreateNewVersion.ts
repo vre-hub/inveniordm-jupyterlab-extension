@@ -1,5 +1,8 @@
 import React from 'react';
-import { InvenioRDMRecordVersion, createInvenioRDMRecordVersion } from '../api_calls';
+import {
+  InvenioRDMRecordVersion,
+  createInvenioRDMRecordVersion
+} from '../api_calls';
 import { useServerSettings } from '../store';
 
 /**

@@ -4,7 +4,8 @@ import { create } from 'zustand';
 import type { InsertInvenioRDMCellAction } from '../jupyterlab_interactions';
 
 interface IInvenioRDMRuntimeState {
-  insertInvenioRDMCell: ((action: InsertInvenioRDMCellAction) => void) | undefined;
+  insertInvenioRDMCell:
+    ((action: InsertInvenioRDMCellAction) => void) | undefined;
   pickDownloadDirectory: (() => Promise<string | null>) | undefined;
   pickUploadFiles: (() => Promise<string[] | null>) | undefined;
   serverSettings: unknown;
@@ -52,7 +53,9 @@ function initializeInvenioRDMStore(options: {
 }
 
 function useServerSettings(): ServerConnection.ISettings {
-  const serverSettings = useInvenioRDMRuntimeStore(state => state.serverSettings);
+  const serverSettings = useInvenioRDMRuntimeStore(
+    state => state.serverSettings
+  );
 
   if (!serverSettings) {
     throw new Error('InvenioRDM server settings have not been initialized.');
@@ -61,7 +64,9 @@ function useServerSettings(): ServerConnection.ISettings {
   return serverSettings as ServerConnection.ISettings;
 }
 
-function useInsertInvenioRDMCell(): (action: InsertInvenioRDMCellAction) => void {
+function useInsertInvenioRDMCell(): (
+  action: InsertInvenioRDMCellAction
+) => void {
   const insertInvenioRDMCell = useInvenioRDMRuntimeStore(
     state => state.insertInvenioRDMCell
   );
@@ -86,7 +91,9 @@ function usePickDownloadDirectory(): () => Promise<string | null> {
 }
 
 function usePickUploadFiles(): () => Promise<string[] | null> {
-  const pickUploadFiles = useInvenioRDMRuntimeStore(state => state.pickUploadFiles);
+  const pickUploadFiles = useInvenioRDMRuntimeStore(
+    state => state.pickUploadFiles
+  );
 
   if (!pickUploadFiles) {
     throw new Error('InvenioRDM file picker has not been initialized.');
