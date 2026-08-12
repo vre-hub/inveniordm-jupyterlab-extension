@@ -25,9 +25,14 @@ Setting `remote_servers` replaces all defaults, so copy the Zenodo entry above
 if you want to keep using it. `oauth_client_id` is optional for anonymous-only
 access.
 
-The bundled Zenodo OAuth client ID only works for JupyterLab at
-`http://localhost:8888` or `http://127.0.0.1:8888`. For any other URL, register
-your own Zenodo OAuth application for that URL and replace the client ID.
+## Configuring OAuth client IDs for Zenodo and CDS
+
+The bundled Zenodo OAuth client ID, as well as the CDS OAuth client ID, only works for JupyterLab at
+`http://localhost:8888` or `http://127.0.0.1:8888`.
+
+This is intended for people running JupyterLab locally, e.g. on their own computer, with default JupyterLab settings, so that the extension works out of the box for them. If you are running JupyterLab on a different URL, you will need to register your own OAuth application for that URL and replace the client ID.
+
+## Running JupyterLab with the config
 
 Start JupyterLab with the config:
 
