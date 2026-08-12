@@ -144,8 +144,9 @@ class InvenioRDMAccessTokenHandler(APIHandler):
 
 
 class InvenioRDMRemoteServersHandler(APIHandler):
-    def initialize(self, remote_servers: RemoteServerRegistry):
+    def initialize(self, remote_servers: RemoteServerRegistry, request_mode: str):
         self.remote_servers = remote_servers
+        self.request_mode = request_mode
 
     @tornado.web.authenticated
     def get(self):
@@ -155,6 +156,10 @@ class InvenioRDMRemoteServersHandler(APIHandler):
                     {
                         "id": server.id,
                         "label": server.label,
+                        "login_available": (
+                            self.request_mode == "proxy"
+                            or server.oauth_client_id is not None
+                        ),
                     }
                     for server in self.remote_servers.all()
                 ]
@@ -163,8 +168,9 @@ class InvenioRDMRemoteServersHandler(APIHandler):
 
 
 class InvenioRDMRemoteServersDefaultHandler(APIHandler):
-    def initialize(self, remote_servers: RemoteServerRegistry):
+    def initialize(self, remote_servers: RemoteServerRegistry, request_mode: str):
         self.remote_servers = remote_servers
+        self.request_mode = request_mode
 
     @tornado.web.authenticated
     def get(self):
@@ -173,6 +179,10 @@ class InvenioRDMRemoteServersDefaultHandler(APIHandler):
                 {
                     "id": self.remote_servers.default.id,
                     "label": self.remote_servers.default.label,
+                    "login_available": (
+                        self.request_mode == "proxy"
+                        or self.remote_servers.default.oauth_client_id is not None
+                    ),
                 }
             )
         )
@@ -1141,12 +1151,12 @@ def setup_route_handlers(
         (
             url_path_join(inveniordm_base_url, "remote-servers"),
             InvenioRDMRemoteServersHandler,
-            {"remote_servers": remote_servers},
+            {"remote_servers": remote_servers, "request_mode": request_mode},
         ),
         (
             url_path_join(inveniordm_base_url, "remote-servers", "default"),
             InvenioRDMRemoteServersDefaultHandler,
-            {"remote_servers": remote_servers},
+            {"remote_servers": remote_servers, "request_mode": request_mode},
         ),
         (
             url_path_join(inveniordm_base_url, "remote-servers", "current"),

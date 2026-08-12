@@ -1,7 +1,10 @@
 import pytest
 import requests as requests_library
 
-from inveniordm_auth.remote_servers import UnknownRemoteServerError
+from inveniordm_auth.remote_servers import (
+    RemoteServerRegistry,
+    UnknownRemoteServerError,
+)
 from inveniordm_auth.token_store import BoundedTokenStore, FileTokenStore
 from inveniordm_jupyterlab.util.job_types import JobCancelled
 from inveniordm_jupyterlab.inveniordm_file_identifier import InvenioRDMFileIdentifier
@@ -31,6 +34,28 @@ class Response:
     def raise_for_status(self):
         if self.status_code >= 400:
             raise AssertionError(f"Unexpected HTTP status {self.status_code}")
+
+
+def test_local_factory_supports_anonymous_requests_without_oauth_client(tmp_path):
+    remote_servers = RemoteServerRegistry(
+        {
+            "public_repository": {
+                "label": "Public repository",
+                "base_url": "https://public.example",
+            }
+        }
+    )
+    factory = LocalInvenioRDMRequestsFactory(remote_servers)
+    factory.token_store = BoundedTokenStore(FileTokenStore(tmp_path / "tokens.json"))
+
+    class Handler:
+        def get_query_argument(self, name, default=None):
+            return default
+
+    requests = factory.create_inveniordm_requests(Handler())
+
+    assert requests.url == "https://public.example"
+    assert requests.headers == {}
 
 
 def test_local_factory_passes_stored_inveniordm_user_id(tmp_path, remote_servers):

@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 
 from inveniordm_jupyterlab import routes
+from inveniordm_auth.remote_servers import RemoteServerRegistry
 from inveniordm_jupyterlab.routes import (
     InvenioRDMCurrentRemoteServerHandler,
     InvenioRDMFileImportCellHandler,
@@ -12,6 +13,7 @@ from inveniordm_jupyterlab.routes import (
     InvenioRDMRecordPermissionHandler,
     InvenioRDMRecordVariantItemHandler,
     InvenioRDMRecordVersionCollectionHandler,
+    InvenioRDMRemoteServersHandler,
     InvenioRDMUserRecordItemHandler,
 )
 from inveniordm_jupyterlab.util.sse import EventBus
@@ -94,6 +96,47 @@ def test_get_current_remote_server(remote_servers):
         "id": remote_servers.default.id,
         "display_name": remote_servers.default.label,
     }
+
+
+def test_remote_servers_report_local_login_availability(remote_servers):
+    responses = []
+    handler = SimpleNamespace(
+        remote_servers=remote_servers,
+        request_mode="local",
+        finish=responses.append,
+    )
+
+    InvenioRDMRemoteServersHandler.get.__wrapped__(handler)
+
+    payload = json.loads(responses[0])
+    assert all(server["login_available"] for server in payload)
+
+
+def test_remote_servers_report_when_local_login_is_unavailable():
+    remote_servers = RemoteServerRegistry(
+        {
+            "public_repository": {
+                "label": "Public repository",
+                "base_url": "https://public.example",
+            }
+        }
+    )
+    responses = []
+    handler = SimpleNamespace(
+        remote_servers=remote_servers,
+        request_mode="local",
+        finish=responses.append,
+    )
+
+    InvenioRDMRemoteServersHandler.get.__wrapped__(handler)
+
+    assert json.loads(responses[0]) == [
+        {
+            "id": "public_repository",
+            "label": "Public repository",
+            "login_available": False,
+        }
+    ]
 
 
 async def test_cancel_unknown_job(jp_fetch):

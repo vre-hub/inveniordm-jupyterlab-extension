@@ -81,7 +81,7 @@ def create_oauth_login(
 ) -> OAuthLogin:
     if not config.client_id:
         raise OAuthConfigurationError(
-            "Set INVENIORDM_CLIENT_ID before starting OAuth login."
+            "OAuth login is not configured for this remote server."
         )
 
     state = state or create_oauth_state()

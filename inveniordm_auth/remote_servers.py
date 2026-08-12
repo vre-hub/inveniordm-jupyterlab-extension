@@ -19,7 +19,7 @@ class RemoteServer:
     id: RemoteServerId
     label: str
     base_url: str
-    oauth_client_id: str
+    oauth_client_id: str | None
     proxy_url: str
     proxy_session_cookie_name: str
 
@@ -58,11 +58,7 @@ class RemoteServerRegistry:
         server_id: str,
         settings: Mapping[str, Any],
     ) -> RemoteServer:
-        required_fields = [
-            "label",
-            "base_url",
-            "oauth_client_id",
-        ]
+        required_fields = ["label", "base_url"]
         values: dict[str, str] = {}
         for field in required_fields:
             value = settings.get(field)
@@ -72,21 +68,34 @@ class RemoteServerRegistry:
                 )
             values[field] = value.strip()
 
+        optional_values: dict[str, str | None] = {}
+        oauth_client_id = settings.get("oauth_client_id")
+        if oauth_client_id is not None and not isinstance(oauth_client_id, str):
+            raise ValueError(
+                f"Remote server {server_id!r} requires 'oauth_client_id' to be a string"
+            )
+        optional_values["oauth_client_id"] = (
+            oauth_client_id.strip()
+            if oauth_client_id and oauth_client_id.strip()
+            else None
+        )
+
         for field in ("proxy_url", "proxy_session_cookie_name"):
             value = settings.get(field, "")
             if not isinstance(value, str):
                 raise ValueError(
                     f"Remote server {server_id!r} requires {field!r} to be a string"
                 )
-            values[field] = value.strip()
+            optional_values[field] = value.strip()
 
         return RemoteServer(
             id=server_id,
             label=values["label"],
             base_url=values["base_url"].rstrip("/"),
-            oauth_client_id=values["oauth_client_id"],
-            proxy_url=values["proxy_url"].rstrip("/"),
-            proxy_session_cookie_name=values["proxy_session_cookie_name"],
+            oauth_client_id=optional_values["oauth_client_id"],
+            proxy_url=(optional_values["proxy_url"] or "").rstrip("/"),
+            proxy_session_cookie_name=optional_values["proxy_session_cookie_name"]
+            or "",
         )
 
     @property

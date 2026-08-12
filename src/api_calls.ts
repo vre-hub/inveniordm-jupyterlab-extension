@@ -25,6 +25,7 @@ export type AccessTokenStatus =
 export type RemoteServerOption = {
   id: RemoteServerId;
   label: string;
+  login_available: boolean;
 };
 
 export type CurrentRemoteServer = {

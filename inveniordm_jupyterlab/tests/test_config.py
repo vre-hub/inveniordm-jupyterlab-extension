@@ -42,13 +42,43 @@ def test_reads_remote_servers_from_jupyter_config():
     assert registry.default.id == "inveniordm_local"
 
 
+def test_extends_builtin_remote_servers_from_jupyter_config():
+    config = Config(
+        {
+            "InvenioRDMJupyterLab": {
+                "remote_servers_mode": "extend",
+                "remote_servers": {
+                    "custom_repository": {
+                        "label": "Custom repository",
+                        "base_url": "https://custom.example",
+                    }
+                },
+            }
+        }
+    )
+
+    registry = InvenioRDMJupyterLab(config=config).remote_server_registry()
+
+    assert [server.id for server in registry.all()] == [
+        "zenodo_production",
+        "cds_repository",
+        "custom_repository",
+    ]
+
+
 def test_request_mode_defaults_to_local():
     assert InvenioRDMJupyterLab().request_mode == "local"
 
 
-def test_remote_servers_must_be_explicitly_configured():
-    with pytest.raises(ValueError, match="remote_servers must not be empty"):
-        InvenioRDMJupyterLab().remote_server_registry()
+def test_uses_builtin_public_remote_servers_by_default():
+    registry = InvenioRDMJupyterLab().remote_server_registry()
+
+    assert [server.id for server in registry.all()] == [
+        "zenodo_production",
+        "cds_repository",
+    ]
+    assert registry.default.base_url == "https://zenodo.org"
+    assert registry.default.oauth_client_id is None
 
 
 def test_reads_request_mode_from_jupyter_config():
@@ -96,7 +126,7 @@ def test_proxy_request_mode_requires_proxy_settings(missing_field):
         InvenioRDMJupyterLab(config=config).remote_server_registry()
 
 
-def test_remote_servers_are_not_hardcoded():
+def test_replaces_builtin_remote_servers_from_jupyter_config():
     config = Config(
         {
             "InvenioRDMJupyterLab": {
@@ -155,15 +185,29 @@ def test_remote_server_registry_rejects_empty_config():
 
 
 def test_remote_server_registry_rejects_incomplete_server():
-    with pytest.raises(ValueError, match="oauth_client_id"):
+    with pytest.raises(ValueError, match="base_url"):
         RemoteServerRegistry(
             {
                 "inveniordm_sandbox": {
                     "label": "Sandbox",
-                    "base_url": "https://sandbox.example",
                 }
             }
         )
+
+
+@pytest.mark.parametrize("oauth_client_id", [None, "", "  "])
+def test_remote_server_registry_accepts_server_without_oauth(oauth_client_id):
+    registry = RemoteServerRegistry(
+        {
+            "public_repository": {
+                "label": "Public repository",
+                "base_url": "https://public.example",
+                "oauth_client_id": oauth_client_id,
+            }
+        }
+    )
+
+    assert registry.default.oauth_client_id is None
 
 
 def test_remote_server_registry_accepts_config_only_id():

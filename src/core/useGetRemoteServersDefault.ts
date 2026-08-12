@@ -5,6 +5,7 @@ import React from 'react';
 type RemoteServerOption = {
   id: string;
   label: string;
+  login_available: boolean;
 };
 
 export function useGetRemoteServersDefault(): RemoteServerOption | undefined {

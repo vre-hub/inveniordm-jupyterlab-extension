@@ -1,17 +1,19 @@
 import json
 import os
+from http import HTTPStatus
 from urllib.parse import urlparse
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
 from tornado.web import RequestHandler
 
-from inveniordm_auth import OAuthCallback, OAuthClientConfig
+from inveniordm_auth import OAuthCallback, OAuthClientConfig, OAuthConfigurationError
 from inveniordm_auth.remote_servers import RemoteServerId, RemoteServerRegistry
 from inveniordm_auth.token_store import BoundedTokenStore
 from inveniordm_auth.tornado_oauth import (
     begin_inveniordm_oauth_login,
     finish_inveniordm_oauth_callback,
+    write_json,
 )
 
 from ..inveniordm_requests.inveniordm_requests_factory import get_remote_server_override
@@ -33,7 +35,11 @@ class LocalInvenioRDMAuthController:
 
     def login(self, handler: APIHandler) -> None:
         remote_server_id = self._oauth_remote_server_id(handler)
-        oauth_config = self._oauth_config(handler, remote_server_id)
+        try:
+            oauth_config = self._oauth_config(handler, remote_server_id)
+        except OAuthConfigurationError as error:
+            write_json(handler, {"message": str(error)}, HTTPStatus.SERVICE_UNAVAILABLE)
+            return
         begin_inveniordm_oauth_login(
             handler,
             oauth_config=oauth_config,
@@ -63,7 +69,11 @@ class LocalInvenioRDMAuthController:
         handler.finish(json.dumps({"authenticated": False}))
 
     def callback(self, handler: APIHandler) -> None:
-        oauth_config, remote_server_id = self._oauth_config_for_callback(handler)
+        try:
+            oauth_config, remote_server_id = self._oauth_config_for_callback(handler)
+        except OAuthConfigurationError as error:
+            write_json(handler, {"message": str(error)}, HTTPStatus.SERVICE_UNAVAILABLE)
+            return
         finish_inveniordm_oauth_callback(
             handler,
             oauth_config=oauth_config,
@@ -96,6 +106,10 @@ class LocalInvenioRDMAuthController:
         redirect_uri = self._oauth_callback_url(handler)
         key = (remote_server_id, redirect_uri)
         server = self.remote_servers.get(remote_server_id)
+        if server.oauth_client_id is None:
+            raise OAuthConfigurationError(
+                f"OAuth login is not configured for remote server {server.id!r}."
+            )
         if key not in self.oauth_configs:
             self.oauth_configs[key] = OAuthClientConfig(
                 inveniordm_base_url=server.base_url,

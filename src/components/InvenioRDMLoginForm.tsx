@@ -9,6 +9,7 @@ import { RemoteServerId } from '../remoteServers';
 import { LoadingPanel } from './LoadingPanel';
 import {
   useGetRemoteServersDefault,
+  useRemoteServers,
   useShouldShowRemoteServerDropdownForLogin
 } from '../core';
 import { ErrorPanel } from './ErrorPanel';
@@ -18,6 +19,7 @@ export const InvenioRDMLoginForm: React.FC = () => {
   const [loginRemoteServer, setLoginRemoteServer] = React.useState<
     RemoteServerId | undefined
   >();
+  const remoteServers = useRemoteServers();
 
   // Get the default remote server and set it as the initial value for loginRemoteServer
   const defaultOption = useGetRemoteServersDefault();
@@ -28,6 +30,11 @@ export const InvenioRDMLoginForm: React.FC = () => {
   }, [defaultOption]);
 
   const showDropdown = useShouldShowRemoteServerDropdownForLogin();
+  const selectedRemoteServer = remoteServers.find(
+    server => server.id === loginRemoteServer
+  );
+  const loginAvailable =
+    selectedRemoteServer?.login_available ?? defaultOption?.login_available;
 
   if (!accessStatus) {
     return <LoadingPanel text={`Checking login status…`} />;
@@ -75,7 +82,14 @@ export const InvenioRDMLoginForm: React.FC = () => {
               </label>
             </div>
           )}
-          <LoginButton remoteServerId={loginRemoteServer} />
+          {loginAvailable === false && (
+            <p className="mb-0 rounded-md bg-surface-muted px-3 py-2 text-sm text-muted-strong">
+              Login for {selectedRemoteServer?.label} is not configured.
+            </p>
+          )}
+          {loginAvailable !== false && (
+            <LoginButton remoteServerId={loginRemoteServer} />
+          )}
         </div>
       )}
       {loggedIn && (

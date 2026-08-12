@@ -44,8 +44,15 @@ jupyter labextension list
 
 ## Remote server configuration
 
-The server extension reads its available remote servers from
+Zenodo and the CERN Document Server are available as public, anonymous remote
+servers by default. Public record search and download do not require login.
+
+The server extension reads additional or replacement remote servers from
 `InvenioRDMJupyterLab.remote_servers` in the Jupyter Server configuration.
+Set `remote_servers_mode` to `extend`, `prepend`, or `replace` to control how
+that configuration is combined with the defaults. A server only needs a
+`label` and `base_url`; `oauth_client_id` is optional and enables login for
+that server in local request mode.
 
 For development, the config in `lab_cwd` provides InvenioRDM production and
 sandbox, CDS production and sandbox, and the local InvenioRDM server. Start Lab
