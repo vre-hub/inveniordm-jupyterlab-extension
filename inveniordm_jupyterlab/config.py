@@ -9,8 +9,10 @@ DEFAULT_REMOTE_SERVERS: dict[str, dict[str, str]] = {
     "zenodo_production": {
         "label": "Zenodo",
         "base_url": "https://zenodo.org",
+        "oauth_client_id": "5LkeWfl5Yvhiz42JkAYQI64UYAsyxll2opUsNdmN",
     },
     "cds_repository": {
+        "oauth_client_id": "BUh7Vh0IjlEbB25GIhgj2fWxKxWce824f32lpcTf",
         "label": "CDS",
         "base_url": "https://repository.cern",
     },
