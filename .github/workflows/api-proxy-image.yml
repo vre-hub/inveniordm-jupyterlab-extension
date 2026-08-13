@@ -1,0 +1,77 @@
+name: Build and publish the API proxy image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # Only the code that actually goes into the image.
+      - "inveniordm_api_proxy/**"
+      - "inveniordm_auth/**"
+      - "deploy/docker/**"
+      - ".github/workflows/api-proxy-image.yml"
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: inveniordm-api-proxy
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to the GH Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          # Context is the repo root: the Dockerfile copies inveniordm_api_proxy/
+          # and inveniordm_auth/ from there.
+          context: .
+          file: ./deploy/docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Smoke test the published image
+        run: |
+          IMAGE=$(echo '${{ steps.meta.outputs.tags }}' | head -n1)
+          docker run -d --name proxy-smoke -p 8001:8001 \
+            -e INVENIORDM_BASE_URL=https://sandbox.zenodo.org \
+            -e INVENIORDM_CLIENT_ID=smoke \
+            -e INVENIORDM_CLIENT_SECRET=smoke \
+            -e PROXY_PUBLIC_URL=http://127.0.0.1:8001 \
+            -e INVENIORDM_JUPYTERLAB_TOKEN_STORE=/tmp/tokens.json \
+            "$IMAGE"
+          for i in $(seq 1 15); do
+            if curl -fsS http://127.0.0.1:8001/health; then
+              echo "health OK"; exit 0
+            fi
+            sleep 2
+          done
+          echo "proxy did not become healthy"; docker logs proxy-smoke; exit 1
