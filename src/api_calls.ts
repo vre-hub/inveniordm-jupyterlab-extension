@@ -175,9 +175,12 @@ export function constructInvenioRDMAuthUrl(
 export async function searchInvenioRDMRecords(
   serverSettings: ServerConnection.ISettings,
   query: string
-): Promise<unknown> {
+): Promise<InvenioRDMRecordSearchResponse> {
   const params = new URLSearchParams({ q: query, include_files: 'true' });
-  return await requestAPI(`records?${params.toString()}`, serverSettings);
+  return await requestAPI<InvenioRDMRecordSearchResponse>(
+    `records?${params.toString()}`,
+    serverSettings
+  );
 }
 
 export async function getInvenioRDMRecordVariant(
@@ -195,16 +198,24 @@ export async function getInvenioRDMRecordVariant(
 
 export async function listInvenioRDMUserRecords(
   serverSettings: ServerConnection.ISettings
-): Promise<unknown> {
+): Promise<InvenioRDMRecordSearchResponse> {
   const params = new URLSearchParams();
   params.append('include_files', 'true');
 
   const queryString = params.toString();
-  return await requestAPI(
+  return await requestAPI<InvenioRDMRecordSearchResponse>(
     `user/records${queryString ? `?${queryString}` : ''}`,
     serverSettings
   );
 }
+
+export type InvenioRDMRecordSearchResponse = {
+  hits?: {
+    hits?: InvenioRDMRecordData[];
+    total?: number;
+  };
+  links?: Record<string, unknown>;
+};
 
 export type InvenioRDMRecordDraftResponse = {
   id: string;

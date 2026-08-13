@@ -339,7 +339,11 @@ def test_record_permission_requires_cached_user_id(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    ("records", "expected"), [([{"id": "123"}], True), ([], False)]
+    ("records", "expected"),
+    [
+        ({"hits": {"hits": [{"id": "123"}]}}, True),
+        ({"hits": {"hits": []}}, False),
+    ],
 )
 def test_check_user_record_permission_workaround_queries_encoded_grant_token(
     monkeypatch,
@@ -412,7 +416,7 @@ def test_get_inveniordm_record_variant_fetches_requested_record_status(monkeypat
 def test_list_inveniordm_user_records_optionally_includes_files(
     monkeypatch, include_files
 ):
-    records = [
+    hits = [
         {"id": "draft-123", "is_draft": True},
         {
             "id": "restricted-123",
@@ -420,6 +424,7 @@ def test_list_inveniordm_user_records_optionally_includes_files(
             "access": {"files": "restricted"},
         },
     ]
+    records = {"hits": {"hits": hits}}
     include_files_calls = []
     monkeypatch.setattr(
         inveniordm_requests_module,
@@ -436,7 +441,7 @@ def test_list_inveniordm_user_records_optionally_includes_files(
 
     assert requests.list_inveniordm_user_records(include_files=include_files) is records
     assert [call[0][0] for call in include_files_calls] == (
-        records if include_files else []
+        hits if include_files else []
     )
 
 
@@ -538,13 +543,15 @@ def test_get_inveniordm_record_public_or_draft_uses_draft_endpoint(monkeypatch):
 
 def test_list_inveniordm_user_records_uses_user_records(monkeypatch):
     calls = []
+    response_data = {
+        "hits": {"hits": [{"id": "record-1"}], "total": 26},
+        "links": {"next": "https://inveniordm.org/api/user/records?page=3&size=25"},
+    }
     monkeypatch.setattr(
         inveniordm_module.requests,
         "get",
-        lambda *args, **kwargs: (
-            calls.append((args, kwargs))
-            or Response({"hits": {"hits": [{"id": "record-1"}]}})
-        ),
+        lambda *args, **kwargs: calls.append((args, kwargs))
+        or Response(response_data),
     )
 
     result = inveniordm_module.list_inveniordm_user_records(
@@ -554,7 +561,7 @@ def test_list_inveniordm_user_records_uses_user_records(monkeypatch):
         size=25,
     )
 
-    assert result == [{"id": "record-1"}]
+    assert result is response_data
     assert calls[0][0] == ("https://inveniordm.org/api/user/records",)
     assert calls[0][1]["params"] == {"page": 2, "size": 25}
     assert calls[0][1]["headers"] == {
@@ -724,12 +731,16 @@ def test_record_versions_preserves_published_and_draft_variants(monkeypatch):
         "list_inveniordm_user_records",
         lambda *args, **kwargs: (
             calls.append((args, kwargs))
-            or [
-                *versions,
-                new_version_draft,
-                edited_version_draft,
-                unrelated_draft,
-            ]
+            or {
+                "hits": {
+                    "hits": [
+                        *versions,
+                        new_version_draft,
+                        edited_version_draft,
+                        unrelated_draft,
+                    ]
+                }
+            }
         ),
     )
     requests = InvenioRDMRequests("https://inveniordm.org", {"Authorization": "x"})

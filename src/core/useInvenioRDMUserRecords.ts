@@ -13,11 +13,8 @@ export function useInvenioRDMUserRecords() {
     setIsLoading(true);
 
     try {
-      setRecords(
-        (await listInvenioRDMUserRecords(
-          serverSettings
-        )) as InvenioRDMRecordData[]
-      );
+      const response = await listInvenioRDMUserRecords(serverSettings);
+      setRecords(response.hits?.hits ?? []);
     } catch (reason) {
       setRecords({ error: String(reason) });
     } finally {

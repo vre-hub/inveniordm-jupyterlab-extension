@@ -1,12 +1,9 @@
 import React from 'react';
 import { useServerSettings } from '../store';
-import { InvenioRDMRecordData, searchInvenioRDMRecords } from '../api_calls';
-
-type InvenioRDMRecordSearchResponse = {
-  hits?: {
-    hits?: InvenioRDMRecordData[];
-  };
-};
+import {
+  InvenioRDMRecordSearchResponse,
+  searchInvenioRDMRecords
+} from '../api_calls';
 
 export function useInvenioRDMRecordSearch() {
   const serverSettings = useServerSettings();
@@ -22,12 +19,7 @@ export function useInvenioRDMRecordSearch() {
     setIsSearching(true);
 
     try {
-      setResults(
-        (await searchInvenioRDMRecords(
-          serverSettings,
-          query
-        )) as InvenioRDMRecordSearchResponse
-      );
+      setResults(await searchInvenioRDMRecords(serverSettings, query));
     } catch (reason) {
       setResults({ error: String(reason) });
     } finally {

@@ -18,6 +18,7 @@ from ..inveniordm_record_identifier import (
 )
 from .inveniordm import (
     InvenioRDMFileResponse,
+    InvenioRDMRecordSearchResponse,
     InvenioRDMPermission,
     check_user_record_permission_workaround,
     create_inveniordm_record_draft,
@@ -77,7 +78,7 @@ class InvenioRDMRequests:
         sort: str = "bestmatch",
         allversions: bool = False,
         include_files: bool = False,
-    ) -> dict[str, Any]:
+    ) -> InvenioRDMRecordSearchResponse:
         records = search_inveniordm_records(
             query,
             base_url=self.url,
@@ -103,7 +104,7 @@ class InvenioRDMRequests:
         page: int = 1,
         size: int = 10,
         include_files: bool = False,
-    ) -> list[dict[str, Any]]:
+    ) -> InvenioRDMRecordSearchResponse:
         records = list_inveniordm_user_records(
             base_url=self.url,
             headers=self.headers,
@@ -111,7 +112,7 @@ class InvenioRDMRequests:
             size=size,
         )
         if include_files:
-            for record in records:
+            for record in records.get("hits", {}).get("hits", []):
                 include_inveniordm_file_if_draft_or_restricted(
                     record,
                     base_url=self.url,
@@ -193,7 +194,7 @@ class InvenioRDMRequests:
             return versions
         drafts = [
             record
-            for record in family_records
+            for record in family_records.get("hits", {}).get("hits", [])
             if str(record.get("parent", {}).get("id")) == str(parent_id)
             and record.get("is_draft", False) is True
         ]

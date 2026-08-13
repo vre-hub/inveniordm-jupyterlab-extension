@@ -5,7 +5,7 @@ TODO consider using httpx instead of requests, for async support.
 
 import base64
 from collections.abc import Iterable
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, TypedDict
 from urllib.parse import quote, urljoin, urlparse, urlunparse
 
 import requests
@@ -16,6 +16,16 @@ from ..inveniordm_record_identifier import InvenioRDMRecordStatus
 InvenioRDMPermission = Literal[
     "manage", "edit", "preview", "view"
 ]  # "preview" means "preview drafts", "view" means "view restricted files"
+
+
+class InvenioRDMRecordSearchHits(TypedDict, total=False):
+    hits: list[dict[str, Any]]
+    total: int
+
+
+class InvenioRDMRecordSearchResponse(TypedDict, total=False):
+    hits: InvenioRDMRecordSearchHits
+    links: dict[str, Any]
 
 
 class InvenioRDMFileResponse(Protocol):
@@ -151,7 +161,7 @@ def search_inveniordm_records(
     size: int = 10,
     sort: str = "bestmatch",
     allversions: bool = False,
-) -> dict[str, Any]:
+) -> InvenioRDMRecordSearchResponse:
     """
     Search published InvenioRDM records.
     """
@@ -230,7 +240,7 @@ def list_inveniordm_user_records(
     size: int = 10,
     query: str | None = None,
     allversions: bool | None = None,
-) -> list[dict[str, Any]]:
+) -> InvenioRDMRecordSearchResponse:
     """
     List records owned by the authenticated user.
     """
@@ -247,7 +257,7 @@ def list_inveniordm_user_records(
         timeout=10,
     )
     response.raise_for_status()
-    return response.json().get("hits", {}).get("hits", [])
+    return response.json()
 
 
 def list_inveniordm_record_versions(
@@ -472,5 +482,5 @@ def check_user_record_permission_workaround(
         page=1,
         size=1,
     )
-    has_permission = len(response) > 0
+    has_permission = len(response.get("hits", {}).get("hits", [])) > 0
     return has_permission
