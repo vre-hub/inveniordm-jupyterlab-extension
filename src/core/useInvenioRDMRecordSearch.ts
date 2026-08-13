@@ -1,36 +1,37 @@
 import React from 'react';
 import { useServerSettings } from '../store';
 import {
-  InvenioRDMRecordSearchResponse,
+  InvenioRDMPaginationParameters,
   searchInvenioRDMRecords
 } from '../api_calls';
+import { usePaginatedInvenioRDMRecords } from './usePaginatedInvenioRDMRecords';
 
 export function useInvenioRDMRecordSearch() {
   const serverSettings = useServerSettings();
-  const [results, setResults] = React.useState<
-    InvenioRDMRecordSearchResponse | { error: string } | null
-  >(null);
-  const [isSearching, setIsSearching] = React.useState(false);
-  const error = results && 'error' in results ? results.error : null;
-  const hits =
-    results && !('error' in results) ? (results.hits?.hits ?? []) : [];
+  const submittedQuery = React.useRef<string>();
+  const fetchRecords = React.useCallback(
+    async (pagination: InvenioRDMPaginationParameters) => {
+      if (submittedQuery.current === undefined) {
+        throw new Error('Search records before loading another page');
+      }
 
-  const search = async (query: string): Promise<void> => {
-    setIsSearching(true);
-
-    try {
-      setResults(
-        await searchInvenioRDMRecords(serverSettings, query, {
-          page: 1,
-          size: 10
-        })
+      return await searchInvenioRDMRecords(
+        serverSettings,
+        submittedQuery.current,
+        pagination
       );
-    } catch (reason) {
-      setResults({ error: String(reason) });
-    } finally {
-      setIsSearching(false);
-    }
-  };
+    },
+    [serverSettings]
+  );
+  const paginatedRecords = usePaginatedInvenioRDMRecords(fetchRecords);
 
-  return { isSearching, error, hits, search };
+  const search = React.useCallback(
+    async (query: string): Promise<void> => {
+      submittedQuery.current = query;
+      await paginatedRecords.loadPage(1);
+    },
+    [paginatedRecords.loadPage]
+  );
+
+  return { ...paginatedRecords, search };
 }
