@@ -30,6 +30,7 @@ class JobsHandler(APIHandler):
 
     @tornado.web.authenticated
     def get(self):
+        """Return identifiers for jobs matching the requested filters."""
         job_type = self.get_query_argument("job_type", None)
         status = self.get_query_argument("status", None)
         latest = self.get_query_argument("latest", "false").lower() in {
@@ -87,11 +88,14 @@ class JobsHandler(APIHandler):
 
 
 class JobProgressHandler(APIHandler):
+    """Expose progress information for an individual background job."""
+
     def initialize(self, get_job_manager: GetJobManager):
         self.get_job_manager = get_job_manager
 
     @tornado.web.authenticated
     def get(self, job_id: str):
+        """Return progress for a job, or 404 when it does not exist."""
         progress = self.get_job_manager(self).get_progress(job_id)
         if progress is None:
             self.set_status(404)
@@ -102,11 +106,14 @@ class JobProgressHandler(APIHandler):
 
 
 class JobCancelHandler(APIHandler):
+    """Cancel an individual background job."""
+
     def initialize(self, get_job_manager: GetJobManager):
         self.get_job_manager = get_job_manager
 
     @tornado.web.authenticated
     def post(self, job_id: str):
+        """Request cancellation and return the job's updated progress."""
         progress = self.get_job_manager(self).cancel(job_id)
         if progress is None:
             self.set_status(404)

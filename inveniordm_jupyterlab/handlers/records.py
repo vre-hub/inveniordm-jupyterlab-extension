@@ -54,11 +54,14 @@ def _resolve_contents_file_paths(
 
 
 class InvenioRDMRecordCollectionHandler(APIHandler):
+    """Search the collection of public records available from InvenioRDM."""
+
     def initialize(self, get_inveniordm_requests: GetInvenioRDMRequests):
         self.get_inveniordm_requests = get_inveniordm_requests
 
     @tornado.web.authenticated
     def get(self):
+        """Return a page of public records matching the supplied search parameters."""
         include_files = self.get_query_argument("include_files", "false").lower() in (
             "1",
             "true",
@@ -88,11 +91,14 @@ class InvenioRDMRecordCollectionHandler(APIHandler):
 
 
 class InvenioRDMRecordVariantItemHandler(APIHandler):
+    """Retrieve a draft or published variant of an InvenioRDM record."""
+
     def initialize(self, get_inveniordm_requests: GetInvenioRDMRequests):
         self.get_inveniordm_requests = get_inveniordm_requests
 
     @tornado.web.authenticated
     def get(self, record_id: str):
+        """Return the requested draft or published record variant."""
         record_identifier = inveniordm_record_identifier(
             record_id,
             self.get_query_argument("record_status", None),
@@ -117,11 +123,14 @@ class InvenioRDMRecordVariantItemHandler(APIHandler):
 
 
 class InvenioRDMUserRecordCollectionHandler(APIHandler):
+    """List InvenioRDM records owned by the current user."""
+
     def initialize(self, get_inveniordm_requests: GetInvenioRDMRequests):
         self.get_inveniordm_requests = get_inveniordm_requests
 
     @tornado.web.authenticated
     def get(self):
+        """Return a page of records belonging to the current user."""
         include_files = self.get_query_argument("include_files", "false").lower() in (
             "1",
             "true",
@@ -146,6 +155,8 @@ class InvenioRDMUserRecordCollectionHandler(APIHandler):
 
 
 class InvenioRDMUserRecordItemHandler(APIHandler):
+    """Manage an individual InvenioRDM record owned by the current user."""
+
     def initialize(
         self,
         get_inveniordm_requests: GetInvenioRDMRequests,
@@ -156,6 +167,7 @@ class InvenioRDMUserRecordItemHandler(APIHandler):
 
     @tornado.web.authenticated
     def delete(self, record_id: str):
+        """Discard a record draft and publish the changed version list."""
         try:
             inveniordm_requests = self.get_inveniordm_requests(self)
             # TODO check if we even need this api call and remove if we dont
@@ -203,11 +215,14 @@ class InvenioRDMUserRecordItemHandler(APIHandler):
 
 
 class InvenioRDMRecordPermissionHandler(APIHandler):
+    """Expose the current user's permission for an InvenioRDM record."""
+
     def initialize(self, get_inveniordm_requests: GetInvenioRDMRequests):
         self.get_inveniordm_requests = get_inveniordm_requests
 
     @tornado.web.authenticated
     async def get(self, record_id: str):
+        """Return the user's permission for a draft or published record."""
         record_status = self.get_query_argument("record_status", None)
         if record_status not in {"draft", "published"}:
             self.set_status(400)
@@ -246,6 +261,8 @@ class InvenioRDMRecordPermissionHandler(APIHandler):
 
 
 class InvenioRDMRecordVersionCollectionHandler(APIHandler):
+    """List and create versions of an InvenioRDM record."""
+
     def initialize(
         self,
         get_inveniordm_requests: GetInvenioRDMRequests,
@@ -256,6 +273,7 @@ class InvenioRDMRecordVersionCollectionHandler(APIHandler):
 
     @tornado.web.authenticated
     async def get(self, record_id: str):
+        """Return versions of a record, optionally including drafts."""
         include_drafts = self.get_query_argument("include_drafts", "true").lower() in (
             "1",
             "true",
@@ -275,6 +293,7 @@ class InvenioRDMRecordVersionCollectionHandler(APIHandler):
 
     @tornado.web.authenticated
     def post(self, record_id: str):
+        """Create a new draft version and publish the changed version list."""
         try:
             inveniordm_requests = self.get_inveniordm_requests(self)
             versions = inveniordm_requests.list_inveniordm_record_versions(
@@ -316,6 +335,8 @@ class InvenioRDMRecordVersionCollectionHandler(APIHandler):
 
 
 class InvenioRDMRecordDraftWithFilesHandler(APIHandler):
+    """Create an InvenioRDM draft by uploading local Jupyter files."""
+
     def initialize(
         self,
         get_inveniordm_requests: GetInvenioRDMRequests,
@@ -328,6 +349,7 @@ class InvenioRDMRecordDraftWithFilesHandler(APIHandler):
 
     @tornado.web.authenticated
     def post(self):
+        """Start a background job that creates a draft and uploads files."""
         data = self.get_json_body() or {}
         file_paths = data.get("file_paths")
 
@@ -399,6 +421,8 @@ class InvenioRDMRecordDraftWithFilesHandler(APIHandler):
 
 
 class InvenioRDMRecordFileCollectionHandler(APIHandler):
+    """Upload files to and delete files from an InvenioRDM record."""
+
     def initialize(
         self,
         get_inveniordm_requests: GetInvenioRDMRequests,
@@ -413,6 +437,7 @@ class InvenioRDMRecordFileCollectionHandler(APIHandler):
 
     @tornado.web.authenticated
     def post(self, record_id: str):
+        """Start a background job that uploads files to a record."""
         data = self.get_json_body() or {}
         file_paths = data.get("file_paths")
 
@@ -503,6 +528,7 @@ class InvenioRDMRecordFileCollectionHandler(APIHandler):
 
     @tornado.web.authenticated
     def delete(self, record_id: str):
+        """Delete a file from a record and publish a record-change event."""
         data = self.get_json_body() or {}
         file_id = inveniordm_file_identifier(
             data.get("record_id"),

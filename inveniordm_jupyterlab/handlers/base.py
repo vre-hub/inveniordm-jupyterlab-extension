@@ -13,7 +13,14 @@ from ..inveniordm_requests.inveniordm_requests import InvenioRDMRequests
 
 
 class APIHandler(JupyterAPIHandler):
+    """
+    Base APIHandler class for InvenioRDM JupyterLab extension.
+    """
+
     def write_error(self, status_code: int, **kwargs) -> None:
+        """
+        Override the default write_error method to handle UnknownRemoteServerError exceptions.
+        """
         exc_info = kwargs.get("exc_info")
         if exc_info and isinstance(exc_info[1], UnknownRemoteServerError):
             self.set_status(400)

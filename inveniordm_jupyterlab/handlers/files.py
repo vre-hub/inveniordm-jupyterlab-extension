@@ -29,6 +29,8 @@ def _download_status_changed_topic(file_id: InvenioRDMFileIdentifier) -> str:
 
 
 class InvenioRDMFileDownloadHandler(APIHandler):
+    """Start and delete downloads of files from InvenioRDM records."""
+
     def initialize(
         self,
         get_inveniordm_requests: GetInvenioRDMRequests,
@@ -41,6 +43,7 @@ class InvenioRDMFileDownloadHandler(APIHandler):
 
     @tornado.web.authenticated
     def post(self):
+        """Start a file download and return its background job identifier."""
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
         record_status = data.get("record_status")
@@ -78,6 +81,7 @@ class InvenioRDMFileDownloadHandler(APIHandler):
 
     @tornado.web.authenticated
     def delete(self):
+        """Delete a downloaded file and publish its updated status."""
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
         record_status = data.get("record_status")
@@ -111,6 +115,8 @@ class InvenioRDMFileDownloadHandler(APIHandler):
 
 
 class InvenioRDMFileDownloadStatusHandler(APIHandler):
+    """Report the local download status of an InvenioRDM file."""
+
     def initialize(
         self,
         get_inveniordm_requests: GetInvenioRDMRequests,
@@ -121,6 +127,7 @@ class InvenioRDMFileDownloadStatusHandler(APIHandler):
 
     @tornado.web.authenticated
     def post(self):
+        """Return download status for the file identified in the request body."""
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
         record_status = data.get("record_status")
@@ -148,6 +155,8 @@ class InvenioRDMFileDownloadStatusHandler(APIHandler):
 
 
 class InvenioRDMFileImportCellHandler(APIHandler):
+    """Create a notebook action that imports a downloaded InvenioRDM file."""
+
     def initialize(
         self,
         get_inveniordm_requests: GetInvenioRDMRequests,
@@ -158,6 +167,7 @@ class InvenioRDMFileImportCellHandler(APIHandler):
 
     @tornado.web.authenticated
     def post(self):
+        """Return an import-cell action for an already downloaded file."""
         data = self.get_json_body() or {}
         record_id = data.get("record_id")
         record_status = data.get("record_status")
@@ -193,22 +203,20 @@ class InvenioRDMFileImportCellHandler(APIHandler):
 
 
 class InvenioRDMDownloadLocationSettingHandler(APIHandler):
+    """Read and modify the current user's download-directory setting."""
+
     def initialize(self, get_user_settings: GetUserSettings):
         self.get_user_settings = get_user_settings
 
     @tornado.web.authenticated
     def get(self):
-        """
-        Get the current downloads directory.
-        """
+        """Return the current downloads directory."""
         downloads_dir = self.get_user_settings(self).get_downloads_directory()
         self.finish(json.dumps({"downloads_dir": str(downloads_dir)}))
 
     @tornado.web.authenticated
     def post(self):
-        """
-        Set the downloads directory.
-        """
+        """Set and return the downloads directory."""
         data = self.get_json_body() or {}
         downloads_dir = data.get("downloads_dir")
         if not downloads_dir:
@@ -235,9 +243,7 @@ class InvenioRDMDownloadLocationSettingHandler(APIHandler):
 
     @tornado.web.authenticated
     def delete(self):
-        """
-        Unset the configured downloads directory.
-        """
+        """Unset the configured downloads directory and return the default."""
         self.get_user_settings(self).unset_downloads_directory()
         self.finish(
             json.dumps(

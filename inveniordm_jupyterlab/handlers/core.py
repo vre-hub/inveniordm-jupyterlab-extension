@@ -14,11 +14,14 @@ from .base import APIHandler, GetInvenioRDMRequests, get_user_id
 
 
 class HelloRouteHandler(APIHandler):
+    """Serve a simple authenticated health-check response."""
+
     # The following decorator should be present on all verb methods (head, get, post,
     # patch, put, delete, options) to ensure only authorized user can request the
     # Jupyter server
     @tornado.web.authenticated
     def get(self):
+        """Return a greeting that confirms the extension route is available."""
         self.finish(
             json.dumps(
                 {
@@ -33,6 +36,8 @@ class HelloRouteHandler(APIHandler):
 
 
 class InvenioRDMAccessTokenHandler(APIHandler):
+    """Report the current user's InvenioRDM access-token status."""
+
     def initialize(
         self,
         inveniordm_requests_factory: InvenioRDMRequestsFactory,
@@ -41,17 +46,21 @@ class InvenioRDMAccessTokenHandler(APIHandler):
 
     @tornado.web.authenticated
     def get(self):
+        """Return the access-token status for the current user."""
         status = self.inveniordm_requests_factory.get_access_token_status(self)
         self.finish(json.dumps(status.__dict__))
 
 
 class InvenioRDMRemoteServersHandler(APIHandler):
+    """List the configured InvenioRDM remote servers."""
+
     def initialize(self, remote_servers: RemoteServerRegistry, request_mode: str):
         self.remote_servers = remote_servers
         self.request_mode = request_mode
 
     @tornado.web.authenticated
     def get(self):
+        """Return configured servers and their login availability."""
         self.finish(
             json.dumps(
                 [
@@ -70,12 +79,15 @@ class InvenioRDMRemoteServersHandler(APIHandler):
 
 
 class InvenioRDMRemoteServersDefaultHandler(APIHandler):
+    """Expose the default configured InvenioRDM remote server."""
+
     def initialize(self, remote_servers: RemoteServerRegistry, request_mode: str):
         self.remote_servers = remote_servers
         self.request_mode = request_mode
 
     @tornado.web.authenticated
     def get(self):
+        """Return the default server and its login availability."""
         self.finish(
             json.dumps(
                 {
@@ -91,6 +103,8 @@ class InvenioRDMRemoteServersDefaultHandler(APIHandler):
 
 
 class InvenioRDMCurrentRemoteServerHandler(APIHandler):
+    """Expose the InvenioRDM remote server selected for the current user."""
+
     def initialize(
         self,
         inveniordm_requests_factory: InvenioRDMRequestsFactory,
@@ -99,6 +113,7 @@ class InvenioRDMCurrentRemoteServerHandler(APIHandler):
 
     @tornado.web.authenticated
     def get(self):
+        """Return the current user's selected remote server."""
         inveniordm_requests = (
             self.inveniordm_requests_factory.create_inveniordm_requests(self)
         )
@@ -119,11 +134,14 @@ class InvenioRDMCurrentRemoteServerHandler(APIHandler):
 
 
 class InvenioRDMAuthHandler(APIHandler):
+    """Dispatch InvenioRDM login, logout, and OAuth callback actions."""
+
     def initialize(self, inveniordm_auth_controller: InvenioRDMAuthController):
         self.inveniordm_auth_controller = inveniordm_auth_controller
 
     @tornado.web.authenticated
     def get(self, action: str):
+        """Run the requested authentication action."""
         if action == "login":
             self.inveniordm_auth_controller.login(self)
             return
@@ -141,11 +159,14 @@ class InvenioRDMAuthHandler(APIHandler):
 
 
 class InvenioRDMMeHandler(APIHandler):
+    """Expose the authenticated user's InvenioRDM profile."""
+
     def initialize(self, get_inveniordm_requests: GetInvenioRDMRequests):
         self.get_inveniordm_requests = get_inveniordm_requests
 
     @tornado.web.authenticated
     def get(self):
+        """Return the current user's InvenioRDM profile."""
         try:
             profile = self.get_inveniordm_requests(self).get_inveniordm_me()
         except ValueError as error:
@@ -167,6 +188,8 @@ class InvenioRDMMeHandler(APIHandler):
 
 
 class InvenioRDMEventsHandler(APIHandler):
+    """Stream server-sent events belonging to the current user."""
+
     def initialize(
         self,
         event_bus: EventBus,
