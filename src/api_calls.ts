@@ -5,7 +5,7 @@ import { ServerConnection } from '@jupyterlab/services';
 import type { InsertInvenioRDMCellAction } from './jupyterlab_interactions';
 import { requestAPI } from './request';
 import { useEventData, useEventListener } from './sse';
-import { useServerSettings } from './store';
+import { useRemoteServerOverride, useServerSettings } from './store';
 import { RemoteServerId } from './remoteServers';
 
 export type AccessTokenResponse = {
@@ -62,6 +62,7 @@ export async function getCurrentRemoteServer(
 
 export function useAccessTokenStatus(): AccessTokenStatus | undefined {
   const serverSettings = useServerSettings();
+  const remoteServerOverride = useRemoteServerOverride();
   const [status, setStatus] = React.useState<AccessTokenStatus>();
 
   const updateStatus = React.useCallback(async (): Promise<void> => {
@@ -72,7 +73,7 @@ export function useAccessTokenStatus(): AccessTokenStatus | undefined {
     } catch (reason) {
       setStatus({ error: String(reason) });
     }
-  }, [serverSettings]);
+  }, [serverSettings, remoteServerOverride]);
 
   React.useEffect(() => {
     void updateStatus();

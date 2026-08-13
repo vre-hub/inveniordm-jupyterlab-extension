@@ -2,46 +2,47 @@ import React from 'react';
 import { KeyRound, ShieldCheck } from 'lucide-react';
 
 import { LoginButton, LogoutButton } from './AuthButtons';
-import { InvenioRDMRemoteServerDropdown } from './InvenioRDMRemoteServerDropdown';
 import { InvenioRDMUserProfile } from './InvenioRDMUserProfile';
 import { useAccessTokenStatus } from '../api_calls';
-import { RemoteServerId } from '../remoteServers';
 import { LoadingPanel } from './LoadingPanel';
-import {
-  useGetRemoteServersDefault,
-  useRemoteServers,
-  useShouldShowRemoteServerDropdownForLogin
-} from '../core';
+import { useGetRemoteServersDefault, useRemoteServers } from '../core';
+import { useRemoteServerOverride } from '../store';
 import { ErrorPanel } from './ErrorPanel';
+import { InvenioRDMRemoteServerOverrideSetting } from './InvenioRDMRemoteServerOverrideSetting';
 
 export const InvenioRDMLoginForm: React.FC = () => {
   const accessStatus = useAccessTokenStatus();
-  const [loginRemoteServer, setLoginRemoteServer] = React.useState<
-    RemoteServerId | undefined
-  >();
-  const remoteServers = useRemoteServers();
-
-  // Get the default remote server and set it as the initial value for loginRemoteServer
   const defaultOption = useGetRemoteServersDefault();
-  React.useEffect(() => {
-    if (defaultOption) {
-      setLoginRemoteServer(defaultOption.id as RemoteServerId);
-    }
-  }, [defaultOption]);
-
-  const showDropdown = useShouldShowRemoteServerDropdownForLogin();
-  const selectedRemoteServer = remoteServers.find(
-    server => server.id === loginRemoteServer
+  const remoteServers = useRemoteServers();
+  const remoteServerOverride = useRemoteServerOverride();
+  const selectedRemoteServer = remoteServerOverride ?? defaultOption?.id;
+  const selectedRemoteServerOption = remoteServers.find(
+    server => server.id === selectedRemoteServer
   );
   const loginAvailable =
-    selectedRemoteServer?.login_available ?? defaultOption?.login_available;
+    selectedRemoteServerOption?.login_available ??
+    defaultOption?.login_available;
 
   if (!accessStatus) {
-    return <LoadingPanel text={`Checking login status…`} />;
+    return (
+      <div>
+        <div className="border-b border-border px-3 pb-4">
+          <InvenioRDMRemoteServerOverrideSetting />
+        </div>
+        <LoadingPanel text={`Checking login status…`} />
+      </div>
+    );
   }
 
   if ('error' in accessStatus) {
-    return <ErrorPanel error={accessStatus.error} />;
+    return (
+      <div>
+        <div className="border-b border-border px-3 pb-4">
+          <InvenioRDMRemoteServerOverrideSetting />
+        </div>
+        <ErrorPanel error={accessStatus.error} />
+      </div>
+    );
   }
 
   const loggedIn =
@@ -51,6 +52,9 @@ export const InvenioRDMLoginForm: React.FC = () => {
 
   return (
     <div>
+      <div className="px-3 pb-4">
+        <InvenioRDMRemoteServerOverrideSetting />
+      </div>
       {!loggedIn && (
         <div className="px-3 py-5">
           <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-primary-subtle text-primary">
@@ -62,33 +66,13 @@ export const InvenioRDMLoginForm: React.FC = () => {
           <p className="mb-5 mt-1.5 text-sm leading-5 text-muted-strong">
             Log in to access your account, manage records, and upload files.
           </p>
-          {showDropdown && (
-            <div className="mb-4">
-              <label className="block">
-                <span className="block text-sm font-medium text-foreground-secondary">
-                  Select environment
-                </span>
-                <span className="mt-1 block text-xs leading-5 text-muted">
-                  Choose the environment to log into for this session.
-                </span>
-                <div className="mt-2">
-                  <InvenioRDMRemoteServerDropdown
-                    ariaLabel={`Login environment`}
-                    onChange={setLoginRemoteServer}
-                    value={loginRemoteServer}
-                    useDefaultOption={false}
-                  />
-                </div>
-              </label>
-            </div>
-          )}
           {loginAvailable === false && (
             <p className="mb-0 rounded-md bg-surface-muted px-3 py-2 text-sm text-muted-strong">
-              Login for {selectedRemoteServer?.label} is not configured.
+              Login for {selectedRemoteServerOption?.label} is not configured.
             </p>
           )}
           {loginAvailable !== false && (
-            <LoginButton remoteServerId={loginRemoteServer} />
+            <LoginButton remoteServerId={selectedRemoteServer} />
           )}
         </div>
       )}
@@ -109,7 +93,7 @@ export const InvenioRDMLoginForm: React.FC = () => {
               </a>
             </span>
           </div>
-          <LogoutButton remoteServerId={loginRemoteServer} />
+          <LogoutButton remoteServerId={selectedRemoteServer} />
         </div>
       )}
     </div>

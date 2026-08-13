@@ -4,10 +4,11 @@ import {
   getInvenioRDMMe,
   useAccessTokenEventListener
 } from '../api_calls';
-import { useServerSettings } from '../store';
+import { useRemoteServerOverride, useServerSettings } from '../store';
 
 export function useInvenioRDMUserProfile() {
   const serverSettings = useServerSettings();
+  const remoteServerOverride = useRemoteServerOverride();
   const [profile, setProfile] = React.useState<InvenioRDMMeResponse | null>(
     null
   );
@@ -25,7 +26,7 @@ export function useInvenioRDMUserProfile() {
   // Load the profile initially.
   React.useEffect(() => {
     void loadProfile();
-  }, [serverSettings]);
+  }, [serverSettings, remoteServerOverride]);
 
   // Update the profile when the access token changes, which may change the user.
   useAccessTokenEventListener(() => {
