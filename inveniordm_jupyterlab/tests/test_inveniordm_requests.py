@@ -5,7 +5,7 @@ from inveniordm_auth.remote_servers import (
     RemoteServerRegistry,
     UnknownRemoteServerError,
 )
-from inveniordm_auth.token_store import BoundedTokenStore, FileTokenStore
+from inveniordm_auth.token_store import FileTokenStore
 from inveniordm_jupyterlab.util.job_types import JobCancelled
 from inveniordm_jupyterlab.inveniordm_file_identifier import InvenioRDMFileIdentifier
 from inveniordm_jupyterlab.inveniordm_record_identifier import (
@@ -46,7 +46,7 @@ def test_local_factory_supports_anonymous_requests_without_oauth_client(tmp_path
         }
     )
     factory = LocalInvenioRDMRequestsFactory(remote_servers)
-    factory.token_store = BoundedTokenStore(FileTokenStore(tmp_path / "tokens.json"))
+    factory.token_store = FileTokenStore(tmp_path / "tokens.json")
 
     class Handler:
         def get_query_argument(self, name, default=None):
@@ -60,8 +60,9 @@ def test_local_factory_supports_anonymous_requests_without_oauth_client(tmp_path
 
 def test_local_factory_passes_stored_inveniordm_user_id(tmp_path, remote_servers):
     factory = LocalInvenioRDMRequestsFactory(remote_servers)
-    factory.token_store = BoundedTokenStore(FileTokenStore(tmp_path / "tokens.json"))
+    factory.token_store = FileTokenStore(tmp_path / "tokens.json")
     factory.token_store.set_token(
+        remote_servers.default.id,
         "token",
         True,
         remote_server_id=remote_servers.default.id,
@@ -75,6 +76,40 @@ def test_local_factory_passes_stored_inveniordm_user_id(tmp_path, remote_servers
     requests = factory.create_inveniordm_requests(Handler())
 
     assert requests.inveniordm_user_id == "123"
+
+
+def test_local_factory_uses_token_for_selected_server(tmp_path, remote_servers):
+    factory = LocalInvenioRDMRequestsFactory(remote_servers)
+    factory.token_store = FileTokenStore(tmp_path / "tokens.json")
+    factory.token_store.set_token(
+        "zenodo",
+        "zenodo-token",
+        True,
+        remote_server_id="zenodo",
+        inveniordm_user_id="1",
+    )
+    factory.token_store.set_token(
+        "cds",
+        "cds-token",
+        True,
+        remote_server_id="cds",
+        inveniordm_user_id="2",
+    )
+
+    class Handler:
+        def __init__(self, remote_server):
+            self.remote_server = remote_server
+
+        def get_query_argument(self, name, default=None):
+            return self.remote_server if name == "remote_server" else default
+
+    zenodo_requests = factory.create_inveniordm_requests(Handler("zenodo"))
+    cds_requests = factory.create_inveniordm_requests(Handler("cds"))
+
+    assert zenodo_requests.headers == {"Authorization": "Bearer zenodo-token"}
+    assert zenodo_requests.inveniordm_user_id == "1"
+    assert cds_requests.headers == {"Authorization": "Bearer cds-token"}
+    assert cds_requests.inveniordm_user_id == "2"
 
 
 def test_local_factory_rejects_unknown_remote_server_override(remote_servers):
@@ -94,8 +129,9 @@ def test_local_factory_uses_default_instead_of_stored_token_server(
     tmp_path, remote_servers
 ):
     factory = LocalInvenioRDMRequestsFactory(remote_servers)
-    factory.token_store = BoundedTokenStore(FileTokenStore(tmp_path / "tokens.json"))
+    factory.token_store = FileTokenStore(tmp_path / "tokens.json")
     factory.token_store.set_token(
+        "removed-server",
         "token",
         True,
         remote_server_id="removed-server",

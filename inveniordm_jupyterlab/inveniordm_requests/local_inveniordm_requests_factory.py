@@ -1,6 +1,6 @@
 from jupyter_server.base.handlers import APIHandler
 
-from inveniordm_auth.token_store import BoundedTokenStore, FileTokenStore, StoredToken
+from inveniordm_auth.token_store import FileTokenStore, StoredToken
 from inveniordm_auth.remote_servers import RemoteServerId, RemoteServerRegistry
 
 from ..inveniordm_auth.auth_controller import InvenioRDMAuthController
@@ -15,7 +15,7 @@ from .inveniordm_requests_factory import (
 class LocalInvenioRDMRequestsFactory(InvenioRDMRequestsFactory):
     def __init__(self, remote_servers: RemoteServerRegistry):
         super().__init__(remote_servers)
-        self.token_store = BoundedTokenStore(FileTokenStore())
+        self.token_store = FileTokenStore()
         self._auth_controller = LocalInvenioRDMAuthController(
             self.token_store,
             remote_servers,
@@ -30,7 +30,7 @@ class LocalInvenioRDMRequestsFactory(InvenioRDMRequestsFactory):
             get_remote_server_override(handler) or self.remote_servers.default.id
         )
         server = self.remote_servers.get(remote_server_id)
-        token = self.token_store.get_token()
+        token = self.token_store.get_token(remote_server_id)
         headers = self._headers_for_token(token, remote_server_id)
 
         return InvenioRDMRequests(

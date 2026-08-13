@@ -41,7 +41,7 @@ class MultiTokenStore(ABC):
         pass
 
 
-class BoundedTokenStore:
+class BoundedTokenStore:  # TODO remove, unused
     def __init__(self, multi_store: MultiTokenStore, token_id: str = "user"):
         self.multi_store = multi_store
         self.token_id = token_id

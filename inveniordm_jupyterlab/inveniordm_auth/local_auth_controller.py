@@ -9,7 +9,7 @@ from tornado.web import RequestHandler
 
 from inveniordm_auth import OAuthCallback, OAuthClientConfig, OAuthConfigurationError
 from inveniordm_auth.remote_servers import RemoteServerId, RemoteServerRegistry
-from inveniordm_auth.token_store import BoundedTokenStore
+from inveniordm_auth.token_store import MultiTokenStore
 from inveniordm_auth.tornado_oauth import (
     begin_inveniordm_oauth_login,
     finish_inveniordm_oauth_callback,
@@ -24,7 +24,7 @@ OAUTH_SCOPE = "user:email"
 class LocalInvenioRDMAuthController:
     def __init__(
         self,
-        token_store: BoundedTokenStore,
+        token_store: MultiTokenStore,
         remote_servers: RemoteServerRegistry,
     ):
         self.token_store = token_store
@@ -57,7 +57,8 @@ class LocalInvenioRDMAuthController:
         )
 
     def logout(self, handler: APIHandler) -> None:
-        self.token_store.remove_token()
+        remote_server_id = self._oauth_remote_server_id(handler)
+        self.token_store.remove_token(remote_server_id)
         return_to = handler.get_query_argument("return_to", None)
         if return_to is not None:
             if not self._is_allowed_return_to(handler, return_to):
@@ -93,6 +94,7 @@ class LocalInvenioRDMAuthController:
         remote_server_id: RemoteServerId,
     ) -> None:
         self.token_store.set_token(
+            remote_server_id,
             callback.access_token,
             True,
             remote_server_id=remote_server_id,
