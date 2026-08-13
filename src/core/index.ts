@@ -12,6 +12,7 @@ export * from './useHasEditingRights';
 export * from './useInsertImportCell';
 export * from './useJobProgressUpdates';
 export * from './useOpenAuth';
+export * from './usePaginatedInvenioRDMRecords';
 export * from './useRemoteServers';
 export * from './useSetInvenioRDMDownloadDirectory';
 export * from './useUnsetInvenioRDMDownloadDirectory';

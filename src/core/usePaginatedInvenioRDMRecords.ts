@@ -12,7 +12,19 @@ type FetchRecords = (
   pagination: InvenioRDMPaginationParameters
 ) => Promise<InvenioRDMRecordSearchResponse>;
 
-export function usePaginatedInvenioRDMRecords(fetchRecords: FetchRecords) {
+export type PaginatedInvenioRDMRecords = {
+  records: InvenioRDMRecordData[];
+  total: number;
+  page: number;
+  pageSize: number;
+  isLoading: boolean;
+  error: string | null;
+  loadPage: (page: number) => Promise<void>;
+};
+
+export function usePaginatedInvenioRDMRecords(
+  fetchRecords: FetchRecords
+): PaginatedInvenioRDMRecords {
   const [records, setRecords] = React.useState<InvenioRDMRecordData[]>([]);
   const [total, setTotal] = React.useState(0);
   const [page, setPage] = React.useState(1);
