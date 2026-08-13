@@ -93,3 +93,4 @@ before-build-python = ["jlpm clean:all"]
 
 [tool.check-wheel-contents]
 ignore = ["W002"]
+toplevel = ["inveniordm_jupyterlab", "inveniordm_auth"]
