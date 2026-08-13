@@ -7,6 +7,8 @@ OAuth login flow against the InvenioRDM sandbox.
 
 from __future__ import annotations
 
+import logging
+import os
 import secrets
 import sys
 from http import HTTPStatus
@@ -151,12 +153,23 @@ def create_server(
 
 
 def main() -> None:
+    # Without this, Tornado's access logs are dropped: they are emitted at
+    # INFO on the root logger, which has no handler configured, so only
+    # warnings and errors ever reach the output and none of them carry a
+    # timestamp. That makes a deployed proxy essentially undebuggable.
+    logging.basicConfig(
+        level=os.environ.get("PROXY_LOG_LEVEL", "INFO").upper(),
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
+    logger = logging.getLogger(__name__)
+
     config = Config.from_environment()
     create_server(config, config.proxy_host, config.proxy_port)
-    print(
-        "InvenioRDM API proxy MVP listening on "
-        f"http://{config.proxy_host}:{config.proxy_port}"
+    logger.info(
+        "InvenioRDM API proxy listening on http://%s:%s",
+        config.proxy_host,
+        config.proxy_port,
     )
-    print(f"InvenioRDM base URL: {config.inveniordm_base_url}")
-    print(f"OAuth redirect URI: {config.redirect_uri}")
+    logger.info("InvenioRDM base URL: %s", config.inveniordm_base_url)
+    logger.info("OAuth redirect URI: %s", config.redirect_uri)
     tornado.ioloop.IOLoop.current().start()
