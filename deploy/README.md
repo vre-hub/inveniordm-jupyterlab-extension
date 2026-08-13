@@ -14,7 +14,7 @@ the access token never reaches the user's server.
 ## Why multi-user deployments need `proxy`
 
 Under JupyterHub, `base_url` is `/user/<username>/`, so in `local` mode every
-user gets a *different* redirect URI:
+user gets a _different_ redirect URI:
 
 ```
 https://jupyter.example.org/user/alice/inveniordm-jupyterlab/auth/callback
@@ -27,7 +27,7 @@ application per user. `INVENIORDM_JUPYTERLAB_PUBLIC_URL` overrides only the
 scheme and host, not the `base_url` segment, so it does not help.
 
 The proxy has one fixed redirect URI, `<PROXY_PUBLIC_URL>/auth/callback`,
-shared by every user. It can also be a *confidential* OAuth client, since
+shared by every user. It can also be a _confidential_ OAuth client, since
 `INVENIORDM_CLIENT_SECRET` lives in the proxy rather than in user pods.
 
 ## Contents
@@ -40,9 +40,9 @@ shared by every user. It can also be a *confidential* OAuth client, since
 ## One release per InvenioRDM instance
 
 The proxy reads a single `INVENIORDM_BASE_URL` and a single client ID from its
-environment; it does not multiplex. Its own README puts it as: *"Each proxy
+environment; it does not multiplex. Its own README puts it as: _"Each proxy
 deployment supplies these values independently; it does not read the JupyterLab
-extension's remote-server configuration."*
+extension's remote-server configuration."_
 
 Serving Zenodo, CDS and Zenodo Sandbox therefore means **three releases**, each
 with its own hostname, OAuth application, and `sessionCookieName`. Sharing a
@@ -62,12 +62,12 @@ last up to a year — so treat it as secret-grade storage.
 **Defaults that must be overridden.** The proxy ships localhost-oriented
 defaults that are wrong in a cluster:
 
-| Setting | Upstream default | Chart handling |
-| --- | --- | --- |
-| `PROXY_HOST` | `127.0.0.1` | forced to `0.0.0.0` |
-| `PROXY_ALLOWED_CORS_ORIGINS` | `localhost:8888` | `proxy.allowedCorsOrigins`, warns if empty |
-| `PROXY_ALLOWED_RETURN_HOSTS` | `localhost`, `127.0.0.1` | `proxy.allowedReturnHosts`, warns if empty |
-| `INVENIORDM_JUPYTERLAB_TOKEN_STORE` | under `jupyter_data_dir()` | set to the mounted volume |
+| Setting                             | Upstream default           | Chart handling                             |
+| ----------------------------------- | -------------------------- | ------------------------------------------ |
+| `PROXY_HOST`                        | `127.0.0.1`                | forced to `0.0.0.0`                        |
+| `PROXY_ALLOWED_CORS_ORIGINS`        | `localhost:8888`           | `proxy.allowedCorsOrigins`, warns if empty |
+| `PROXY_ALLOWED_RETURN_HOSTS`        | `localhost`, `127.0.0.1`   | `proxy.allowedReturnHosts`, warns if empty |
+| `INVENIORDM_JUPYTERLAB_TOKEN_STORE` | under `jupyter_data_dir()` | set to the mounted volume                  |
 
 **Cookies.** The session cookie is `SameSite=Lax`. Host the proxy under the
 same registrable domain as JupyterHub (e.g. both under `example.org`) so the
