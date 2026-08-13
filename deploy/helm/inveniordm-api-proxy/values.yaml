@@ -71,8 +71,23 @@ ingress:
   enabled: true
   className: ""
   host: ""
+  # Serve the proxy under a path prefix instead of at the root of a host. Handy
+  # when it shares a hostname with JupyterLab, which also makes the two
+  # same-origin and sidesteps CORS and SameSite cookie concerns entirely.
+  # With nginx this needs a capture-group path, an ImplementationSpecific
+  # pathType, a rewrite-target annotation, and a matching proxy.publicUrl:
+  #   path: /inveniordm-proxy(/|$)(.*)
+  #   pathType: ImplementationSpecific
+  #   annotations:
+  #     nginx.ingress.kubernetes.io/rewrite-target: /$2
+  #   proxy.publicUrl: https://<host>/inveniordm-proxy
+  path: /
+  pathType: Prefix
   annotations: {}
   tls:
+    # Set to false when another Ingress already terminates TLS for this host,
+    # e.g. when sharing a hostname with JupyterLab. Two Ingresses declaring TLS
+    # for one host means two certificates for the same name.
     enabled: true
     # Defaults to "<fullname>-tls".
     secretName: ""
