@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, Download, FlaskConical } from 'lucide-react';
+import { Download, Server } from 'lucide-react';
 
 import { SelectDownloadDirectory } from './DownloadDirectoryPicker';
 import { InvenioRDMRemoteServerOverrideSetting } from './InvenioRDMRemoteServerOverrideSetting';
@@ -26,26 +26,25 @@ export function Settings(): JSX.Element {
           <SelectDownloadDirectory />
         </div>
       </section>
-      <details className="group overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-        <summary className="flex cursor-pointer list-none items-start gap-2 bg-surface-muted px-2 py-3 transition-colors hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
-          <FlaskConical
+      <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+        <div className="flex items-start gap-2 border-b border-border bg-surface-muted px-2 py-3">
+          <Server
             aria-hidden="true"
-            className="mt-0.5 size-4 shrink-0 text-warning"
+            className="mt-0.5 size-4 shrink-0 text-primary"
           />
-          <div className="min-w-0 flex-1">
+          <div>
             <h2 className="m-0 text-sm font-semibold text-foreground">
-              Developer settings
+              Server environment
             </h2>
+            <p className="mb-0 mt-1 text-xs leading-5 text-muted">
+              Choose which repository server the extension connects to.
+            </p>
           </div>
-          <ChevronDown
-            aria-hidden="true"
-            className="mt-0.5 size-4 shrink-0 text-muted transition-transform group-open:rotate-180"
-          />
-        </summary>
-        <div className="space-y-4 border-t border-border px-2 py-4">
+        </div>
+        <div className="px-2 py-4">
           <InvenioRDMRemoteServerOverrideSetting />
         </div>
-      </details>
+      </section>
     </div>
   );
 }
