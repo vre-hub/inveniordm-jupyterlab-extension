@@ -10,9 +10,10 @@ import { InvenioRDMRecordList } from './InvenioRDMRecordList';
 import { ErrorPanel } from './ErrorPanel';
 
 export const InvenioRDMUserRecordList: React.FC = () => {
-  const { records, isLoading, error } = useInvenioRDMUserRecords();
+  const userRecords = useInvenioRDMUserRecords();
+  const { isLoading, error } = userRecords;
 
-  if (isLoading) {
+  if (isLoading && userRecords.records.length === 0) {
     return <LoadingPanel text="Loading records…" />;
   }
 
@@ -22,7 +23,7 @@ export const InvenioRDMUserRecordList: React.FC = () => {
 
   return (
     <InvenioRDMRecordList
-      records={records}
+      pagination={userRecords}
       includeDrafts={true}
       renderPreview={props => <InvenioRDMUserRecordPreview {...props} />}
       renderDetails={props => <InvenioRDMUserRecordDetails {...props} />}

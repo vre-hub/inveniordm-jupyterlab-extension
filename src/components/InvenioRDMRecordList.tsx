@@ -8,9 +8,11 @@ import {
 } from '../api_calls';
 import { InvenioRDMRecordRendererProps } from './InvenioRDMRecordRenderer';
 import { InvenioRDMVersionedRecord } from './InvenioRDMVersionedRecord';
+import { Pagination } from './Pagination';
+import type { PaginatedInvenioRDMRecords } from '../core/usePaginatedInvenioRDMRecords';
 
 type InvenioRDMRecordListProps = {
-  records: InvenioRDMRecordData[];
+  pagination: PaginatedInvenioRDMRecords;
   includeDrafts: boolean;
   renderPreview: (props: InvenioRDMRecordRendererProps) => JSX.Element;
   renderDetails: (props: InvenioRDMRecordRendererProps) => JSX.Element;
@@ -21,11 +23,12 @@ type InvenioRDMRecordListProps = {
  * file details. Both public search results and a user's records use this flow.
  */
 export const InvenioRDMRecordList: React.FC<InvenioRDMRecordListProps> = ({
-  records,
+  pagination,
   includeDrafts,
   renderPreview,
   renderDetails
 }) => {
+  const { records } = pagination;
   const [selection, setSelection] = React.useState<
     | {
         identifier: InvenioRDMRecordIdentifier;
@@ -87,6 +90,13 @@ export const InvenioRDMRecordList: React.FC<InvenioRDMRecordListProps> = ({
           />
         );
       })}
+      <Pagination
+        disabled={pagination.isLoading}
+        onPageChange={page => void pagination.loadPage(page)}
+        page={pagination.page}
+        pageSize={pagination.pageSize}
+        total={pagination.total}
+      />
     </div>
   );
 };

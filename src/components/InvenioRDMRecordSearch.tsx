@@ -14,12 +14,8 @@ export const InvenioRDMRecordSearch: React.FC = () => {
   const { remoteServer } = useCurrentRemoteServer();
   const remoteName = remoteServer?.display_name ?? 'remote repository';
 
-  const {
-    isLoading: isSearching,
-    error,
-    records,
-    search
-  } = useInvenioRDMRecordSearch();
+  const recordSearch = useInvenioRDMRecordSearch();
+  const { isLoading: isSearching, error, search } = recordSearch;
 
   const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -60,7 +56,7 @@ export const InvenioRDMRecordSearch: React.FC = () => {
       </form>
       {error && <ErrorPanel error={error} title="Could not search records" />}
       <InvenioRDMRecordList
-        records={records}
+        pagination={recordSearch}
         includeDrafts={false}
         renderPreview={props => <InvenioRDMRecordPreview {...props} />}
         renderDetails={props => <InvenioRDMRecordRenderer {...props} />}
