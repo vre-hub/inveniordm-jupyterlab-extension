@@ -61,12 +61,16 @@ spec:
               value: {{ join "," .Values.proxy.allowedCorsOrigins | quote }}
             - name: PROXY_ALLOWED_RETURN_HOSTS
               value: {{ join "," .Values.proxy.allowedReturnHosts | quote }}
-            {{- if .Values.persistence.enabled }}
-            # Default is jupyter_data_dir()/inveniordm_jupyterlab/tokens.json,
-            # which is not a sensible location in this container.
+            # Always set. The default is under jupyter_data_dir(), which is not
+            # writable with readOnlyRootFilesystem. Without persistence this
+            # lands on the ephemeral /tmp volume, so tokens do not survive a
+            # restart and every user has to log in again.
             - name: INVENIORDM_JUPYTERLAB_TOKEN_STORE
+              {{- if .Values.persistence.enabled }}
               value: {{ printf "%s/tokens.json" (.Values.persistence.mountPath | trimSuffix "/") | quote }}
-            {{- end }}
+              {{- else }}
+              value: "/tmp/tokens.json"
+              {{- end }}
             {{- range $key, $value := .Values.extraEnv }}
             - name: {{ $key }}
               value: {{ $value | quote }}
