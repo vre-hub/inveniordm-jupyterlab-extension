@@ -1,19 +1,31 @@
 import json
+from urllib.parse import quote
 
 import requests
 import tornado
 
 from ..cell_actions import make_inveniordm_import_cell_action
-from ..inveniordm_file_identifier import inveniordm_file_identifier
+from ..inveniordm_file_identifier import (
+    InvenioRDMFileIdentifier,
+    inveniordm_file_identifier,
+)
 from ..util.sse import EventBus
 from .base import (
     APIHandler,
     GetInvenioRDMDownloadManager,
     GetInvenioRDMRequests,
     GetUserSettings,
-    _download_status_changed_topic,
     get_user_id,
 )
+
+
+def _download_status_changed_topic(file_id: InvenioRDMFileIdentifier) -> str:
+    return (
+        "file.download-status.changed."
+        f"{quote(str(file_id.record_id), safe='')}."
+        f"{quote(file_id.record_status, safe='')}."
+        f"{quote(file_id.file_key, safe='')}"
+    )
 
 
 class InvenioRDMFileDownloadHandler(APIHandler):

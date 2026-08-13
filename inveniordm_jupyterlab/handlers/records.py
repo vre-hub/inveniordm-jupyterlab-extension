@@ -1,6 +1,8 @@
 import asyncio
 import json
+from pathlib import Path
 from typing import cast
+from urllib.parse import quote
 
 import requests
 import tornado
@@ -19,10 +21,36 @@ from .base import (
     CreateJobMetadata,
     GetInvenioRDMRequests,
     GetJobManager,
-    _record_changed_topic,
-    _resolve_contents_file_paths,
+    contents_root,
     get_user_id,
 )
+
+
+def _record_changed_topic(record_id: int | str) -> str:
+    return f"record.changed.{quote(str(record_id), safe='')}"
+
+
+def _resolve_contents_file_paths(
+    handler: APIHandler,
+    file_paths: list[str],
+) -> list[Path]:
+    """
+    Convert a list of file paths that are relative to the Jupyter root into absolute paths on the filesystem.
+    """
+    root_dir = contents_root(handler)
+    resolved_paths = []
+
+    for file_path in file_paths:
+        path = (root_dir / file_path).resolve()
+        if not path.is_relative_to(root_dir):
+            raise ValueError(f"File is outside the Jupyter root: {file_path}")
+        if not path.exists():
+            raise ValueError(f"File does not exist: {file_path}")
+        if not path.is_file():
+            raise ValueError(f"Path is not a file: {file_path}")
+        resolved_paths.append(path)
+
+    return resolved_paths
 
 
 class InvenioRDMRecordCollectionHandler(APIHandler):

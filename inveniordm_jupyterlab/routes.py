@@ -34,7 +34,7 @@ from .handlers import (
     JobProgressHandler,
     JobsHandler,
 )
-from .handlers.base import _contents_root
+from .handlers.base import contents_root
 from .inveniordm_download_manager import InvenioRDMDownloadManager
 from .inveniordm_requests.inveniordm_requests import InvenioRDMRequests
 from .inveniordm_requests.inveniordm_requests_factory_create import (
@@ -70,7 +70,7 @@ def setup_route_handlers(
         }
 
     def get_user_settings(handler: APIHandler) -> InvenioRDMUserSettings:
-        return InvenioRDMUserSettingsFromFile(_contents_root(handler))
+        return InvenioRDMUserSettingsFromFile(contents_root(handler))
 
     def get_inveniordm_download_manager(
         handler: APIHandler,
