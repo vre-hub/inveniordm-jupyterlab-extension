@@ -128,6 +128,15 @@ def finish_inveniordm_oauth_callback(
         write_json(handler, {"message": str(error)}, HTTPStatus.BAD_GATEWAY)
         return
     except HTTPError as error:
+        # A 4xx here means the grant or the client registration is wrong (an
+        # expired authorization code, a bad client secret, a redirect_uri
+        # mismatch), not that the upstream is unhealthy. Reporting those as
+        # 502 sends whoever is debugging to the wrong layer.
+        status = (
+            HTTPStatus.BAD_REQUEST
+            if 400 <= error.code < 500
+            else HTTPStatus.BAD_GATEWAY
+        )
         write_json(
             handler,
             {
@@ -135,7 +144,7 @@ def finish_inveniordm_oauth_callback(
                 "status": error.code,
                 "body": error.read().decode("utf-8", errors="replace"),
             },
-            HTTPStatus.BAD_GATEWAY,
+            status,
         )
         return
     except URLError as error:
