@@ -174,9 +174,15 @@ export function constructInvenioRDMAuthUrl(
 
 export async function searchInvenioRDMRecords(
   serverSettings: ServerConnection.ISettings,
-  query: string
+  query: string,
+  pagination: InvenioRDMPaginationParameters
 ): Promise<InvenioRDMRecordSearchResponse> {
-  const params = new URLSearchParams({ q: query, include_files: 'true' });
+  const params = new URLSearchParams({
+    q: query,
+    include_files: 'true',
+    page: pagination.page.toString(),
+    size: pagination.size.toString()
+  });
   return await requestAPI<InvenioRDMRecordSearchResponse>(
     `records?${params.toString()}`,
     serverSettings
@@ -197,10 +203,14 @@ export async function getInvenioRDMRecordVariant(
 }
 
 export async function listInvenioRDMUserRecords(
-  serverSettings: ServerConnection.ISettings
+  serverSettings: ServerConnection.ISettings,
+  pagination: InvenioRDMPaginationParameters
 ): Promise<InvenioRDMRecordSearchResponse> {
-  const params = new URLSearchParams();
-  params.append('include_files', 'true');
+  const params = new URLSearchParams({
+    include_files: 'true',
+    page: pagination.page.toString(),
+    size: pagination.size.toString()
+  });
 
   const queryString = params.toString();
   return await requestAPI<InvenioRDMRecordSearchResponse>(
@@ -208,6 +218,11 @@ export async function listInvenioRDMUserRecords(
     serverSettings
   );
 }
+
+export type InvenioRDMPaginationParameters = {
+  page: number;
+  size: number;
+};
 
 export type InvenioRDMRecordSearchResponse = {
   hits?: {

@@ -19,7 +19,12 @@ export function useInvenioRDMRecordSearch() {
     setIsSearching(true);
 
     try {
-      setResults(await searchInvenioRDMRecords(serverSettings, query));
+      setResults(
+        await searchInvenioRDMRecords(serverSettings, query, {
+          page: 1,
+          size: 10
+        })
+      );
     } catch (reason) {
       setResults({ error: String(reason) });
     } finally {

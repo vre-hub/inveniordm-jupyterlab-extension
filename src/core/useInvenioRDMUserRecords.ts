@@ -13,7 +13,10 @@ export function useInvenioRDMUserRecords() {
     setIsLoading(true);
 
     try {
-      const response = await listInvenioRDMUserRecords(serverSettings);
+      const response = await listInvenioRDMUserRecords(serverSettings, {
+        page: 1,
+        size: 10
+      });
       setRecords(response.hits?.hits ?? []);
     } catch (reason) {
       setRecords({ error: String(reason) });
