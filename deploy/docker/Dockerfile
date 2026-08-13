@@ -24,7 +24,9 @@ RUN find /app -type d -name tests -prune -exec rm -rf {} + \
     && find /app -type d -name __pycache__ -prune -exec rm -rf {} +
 
 # Matches the securityContext in deploy/helm/inveniordm-api-proxy.
-RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin proxy
+# NB: the Debian base already ships a system user named "proxy" (uid 13), so
+# this account needs a different name.
+RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin inveniordm
 USER 1000
 
 ENV PYTHONUNBUFFERED=1 \
