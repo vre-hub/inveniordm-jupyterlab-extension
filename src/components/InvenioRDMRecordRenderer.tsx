@@ -19,6 +19,15 @@ export type InvenioRDMRecordRendererProps = {
   hasEditingRights?: boolean;
 };
 
+const HumanReadableDate: React.FC<{ value: string }> = ({ value }) => (
+  <time dateTime={value}>
+    {new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(new Date(value))}
+  </time>
+);
+
 export const InvenioRDMRecordRenderer: React.FC<
   InvenioRDMRecordRendererProps
 > = ({
@@ -106,8 +115,12 @@ export const InvenioRDMRecordRendererHeader: React.FC<
         </div>
         <div className="mb-1 text-xs text-muted">
           <div>ID: {record.id}</div>
-          <div>Created: {new Date(record.created).toLocaleString()}</div>
-          <div>Modified: {new Date(record.updated).toLocaleString()}</div>
+          <div>
+            Created: <HumanReadableDate value={record.created} />
+          </div>
+          <div>
+            Modified: <HumanReadableDate value={record.updated} />
+          </div>
           {record.pids?.doi?.identifier ? (
             <div>DOI: {record.pids.doi.identifier}</div>
           ) : null}
