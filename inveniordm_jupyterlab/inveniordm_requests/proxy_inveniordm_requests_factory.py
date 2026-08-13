@@ -41,7 +41,9 @@ class ProxyInvenioRDMRequestsFactory(InvenioRDMRequestsFactory):
         return self._auth_controller
 
     def create_inveniordm_requests(self, handler: APIHandler) -> InvenioRDMRequests:
-        remote_server_override = get_remote_server_override(handler)
+        remote_server_id = (
+            get_remote_server_override(handler) or self.remote_servers.default.id
+        )
         cookies = {
             server.id: _nonempty_cookie(
                 handler.request.cookies.get(server.proxy_session_cookie_name)
@@ -49,19 +51,10 @@ class ProxyInvenioRDMRequestsFactory(InvenioRDMRequestsFactory):
             for server in self.remote_servers.all()
         }
 
-        if remote_server_override is not None:
-            return self._create_requests_for_server(
-                remote_server_override, cookies.get(remote_server_override)
-            )
-
-        for server in self.remote_servers.all():
-            if cookies[server.id] is not None:
-                return self._create_requests_for_server(
-                    server.id,
-                    cookies[server.id],
-                )
-
-        return InvenioRDMRequests(url=self.remote_servers.default.base_url)
+        return self._create_requests_for_server(
+            remote_server_id,
+            cookies.get(remote_server_id),
+        )
 
     def _create_requests_for_server(
         self,

@@ -81,3 +81,33 @@ def test_proxy_factory_rejects_unknown_remote_server_override(remote_servers):
         factory.create_inveniordm_requests(handler)
 
     assert raised.value.remote_server_id == "removed-server"
+
+
+def test_proxy_factory_uses_default_instead_of_authenticated_server():
+    remote_servers = RemoteServerRegistry(
+        {
+            "default": {
+                "label": "Default",
+                "base_url": "https://default.example",
+                "proxy_url": "http://default-proxy.example",
+                "proxy_session_cookie_name": "default_session",
+            },
+            "connected": {
+                "label": "Connected",
+                "base_url": "https://connected.example",
+                "proxy_url": "http://connected-proxy.example",
+                "proxy_session_cookie_name": "connected_session",
+            },
+        },
+        default_server_id="default",
+    )
+    cookies = SimpleCookie()
+    cookies["connected_session"] = "session"
+
+    requests = ProxyInvenioRDMRequestsFactory(
+        remote_servers
+    ).create_inveniordm_requests(_Handler(cookies))
+
+    assert requests.url == "https://default.example"
+    assert requests.headers == {}
+    assert requests.inveniordm_user_id is None

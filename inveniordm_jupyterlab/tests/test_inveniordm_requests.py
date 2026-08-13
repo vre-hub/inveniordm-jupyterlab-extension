@@ -90,7 +90,7 @@ def test_local_factory_rejects_unknown_remote_server_override(remote_servers):
     assert raised.value.remote_server_id == "removed-server"
 
 
-def test_local_factory_rejects_token_for_unknown_remote_server(
+def test_local_factory_uses_default_instead_of_stored_token_server(
     tmp_path, remote_servers
 ):
     factory = LocalInvenioRDMRequestsFactory(remote_servers)
@@ -105,10 +105,11 @@ def test_local_factory_rejects_token_for_unknown_remote_server(
         def get_query_argument(self, name, default=None):
             return default
 
-    with pytest.raises(UnknownRemoteServerError) as raised:
-        factory.create_inveniordm_requests(Handler())
+    requests = factory.create_inveniordm_requests(Handler())
 
-    assert raised.value.remote_server_id == "removed-server"
+    assert requests.url == remote_servers.default.base_url
+    assert requests.headers == {}
+    assert requests.inveniordm_user_id is None
 
 
 def test_upload_record_files_passes_record_id(monkeypatch, tmp_path):

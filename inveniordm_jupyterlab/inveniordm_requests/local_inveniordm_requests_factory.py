@@ -26,27 +26,20 @@ class LocalInvenioRDMRequestsFactory(InvenioRDMRequestsFactory):
         return self._auth_controller
 
     def create_inveniordm_requests(self, handler: APIHandler) -> InvenioRDMRequests:
-        remote_server_override = get_remote_server_override(handler)
+        remote_server_id = (
+            get_remote_server_override(handler) or self.remote_servers.default.id
+        )
+        server = self.remote_servers.get(remote_server_id)
         token = self.token_store.get_token()
+        headers = self._headers_for_token(token, remote_server_id)
 
-        if remote_server_override is not None:
-            headers = self._headers_for_token(token, remote_server_override)
-            return InvenioRDMRequests(
-                url=self.remote_servers.get(remote_server_override).base_url,
-                headers=headers,
-                inveniordm_user_id=(
-                    token.inveniordm_user_id if token is not None and headers else None
-                ),
-            )
-
-        if token is not None:
-            return InvenioRDMRequests(
-                url=self.remote_servers.get(token.remote_server_id).base_url,
-                headers=self._headers_for_token(token, token.remote_server_id),
-                inveniordm_user_id=token.inveniordm_user_id,
-            )
-
-        return InvenioRDMRequests(url=self.remote_servers.default.base_url)
+        return InvenioRDMRequests(
+            url=server.base_url,
+            headers=headers,
+            inveniordm_user_id=(
+                token.inveniordm_user_id if token is not None and headers else None
+            ),
+        )
 
     def _headers_for_token(
         self,
