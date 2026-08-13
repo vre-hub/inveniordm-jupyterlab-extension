@@ -19,14 +19,21 @@ export type InvenioRDMRecordRendererProps = {
   hasEditingRights?: boolean;
 };
 
-const HumanReadableDate: React.FC<{ value: string }> = ({ value }) => (
-  <time dateTime={value}>
-    {new Intl.DateTimeFormat(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    }).format(new Date(value))}
-  </time>
-);
+const HumanReadableDate: React.FC<{ value: string }> = ({ value }) => {
+  const date = new Date(value);
+
+  return (
+    <time
+      dateTime={value}
+      title={new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      }).format(date)}
+    >
+      {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date)}
+    </time>
+  );
+};
 
 export const InvenioRDMRecordRenderer: React.FC<
   InvenioRDMRecordRendererProps
