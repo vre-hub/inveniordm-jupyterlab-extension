@@ -1,0 +1,21 @@
+{{- if .Values.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "inveniordm-api-proxy.fullname" . }}-tokens
+  labels:
+    {{- include "inveniordm-api-proxy.labels" . | nindent 4 }}
+  annotations:
+    # This volume holds live InvenioRDM access tokens (1 year lifetime).
+    # Deleting the release should not silently discard them.
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+  {{- if .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  {{- end }}
+{{- end }}

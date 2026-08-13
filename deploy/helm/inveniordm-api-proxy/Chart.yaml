@@ -1,0 +1,17 @@
+apiVersion: v2
+name: inveniordm-api-proxy
+version: 0.1.0
+description: >-
+  API proxy for the InvenioRDM JupyterLab extension. Holds the OAuth client
+  secret and the users' InvenioRDM access tokens away from the singleuser
+  servers, and forwards API requests on their behalf. One release per
+  InvenioRDM instance (Zenodo, CDS, Zenodo Sandbox, ...).
+keywords:
+  - inveniordm
+  - zenodo
+  - jupyterlab
+  - oauth
+home: https://vre-hub.github.io
+sources:
+  - https://github.com/vre-hub/inveniordm-jupyterlab-extension
+appVersion: "0.1.0"

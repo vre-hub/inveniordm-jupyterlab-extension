@@ -1,0 +1,115 @@
+# Default values for inveniordm-api-proxy.
+#
+# IMPORTANT: one release per InvenioRDM instance. The proxy reads a single
+# INVENIORDM_BASE_URL and a single client ID from its environment -- it does
+# not multiplex. Serving Zenodo, CDS and Zenodo Sandbox means three releases,
+# each with its own hostname, OAuth application and session cookie name.
+#
+# See values-example.yaml for a worked multi-instance setup.
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/vre-hub/inveniordm-api-proxy
+  # Pin an immutable tag or digest. The token store is stateful, so silently
+  # rolling to a new image is not desirable.
+  tag: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# The InvenioRDM instance this proxy talks to.
+inveniordm:
+  # INVENIORDM_BASE_URL, e.g. https://zenodo.org
+  baseUrl: ""
+  # INVENIORDM_PROXY_SESSION_COOKIE_NAME. MUST be unique per release: the OAuth
+  # state cookie is derived from it as "<name>_oauth_state", so two proxies
+  # sharing a name will clobber each other's login flows.
+  sessionCookieName: ""
+  # INVENIORDM_OAUTH_SCOPE. The JupyterLab extension requests "user:email".
+  scope: "user:email"
+
+oauth:
+  # INVENIORDM_CLIENT_ID of the registered OAuth application. Not a secret --
+  # it travels in the authorization URL -- but it is per-instance.
+  clientId: ""
+  # Name of an existing Secret holding the client secret. Preferred: it keeps
+  # the secret out of the values files (e.g. a SealedSecret).
+  existingSecret: ""
+  existingSecretKey: "client-secret"
+  # Dev/testing escape hatch: renders a plain Secret into the release. Leave
+  # empty in any real deployment and use existingSecret instead.
+  clientSecret: ""
+
+proxy:
+  # PROXY_PUBLIC_URL. Defaults to https://<ingress.host>.
+  # The OAuth application's redirect URI must be exactly
+  # "<publicUrl>/auth/callback" -- InvenioRDM matches it as an exact string.
+  publicUrl: ""
+  # PROXY_PORT
+  port: 8001
+  # PROXY_ALLOWED_CORS_ORIGINS -- origins of the JupyterLab servers that call
+  # this proxy, e.g. https://jupyter.example.org. Upstream defaults to
+  # localhost:8888, so this must be set for any real deployment.
+  allowedCorsOrigins: []
+  # PROXY_ALLOWED_RETURN_HOSTS -- hosts the proxy will redirect back to after
+  # login, e.g. jupyter.example.org. Upstream defaults to localhost.
+  allowedReturnHosts: []
+
+# Token store. The proxy uses a file-backed store (FileTokenStore) holding live
+# InvenioRDM access tokens -- treat this volume as secret-grade storage.
+# Disabling persistence logs every user out on restart.
+persistence:
+  enabled: true
+  size: 1Gi
+  # Leave empty to use the cluster default StorageClass.
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  mountPath: /var/lib/inveniordm-api-proxy
+
+ingress:
+  enabled: true
+  className: ""
+  host: ""
+  annotations: {}
+  tls:
+    enabled: true
+    # Defaults to "<fullname>-tls".
+    secretName: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+# The token store is a single JSON file on a RWO volume with no cross-process
+# locking, so this chart is deliberately single-replica. Do not scale it up.
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podAnnotations: {}
+extraEnv: {}
