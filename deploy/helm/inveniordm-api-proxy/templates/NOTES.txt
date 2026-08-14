@@ -1,0 +1,38 @@
+{{ include "inveniordm-api-proxy.fullname" . }} is deploying.
+
+Public URL:   {{ include "inveniordm-api-proxy.publicUrl" . }}
+InvenioRDM:   {{ .Values.inveniordm.baseUrl }}
+Redirect URI: {{ include "inveniordm-api-proxy.publicUrl" . }}/auth/callback
+
+1. The OAuth application registered on {{ .Values.inveniordm.baseUrl }} must have
+   EXACTLY the redirect URI above. InvenioRDM compares it as a literal string.
+
+2. Point the JupyterLab extension at this proxy, in the Jupyter server config
+   of the singleuser servers:
+
+     c.InvenioRDMJupyterLab.request_mode = "proxy"
+     c.InvenioRDMJupyterLab.remote_servers = {
+         "<server-id>": {
+             "label": "...",
+             "base_url": "{{ .Values.inveniordm.baseUrl }}",
+             "oauth_client_id": "{{ .Values.oauth.clientId }}",
+             "proxy_url": "{{ include "inveniordm-api-proxy.publicUrl" . }}",
+             "proxy_session_cookie_name": "{{ .Values.inveniordm.sessionCookieName }}",
+         },
+     }
+
+   Both proxy_url and proxy_session_cookie_name are required in proxy mode --
+   validate_proxy_configuration() rejects empty values.
+
+3. Check it is up:
+
+     kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "inveniordm-api-proxy.fullname" . }} 8001:{{ .Values.service.port }}
+     curl localhost:8001/health
+{{ if not .Values.proxy.allowedCorsOrigins }}
+WARNING: proxy.allowedCorsOrigins is empty, so the proxy falls back to its
+localhost defaults and will reject browser calls from your JupyterLab.
+{{- end }}
+{{- if not .Values.proxy.allowedReturnHosts }}
+WARNING: proxy.allowedReturnHosts is empty, so the proxy falls back to its
+localhost defaults and will refuse to redirect users back after login.
+{{- end }}

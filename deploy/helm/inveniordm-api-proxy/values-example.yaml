@@ -1,0 +1,101 @@
+# Worked example: three proxy releases, one per InvenioRDM instance.
+#
+# Each block below is a SEPARATE `helm install`, not a single values file:
+#
+#   helm install inveniordm-proxy-zenodo  ./deploy/helm/inveniordm-api-proxy \
+#       -n <namespace> -f values-zenodo.yaml
+#   helm install inveniordm-proxy-cds     ./deploy/helm/inveniordm-api-proxy \
+#       -n <namespace> -f values-cds.yaml
+#   helm install inveniordm-proxy-sandbox ./deploy/helm/inveniordm-api-proxy \
+#       -n <namespace> -f values-zenodo-sandbox.yaml
+#
+# Note the distinct host and sessionCookieName in each: sharing either between
+# releases breaks the login flow.
+
+# --- values-zenodo.yaml -----------------------------------------------------
+# image:
+#   tag: "0.1.0"
+# inveniordm:
+#   baseUrl: https://zenodo.org
+#   sessionCookieName: zenodo_proxy_session
+# oauth:
+#   clientId: "<client id of the Zenodo OAuth application>"
+#   existingSecret: inveniordm-proxy-zenodo-oauth
+# ingress:
+#   className: nginx
+#   host: inveniordm-proxy-zenodo.example.org
+#   annotations:
+#     cert-manager.io/cluster-issuer: letsencrypt
+# proxy:
+#   allowedCorsOrigins:
+#     - https://jupyter.example.org
+#   allowedReturnHosts:
+#     - jupyter.example.org
+
+# --- values-cds.yaml --------------------------------------------------------
+# image:
+#   tag: "0.1.0"
+# inveniordm:
+#   baseUrl: https://repository.cern
+#   sessionCookieName: cds_proxy_session
+# oauth:
+#   clientId: "<client id of the CDS OAuth application>"
+#   existingSecret: inveniordm-proxy-cds-oauth
+# ingress:
+#   className: nginx
+#   host: inveniordm-proxy-cds.example.org
+#   annotations:
+#     cert-manager.io/cluster-issuer: letsencrypt
+# proxy:
+#   allowedCorsOrigins:
+#     - https://jupyter.example.org
+#   allowedReturnHosts:
+#     - jupyter.example.org
+
+# --- values-zenodo-sandbox.yaml ---------------------------------------------
+# image:
+#   tag: "0.1.0"
+# inveniordm:
+#   baseUrl: https://sandbox.zenodo.org
+#   sessionCookieName: zenodo_sandbox_proxy_session
+# oauth:
+#   clientId: "<client id of the Zenodo Sandbox OAuth application>"
+#   existingSecret: inveniordm-proxy-sandbox-oauth
+# ingress:
+#   className: nginx
+#   host: inveniordm-proxy-sandbox.example.org
+#   annotations:
+#     cert-manager.io/cluster-issuer: letsencrypt
+# proxy:
+#   allowedCorsOrigins:
+#     - https://jupyter.example.org
+#   allowedReturnHosts:
+#     - jupyter.example.org
+
+# The corresponding JupyterLab server config, once all three are up:
+#
+#   c.InvenioRDMJupyterLab.request_mode = "proxy"
+#   c.InvenioRDMJupyterLab.default_remote_server = "zenodo"
+#   c.InvenioRDMJupyterLab.remote_servers = {
+#       "zenodo": {
+#           "label": "Zenodo",
+#           "base_url": "https://zenodo.org",
+#           "oauth_client_id": "<client id>",
+#           "proxy_url": "https://inveniordm-proxy-zenodo.example.org",
+#           "proxy_session_cookie_name": "zenodo_proxy_session",
+#       },
+#       "cds": {
+#           "label": "CDS",
+#           "base_url": "https://repository.cern",
+#           "oauth_client_id": "<client id>",
+#           "proxy_url": "https://inveniordm-proxy-cds.example.org",
+#           "proxy_session_cookie_name": "cds_proxy_session",
+#       },
+#       "zenodo_sandbox": {
+#           "label": "Zenodo Sandbox",
+#           "base_url": "https://sandbox.zenodo.org",
+#           "oauth_client_id": "<client id>",
+#           "proxy_url": "https://inveniordm-proxy-sandbox.example.org",
+#           "proxy_session_cookie_name": "zenodo_sandbox_proxy_session",
+#       },
+#   }

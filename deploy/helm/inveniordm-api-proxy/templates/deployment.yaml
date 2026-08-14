@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "inveniordm-api-proxy.fullname" . }}
+  labels:
+    {{- include "inveniordm-api-proxy.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    # FileTokenStore writes a single JSON file on a RWO volume: a rolling
+    # update would either deadlock on the volume or have two writers.
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "inveniordm-api-proxy.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "inveniordm-api-proxy.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: proxy
+          image: "{{ .Values.image.repository }}:{{ required "image.tag must be set -- do not track a mutable tag for a stateful service" .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          command: ["python", "-m", "inveniordm_api_proxy"]
+          env:
+            # Upstream defaults to 127.0.0.1, which accepts nothing from
+            # outside the pod.
+            - name: PROXY_HOST
+              value: "0.0.0.0"
+            - name: PROXY_PORT
+              value: {{ .Values.proxy.port | quote }}
+            - name: PROXY_PUBLIC_URL
+              value: {{ include "inveniordm-api-proxy.publicUrl" . | quote }}
+            - name: INVENIORDM_BASE_URL
+              value: {{ required "inveniordm.baseUrl must be set" .Values.inveniordm.baseUrl | quote }}
+            - name: INVENIORDM_PROXY_SESSION_COOKIE_NAME
+              value: {{ required "inveniordm.sessionCookieName must be set and unique per release" .Values.inveniordm.sessionCookieName | quote }}
+            - name: INVENIORDM_OAUTH_SCOPE
+              value: {{ .Values.inveniordm.scope | quote }}
+            - name: INVENIORDM_CLIENT_ID
+              value: {{ required "oauth.clientId must be set" .Values.oauth.clientId | quote }}
+            - name: INVENIORDM_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "inveniordm-api-proxy.secretName" . }}
+                  key: {{ .Values.oauth.existingSecretKey }}
+            - name: PROXY_ALLOWED_CORS_ORIGINS
+              value: {{ join "," .Values.proxy.allowedCorsOrigins | quote }}
+            - name: PROXY_ALLOWED_RETURN_HOSTS
+              value: {{ join "," .Values.proxy.allowedReturnHosts | quote }}
+            # Always set. The default is under jupyter_data_dir(), which is not
+            # writable with readOnlyRootFilesystem. Without persistence this
+            # lands on the ephemeral /tmp volume, so tokens do not survive a
+            # restart and every user has to log in again.
+            - name: INVENIORDM_JUPYTERLAB_TOKEN_STORE
+              {{- if .Values.persistence.enabled }}
+              value: {{ printf "%s/tokens.json" (.Values.persistence.mountPath | trimSuffix "/") | quote }}
+              {{- else }}
+              value: "/tmp/tokens.json"
+              {{- end }}
+            {{- range $key, $value := .Values.extraEnv }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.proxy.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.persistence.enabled }}
+            - name: token-store
+              mountPath: {{ .Values.persistence.mountPath }}
+            {{- end }}
+      volumes:
+        # readOnlyRootFilesystem is on, so give the process a writable /tmp.
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.persistence.enabled }}
+        - name: token-store
+          persistentVolumeClaim:
+            claimName: {{ include "inveniordm-api-proxy.fullname" . }}-tokens
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
