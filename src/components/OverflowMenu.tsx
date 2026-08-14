@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { MoreVertical } from 'lucide-react';
 
+/** Describes an action shown in an overflow menu. */
 export type OverflowMenuItem = {
   label: string;
   hint?: string;
@@ -10,6 +11,7 @@ export type OverflowMenuItem = {
   destructive?: boolean;
 };
 
+/** Displays a compact menu of secondary actions. */
 export const OverflowMenu: React.FC<{
   items: OverflowMenuItem[];
   label?: string;

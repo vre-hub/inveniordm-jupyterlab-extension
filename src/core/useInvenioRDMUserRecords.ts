@@ -6,6 +6,7 @@ import {
 import { useServerSettings } from '../store';
 import { usePaginatedInvenioRDMRecords } from './usePaginatedInvenioRDMRecords';
 
+/** Provides the current user's records as a paginated collection. */
 export function useInvenioRDMUserRecords() {
   const serverSettings = useServerSettings();
   const fetchRecords = React.useCallback(

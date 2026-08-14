@@ -8,6 +8,7 @@ type RemoteServerOption = {
   login_available: boolean;
 };
 
+/** Returns the server configured as the default InvenioRDM repository. */
 export function useGetRemoteServersDefault(): RemoteServerOption | undefined {
   const serverSettings = useServerSettings();
   const [defaultRemoteServer, setDefaultRemoteServer] = React.useState<

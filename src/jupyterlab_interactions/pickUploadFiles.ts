@@ -1,6 +1,7 @@
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { FileDialog } from '@jupyterlab/filebrowser';
 
+/** Opens JupyterLab's file picker and returns selected file paths. */
 export async function pickUploadFiles(
   docManager: IDocumentManager
 ): Promise<string[] | null> {

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
 
+/** Describes a selectable tab and its label. */
 export type TabItem<T extends string> = {
   id: T;
   label?: string;
@@ -14,6 +15,7 @@ type TabsProps<T extends string> = {
   tabs: TabItem<T>[];
 };
 
+/** Displays an accessible tab list for switching between views. */
 export function Tabs<T extends string>({
   currentTab,
   onChange,

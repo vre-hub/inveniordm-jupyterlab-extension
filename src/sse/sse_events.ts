@@ -8,6 +8,7 @@ function eventSourceUrl(serverSettings: ServerConnection.ISettings): string {
   return URLExt.join(serverSettings.baseUrl, 'inveniordm-jupyterlab', 'events');
 }
 
+/** Event delivered by the InvenioRDM server event stream. */
 export type InvenioRDMEvent = {
   topic: string;
   data?: unknown;

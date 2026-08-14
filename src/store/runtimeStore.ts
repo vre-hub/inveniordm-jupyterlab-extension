@@ -3,6 +3,7 @@ import { create } from 'zustand';
 
 import type { InsertInvenioRDMCellAction } from '../jupyterlab_interactions';
 
+/** JupyterLab services supplied to the React application at startup. */
 interface IInvenioRDMRuntimeState {
   insertInvenioRDMCell:
     ((action: InsertInvenioRDMCellAction) => void) | undefined;
@@ -18,28 +19,33 @@ const useInvenioRDMRuntimeStore = create<IInvenioRDMRuntimeState>()(() => ({
   serverSettings: undefined
 }));
 
+/** Registers the notebook-cell integration used by React components. */
 function setInsertInvenioRDMCell(
   insertInvenioRDMCell: (action: InsertInvenioRDMCellAction) => void
 ): void {
   useInvenioRDMRuntimeStore.setState({ insertInvenioRDMCell });
 }
 
+/** Registers the active Jupyter server connection settings. */
 function setServerSettings(serverSettings: ServerConnection.ISettings): void {
   useInvenioRDMRuntimeStore.setState({ serverSettings });
 }
 
+/** Registers the JupyterLab directory picker. */
 function setPickDownloadDirectory(
   pickDownloadDirectory: () => Promise<string | null>
 ): void {
   useInvenioRDMRuntimeStore.setState({ pickDownloadDirectory });
 }
 
+/** Registers the JupyterLab file picker. */
 function setPickUploadFiles(
   pickUploadFiles: () => Promise<string[] | null>
 ): void {
   useInvenioRDMRuntimeStore.setState({ pickUploadFiles });
 }
 
+/** Initializes the runtime services required by the extension UI. */
 function initializeInvenioRDMStore(options: {
   insertInvenioRDMCell: (action: InsertInvenioRDMCellAction) => void;
   pickDownloadDirectory: () => Promise<string | null>;
@@ -52,6 +58,7 @@ function initializeInvenioRDMStore(options: {
   setServerSettings(options.serverSettings);
 }
 
+/** Returns the active Jupyter server connection settings. */
 function useServerSettings(): ServerConnection.ISettings {
   const serverSettings = useInvenioRDMRuntimeStore(
     state => state.serverSettings
@@ -64,6 +71,7 @@ function useServerSettings(): ServerConnection.ISettings {
   return serverSettings as ServerConnection.ISettings;
 }
 
+/** Returns the registered notebook-cell integration. */
 function useInsertInvenioRDMCell(): (
   action: InsertInvenioRDMCellAction
 ) => void {
@@ -78,6 +86,7 @@ function useInsertInvenioRDMCell(): (
   return insertInvenioRDMCell;
 }
 
+/** Returns the registered JupyterLab directory picker. */
 function usePickDownloadDirectory(): () => Promise<string | null> {
   const pickDownloadDirectory = useInvenioRDMRuntimeStore(
     state => state.pickDownloadDirectory
@@ -90,6 +99,7 @@ function usePickDownloadDirectory(): () => Promise<string | null> {
   return pickDownloadDirectory;
 }
 
+/** Returns the registered JupyterLab file picker. */
 function usePickUploadFiles(): () => Promise<string[] | null> {
   const pickUploadFiles = useInvenioRDMRuntimeStore(
     state => state.pickUploadFiles

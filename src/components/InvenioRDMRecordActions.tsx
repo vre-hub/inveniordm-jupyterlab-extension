@@ -16,6 +16,7 @@ import {
 import { OverflowMenu, OverflowMenuItem } from './OverflowMenu';
 import { useRecordAction } from './RecordActionStatus';
 
+/** Displays the actions available for an InvenioRDM record. */
 export const InvenioRDMRecordActions: React.FC<{
   record: InvenioRDMRecordData;
   versions: InvenioRDMRecordVersion[];

@@ -1,6 +1,7 @@
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { FileDialog } from '@jupyterlab/filebrowser';
 
+/** Opens JupyterLab's directory picker for a download destination. */
 export async function pickDownloadDirectory(
   docManager: IDocumentManager
 ): Promise<string | null> {

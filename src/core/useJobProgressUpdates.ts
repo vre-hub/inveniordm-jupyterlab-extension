@@ -9,6 +9,7 @@ import { useServerSettings } from '../store';
 
 const TERMINAL_STATUSES = new Set(['done', 'error', 'canceled']);
 
+/** Identifies a background job and its completion callbacks. */
 export type JobProgressProps = {
   jobId: string;
   onDone?: (progress: JobProgressResponse) => void;
@@ -16,6 +17,7 @@ export type JobProgressProps = {
   onError?: (message: string) => void;
 };
 
+/** Tracks a background job and exposes progress and cancellation state. */
 export function useJobProgressUpdates({
   jobId,
   onDone,

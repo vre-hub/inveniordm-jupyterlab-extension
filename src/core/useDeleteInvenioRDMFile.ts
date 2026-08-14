@@ -5,6 +5,7 @@ import {
   deleteInvenioRDMRecordFile
 } from '../api_calls';
 
+/** Provides state and an action for deleting a file from a record draft. */
 export function useDeleteInvenioRDMFile(fileId: InvenioRDMFileIdentifier) {
   const serverSettings = useServerSettings();
   const [isDeleting, setIsDeleting] = React.useState(false);

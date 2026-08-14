@@ -6,6 +6,7 @@ import {
 } from '../api_calls';
 import { useRemoteServerOverride, useServerSettings } from '../store';
 
+/** Returns the current user's repository profile and loading state. */
 export function useInvenioRDMUserProfile() {
   const serverSettings = useServerSettings();
   const remoteServerOverride = useRemoteServerOverride();

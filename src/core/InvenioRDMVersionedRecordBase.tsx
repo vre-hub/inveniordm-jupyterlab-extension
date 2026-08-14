@@ -3,6 +3,7 @@ import { InvenioRDMRecordIdentifier, InvenioRDMRecordData } from '../api_calls';
 import { useInvenioRDMVersionedRecord } from '.';
 import { InvenioRDMRecordRendererProps } from '../components/InvenioRDMRecordRenderer';
 
+/** Properties for loading and rendering a selectable record version. */
 export type InvenioRDMVersionedRecordBaseProps = {
   initialRecordIdentifier: InvenioRDMRecordIdentifier;
   initialRecordValue?: InvenioRDMRecordData;

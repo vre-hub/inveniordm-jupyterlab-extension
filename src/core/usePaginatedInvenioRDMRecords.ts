@@ -12,6 +12,7 @@ type FetchRecords = (
   pagination: InvenioRDMPaginationParameters
 ) => Promise<InvenioRDMRecordSearchResponse>;
 
+/** State and controls for a paginated collection of records. */
 export type PaginatedInvenioRDMRecords = {
   records: InvenioRDMRecordData[];
   total: number;
@@ -22,6 +23,7 @@ export type PaginatedInvenioRDMRecords = {
   loadPage: (page: number) => Promise<void>;
 };
 
+/** Manages pagination for a supplied record-fetching function. */
 export function usePaginatedInvenioRDMRecords(
   fetchRecords: FetchRecords
 ): PaginatedInvenioRDMRecords {

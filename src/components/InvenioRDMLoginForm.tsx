@@ -14,6 +14,7 @@ import { useRemoteServerOverride } from '../store';
 import { ErrorPanel } from './ErrorPanel';
 import { InvenioRDMRemoteServerOverrideSetting } from './InvenioRDMRemoteServerOverrideSetting';
 
+/** Displays repository selection and authentication controls. */
 export const InvenioRDMLoginForm: React.FC = () => {
   const accessStatus = useAccessTokenStatus();
   const defaultOption = useGetRemoteServersDefault();

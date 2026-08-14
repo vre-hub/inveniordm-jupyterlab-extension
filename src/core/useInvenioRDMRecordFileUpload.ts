@@ -5,6 +5,7 @@ import {
 } from '../api_calls';
 import { useServerSettings } from '../store';
 
+/** Manages uploads of selected files to an existing record draft. */
 export function useInvenioRDMRecordFileUpload(recordId: string) {
   const serverSettings = useServerSettings();
   const [uploadId, setUploadId] = React.useState<string | null>(null);

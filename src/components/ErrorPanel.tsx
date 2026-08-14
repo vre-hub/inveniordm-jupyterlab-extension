@@ -1,6 +1,7 @@
 import { AlertCircle } from 'lucide-react';
 import React from 'react';
 
+/** Displays an error message with an optional heading. */
 export const ErrorPanel: React.FC<{ error: string; title?: string }> = ({
   error,
   title

@@ -9,6 +9,7 @@ type PaginationProps = {
   onPageChange: (page: number) => void;
 };
 
+/** Displays controls for navigating a paginated collection. */
 export const Pagination: React.FC<PaginationProps> = ({
   page,
   pageSize,

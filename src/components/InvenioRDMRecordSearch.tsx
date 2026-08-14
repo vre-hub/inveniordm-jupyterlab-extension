@@ -9,6 +9,7 @@ import { InvenioRDMRecordList } from './InvenioRDMRecordList';
 import { useCurrentRemoteServer, useInvenioRDMRecordSearch } from '../core';
 import { ErrorPanel } from './ErrorPanel';
 
+/** Displays record search and paginated search results. */
 export const InvenioRDMRecordSearch: React.FC = () => {
   const [query, setQuery] = React.useState('');
   const { remoteServer } = useCurrentRemoteServer();

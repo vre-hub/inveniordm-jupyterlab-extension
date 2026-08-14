@@ -11,6 +11,7 @@ import { InvenioRDMRecordActions } from './InvenioRDMRecordActions';
 import { InvenioRDMRecordFileUpload } from './InvenioRDMRecordFileUpload';
 import { RecordActionProvider, RecordActionStatus } from './RecordActionStatus';
 
+/** Properties used to display a record and its available interactions. */
 export type InvenioRDMRecordRendererProps = {
   record: InvenioRDMRecordData;
   versions: InvenioRDMRecordVersion[];
@@ -19,6 +20,7 @@ export type InvenioRDMRecordRendererProps = {
   hasEditingRights?: boolean;
 };
 
+/** Displays a timestamp in the user's local date format. */
 const HumanReadableDate: React.FC<{ value: string }> = ({ value }) => {
   const date = new Date(value);
 
@@ -35,6 +37,7 @@ const HumanReadableDate: React.FC<{ value: string }> = ({ value }) => {
   );
 };
 
+/** Displays the full details, files, and actions for a record. */
 export const InvenioRDMRecordRenderer: React.FC<
   InvenioRDMRecordRendererProps
 > = ({
@@ -75,6 +78,7 @@ export const InvenioRDMRecordRenderer: React.FC<
   );
 };
 
+/** Displays a compact preview of a record. */
 export const InvenioRDMRecordPreview: React.FC<
   InvenioRDMRecordRendererProps
 > = props => (
@@ -83,6 +87,7 @@ export const InvenioRDMRecordPreview: React.FC<
   </div>
 );
 
+/** Displays a record heading with its status and refresh action. */
 export const InvenioRDMRecordRendererHeader: React.FC<
   InvenioRDMRecordRendererProps
 > = ({

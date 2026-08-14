@@ -4,6 +4,7 @@ import { Mail, UserRound } from 'lucide-react';
 import { useInvenioRDMUserProfile } from '../core';
 import { ErrorPanel } from './ErrorPanel';
 
+/** Displays the current InvenioRDM user's profile and session controls. */
 export const InvenioRDMUserProfile: React.FC = () => {
   const { profile, error } = useInvenioRDMUserProfile();
 

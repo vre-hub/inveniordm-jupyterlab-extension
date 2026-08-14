@@ -3,6 +3,7 @@ import React from 'react';
 import { getRemoteServers, RemoteServerOption } from '../api_calls';
 import { useServerSettings } from '../store';
 
+/** Returns the InvenioRDM servers available to the extension. */
 export function useRemoteServers(): RemoteServerOption[] {
   const serverSettings = useServerSettings();
   const [remoteServers, setRemoteServers] = React.useState<

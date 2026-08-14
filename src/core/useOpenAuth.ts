@@ -2,6 +2,7 @@ import { constructInvenioRDMAuthUrl } from '../api_calls';
 import { RemoteServerId } from '../remoteServers';
 import { useServerSettings, useRemoteServerOverride } from '../store';
 
+/** Returns an action that opens a repository authentication flow. */
 export const useOpenAuth = (
   remoteServerId?: RemoteServerId
 ): ((action: 'login' | 'logout') => void) => {

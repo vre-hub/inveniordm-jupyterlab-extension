@@ -1,6 +1,7 @@
 import { LoaderCircle } from 'lucide-react';
 import React from 'react';
 
+/** Displays a loading indicator with a short status message. */
 export function LoadingPanel({ text }: { text: string }): JSX.Element {
   return (
     <div

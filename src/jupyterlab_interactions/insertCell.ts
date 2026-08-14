@@ -1,12 +1,14 @@
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { JSONExt, PartialJSONObject } from '@lumino/coreutils';
 
+/** Content and metadata for a notebook cell managed by the extension. */
 type InsertInvenioRDMCellAction = {
   cell_type: 'code' | 'markdown';
   source: string;
   metadata_inveniordm_jupyterlab?: PartialJSONObject;
 };
 
+/** Inserts or updates a notebook cell for an InvenioRDM action. */
 export function insertInvenioRDMCell(
   action: InsertInvenioRDMCellAction,
   notebooks: INotebookTracker

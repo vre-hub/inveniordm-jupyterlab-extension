@@ -28,6 +28,7 @@ export function findRecordIdentifier(
   return version ? inveniordmRecordIdentifierFromRecord(version) : undefined;
 }
 
+/** Lets the user select a published or draft version of a record. */
 export function VersionDropdown({
   recordIdentifier,
   versions,
@@ -66,6 +67,7 @@ export function VersionDropdown({
   );
 }
 
+/** Displays the label and status for a record version option. */
 function VersionDropdownContent({
   version
 }: {

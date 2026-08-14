@@ -9,6 +9,7 @@ type PickFilesButtonProps = {
   onFilesSelected: (files: string[]) => void;
 };
 
+/** Lets the user choose local JupyterLab files for upload. */
 export function PickFilesButton({
   buttonText,
   disabled = false,

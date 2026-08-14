@@ -1,6 +1,7 @@
 import React from 'react';
 import { InvenioRDMFile, InvenioRDMFileIdentifier } from '../api_calls';
 
+/** Builds the record-aware identifier used for file operations. */
 export function useInvenioRDMFileIdentifierFromProps(
   file: InvenioRDMFile,
   recordId: string,

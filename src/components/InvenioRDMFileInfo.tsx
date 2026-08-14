@@ -10,6 +10,7 @@ import {
   useInvenioRDMFileIdentifierFromProps
 } from '../core';
 
+/** Displays file metadata and the actions available for the file. */
 export const InvenioRDMFileInfo: React.FC<{
   file: InvenioRDMFile;
   recordId: string;

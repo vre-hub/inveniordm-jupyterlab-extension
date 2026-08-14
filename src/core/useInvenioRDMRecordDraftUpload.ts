@@ -5,6 +5,7 @@ import {
 } from '../api_calls';
 import { useServerSettings } from '../store';
 
+/** Manages creation of a new record draft from selected files. */
 export function useInvenioRDMRecordDraftUpload() {
   const serverSettings = useServerSettings();
   const [isCreatingDraft, setIsCreatingDraft] = React.useState(false);

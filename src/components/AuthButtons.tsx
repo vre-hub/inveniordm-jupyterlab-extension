@@ -8,6 +8,7 @@ type AuthButtonProps = {
   remoteServerId?: RemoteServerId;
 };
 
+/** Opens the login flow for an InvenioRDM server. */
 export const LoginButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
   const openAuth = useOpenAuth(remoteServerId);
 
@@ -23,6 +24,7 @@ export const LoginButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
   );
 };
 
+/** Opens the logout flow for an InvenioRDM server. */
 export const LogoutButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
   const openAuth = useOpenAuth(remoteServerId);
 
@@ -35,14 +37,5 @@ export const LogoutButton: React.FC<AuthButtonProps> = ({ remoteServerId }) => {
       <LogOut aria-hidden="true" className="size-4 shrink-0" />
       Log out
     </button>
-  );
-};
-
-export const AuthButtons: React.FC = () => {
-  return (
-    <div className="flex flex-col gap-2">
-      <LoginButton />
-      <LogoutButton />
-    </div>
   );
 };

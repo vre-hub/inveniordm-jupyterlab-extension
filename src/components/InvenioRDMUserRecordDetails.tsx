@@ -25,6 +25,7 @@ export const InvenioRDMUserRecordDetails: React.FC<
   );
 };
 
+/** Displays a compact user-record preview without files but with permission-aware actions. */
 export const InvenioRDMUserRecordPreview: React.FC<
   InvenioRDMUserRecordDetailsProps
 > = props => {

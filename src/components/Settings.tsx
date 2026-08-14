@@ -3,6 +3,7 @@ import { Download } from 'lucide-react';
 
 import { SelectDownloadDirectory } from './DownloadDirectoryPicker';
 
+/** Displays extension settings available from the sidebar. */
 export function Settings(): JSX.Element {
   return (
     <div className="space-y-4">

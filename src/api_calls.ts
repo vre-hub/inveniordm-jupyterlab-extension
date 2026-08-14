@@ -8,6 +8,7 @@ import { useEventData, useEventListener } from './sse';
 import { useRemoteServerOverride, useServerSettings } from './store';
 import { RemoteServerId } from './remoteServers';
 
+/** Authentication state reported for a remote server. */
 export type AccessTokenResponse = {
   access_token_present: boolean;
   access_token_valid: boolean;
@@ -16,23 +17,27 @@ export type AccessTokenResponse = {
   remote_server_base_url: string;
 };
 
+/** Authentication state or the error that prevented it from loading. */
 export type AccessTokenStatus =
   | AccessTokenResponse
   | {
       error: string;
     };
 
+/** Remote server metadata used in repository selectors. */
 export type RemoteServerOption = {
   id: RemoteServerId;
   label: string;
   login_available: boolean;
 };
 
+/** Identifies the remote server currently used by API requests. */
 export type CurrentRemoteServer = {
   id: RemoteServerId;
   display_name: string;
 };
 
+/** Lists the remote InvenioRDM servers available to the extension. */
 export async function getRemoteServers(
   serverSettings: ServerConnection.ISettings
 ): Promise<RemoteServerOption[]> {
@@ -42,6 +47,7 @@ export async function getRemoteServers(
   );
 }
 
+/** Returns the configured default remote server. */
 export async function getRemoteServersDefault(
   serverSettings: ServerConnection.ISettings
 ): Promise<RemoteServerOption> {
@@ -51,6 +57,7 @@ export async function getRemoteServersDefault(
   );
 }
 
+/** Returns the remote server currently used by the backend. */
 export async function getCurrentRemoteServer(
   serverSettings: ServerConnection.ISettings
 ): Promise<CurrentRemoteServer> {
@@ -60,6 +67,7 @@ export async function getCurrentRemoteServer(
   );
 }
 
+/** Tracks authentication status for the selected remote server. */
 export function useAccessTokenStatus(): AccessTokenStatus | undefined {
   const serverSettings = useServerSettings();
   const remoteServerOverride = useRemoteServerOverride();
@@ -103,25 +111,30 @@ export function useAccessTokenStatus(): AccessTokenStatus | undefined {
   return state.status;
 }
 
+/** Runs a callback when repository authentication status changes. */
 export function useAccessTokenEventListener(onEvent: () => void): void {
   return useEventListener('auth.status.changed', onEvent);
 }
 
+/** Basic profile information for the authenticated user. */
 export type InvenioRDMMeResponse = {
   email: string;
   id: number;
 };
 
+/** Returns basic profile information for the authenticated user. */
 export async function getInvenioRDMMe(
   serverSettings: ServerConnection.ISettings
 ): Promise<InvenioRDMMeResponse> {
   return await requestAPI<InvenioRDMMeResponse>('me', serverSettings);
 }
 
+/** The download directory currently reported by the backend. */
 export type SetInvenioRDMDownloadDirectoryResponse = {
   downloads_dir: string;
 };
 
+/** Returns the configured InvenioRDM download directory. */
 export async function getInvenioRDMDownloadDirectory(
   serverSettings: ServerConnection.ISettings
 ): Promise<SetInvenioRDMDownloadDirectoryResponse> {
@@ -131,6 +144,7 @@ export async function getInvenioRDMDownloadDirectory(
   );
 }
 
+/** Changes the directory used for InvenioRDM downloads. */
 export async function setInvenioRDMDownloadDirectory(
   serverSettings: ServerConnection.ISettings,
   downloadsDir: string
@@ -146,6 +160,7 @@ export async function setInvenioRDMDownloadDirectory(
   );
 }
 
+/** Restores the default directory used for InvenioRDM downloads. */
 export async function unsetInvenioRDMDownloadDirectory(
   serverSettings: ServerConnection.ISettings
 ): Promise<SetInvenioRDMDownloadDirectoryResponse> {
@@ -190,6 +205,7 @@ export function constructInvenioRDMAuthUrl(
   );
 }
 
+/** Searches public records on the selected remote server. */
 export async function searchInvenioRDMRecords(
   serverSettings: ServerConnection.ISettings,
   query: string,
@@ -207,6 +223,7 @@ export async function searchInvenioRDMRecords(
   );
 }
 
+/** Returns a draft or published representation of a record. */
 export async function getInvenioRDMRecordVariant(
   serverSettings: ServerConnection.ISettings,
   identifier: InvenioRDMRecordIdentifier
@@ -220,6 +237,7 @@ export async function getInvenioRDMRecordVariant(
   );
 }
 
+/** Lists records owned by the authenticated user. */
 export async function listInvenioRDMUserRecords(
   serverSettings: ServerConnection.ISettings,
   pagination: InvenioRDMPaginationParameters
@@ -237,11 +255,13 @@ export async function listInvenioRDMUserRecords(
   );
 }
 
+/** Page selection supplied to paginated record endpoints. */
 export type InvenioRDMPaginationParameters = {
   page: number;
   size: number;
 };
 
+/** Paginated record results returned by search and user listings. */
 export type InvenioRDMRecordSearchResponse = {
   hits?: {
     hits?: InvenioRDMRecordData[];
@@ -250,6 +270,7 @@ export type InvenioRDMRecordSearchResponse = {
   links?: Record<string, unknown>;
 };
 
+/** Basic record draft information returned after a mutation. */
 export type InvenioRDMRecordDraftResponse = {
   id: string;
   links: {
@@ -259,6 +280,7 @@ export type InvenioRDMRecordDraftResponse = {
   is_published?: boolean;
 };
 
+/** Discards a record draft owned by the authenticated user. */
 export async function deleteInvenioRDMRecordDraft(
   serverSettings: ServerConnection.ISettings,
   recordId: string
@@ -271,6 +293,7 @@ export async function deleteInvenioRDMRecordDraft(
 }
 
 //TODO check if this is just InvenioRDMRecordData or if it is different
+/** Summary of one version in a record's version history. */
 export type InvenioRDMRecordVersion = {
   id: string;
   status: InvenioRDMRecordStatus;
@@ -283,6 +306,7 @@ export type InvenioRDMRecordVersion = {
   };
 };
 
+/** Lists the available versions of a record. */
 export async function listInvenioRDMRecordVersions(
   serverSettings: ServerConnection.ISettings,
   recordId: string,
@@ -297,10 +321,12 @@ export async function listInvenioRDMRecordVersions(
   );
 }
 
+/** Draft created when a new record version is started. */
 export type CreateInvenioRDMRecordVersionResponse = {
   draft: InvenioRDMRecordDraftResponse;
 };
 
+/** Creates a new draft version of a published record. */
 export async function createInvenioRDMRecordVersion(
   serverSettings: ServerConnection.ISettings,
   recordId: string
@@ -312,18 +338,22 @@ export async function createInvenioRDMRecordVersion(
   );
 }
 
+/** Identifier returned when a background job starts. */
 export type StartJobResponse = {
   job_id: string;
 };
 
+/** Lifecycle state of an upload or download job. */
 export type JobStatus =
   'pending' | 'running' | 'canceling' | 'canceled' | 'done' | 'error';
 
+/** Output made available by a completed background job. */
 export type JobResult = {
   draft?: InvenioRDMRecordDraftResponse;
   path?: string;
 };
 
+/** Current progress and result information for a background job. */
 export type JobProgressResponse = {
   job_id: string;
   job_type: 'upload' | 'download';
@@ -336,10 +366,12 @@ export type JobProgressResponse = {
   cancel_requested: boolean;
 };
 
+/** Job identifiers matching a backend query. */
 export type FindJobsResponse = {
   job_ids: string[];
 };
 
+/** Identifies a draft or published record representation. */
 export type InvenioRDMRecordIdentifier = {
   record_id: string;
   record_status: 'draft' | 'published';
@@ -356,6 +388,7 @@ export function inveniordmRecordIdentifierFromRecord(record: {
   };
 }
 
+/** Identifies a file within a draft or published record. */
 export type InvenioRDMFileIdentifier = InvenioRDMRecordIdentifier & {
   file_key: string;
 };
@@ -370,6 +403,7 @@ type ActiveJobIdentifier =
       fileId: InvenioRDMFileIdentifier;
     };
 
+/** Returns the latest active job for an upload or file download. */
 export async function getLatestActiveJobId(
   serverSettings: ServerConnection.ISettings,
   identifier: ActiveJobIdentifier
@@ -396,6 +430,7 @@ export async function getLatestActiveJobId(
   return response.job_ids[0] ?? null;
 }
 
+/** Starts creation of a record draft containing local files. */
 export async function createInvenioRDMRecordDraftWithFiles(
   serverSettings: ServerConnection.ISettings,
   filePaths: string[]
@@ -411,6 +446,7 @@ export async function createInvenioRDMRecordDraftWithFiles(
   );
 }
 
+/** Starts uploading local files to an existing record draft. */
 export async function uploadInvenioRDMRecordFiles(
   serverSettings: ServerConnection.ISettings,
   recordId: string,
@@ -427,10 +463,12 @@ export async function uploadInvenioRDMRecordFiles(
   );
 }
 
+/** Identifies the record file deleted by the backend. */
 export type DeleteInvenioRDMRecordFileResponse = {
   deleted_key: string;
 };
 
+/** Deletes a file from an InvenioRDM record draft. */
 export async function deleteInvenioRDMRecordFile(
   serverSettings: ServerConnection.ISettings,
   fileId: InvenioRDMFileIdentifier
@@ -446,6 +484,7 @@ export async function deleteInvenioRDMRecordFile(
   );
 }
 
+/** Returns live progress updates for a background job. */
 export function useJobProgress(jobId: string) {
   return useEventData<JobProgressResponse | null>(
     `job.progress.${jobId}`,
@@ -453,6 +492,7 @@ export function useJobProgress(jobId: string) {
   );
 }
 
+/** Returns the latest known progress for a background job. */
 export async function getJobProgress(
   serverSettings: ServerConnection.ISettings,
   jobId: string
@@ -460,6 +500,7 @@ export async function getJobProgress(
   return await requestAPI<JobProgressResponse>(`jobs/${jobId}`, serverSettings);
 }
 
+/** Requests cancellation of a background job. */
 export async function cancelJob(
   serverSettings: ServerConnection.ISettings,
   jobId: string
@@ -471,16 +512,19 @@ export async function cancelJob(
   );
 }
 
+/** Local availability and path of a remote file. */
 export type InvenioRDMFileDownloadStatusResponse = {
   downloaded: boolean;
   path: string | null;
 };
 
+/** Result of removing a downloaded file from JupyterLab. */
 export type DeleteInvenioRDMFileDownloadResponse = {
   deleted: boolean;
   path: string | null;
 };
 
+/** Starts downloading an InvenioRDM file into JupyterLab. */
 export async function downloadInvenioRDMFile(
   serverSettings: ServerConnection.ISettings,
   fileId: InvenioRDMFileIdentifier
@@ -492,6 +536,7 @@ export async function downloadInvenioRDMFile(
   });
 }
 
+/** Returns whether an InvenioRDM file has been downloaded. */
 export async function getInvenioRDMFileDownloadStatus(
   serverSettings: ServerConnection.ISettings,
   fileId: InvenioRDMFileIdentifier
@@ -507,6 +552,7 @@ export async function getInvenioRDMFileDownloadStatus(
   );
 }
 
+/** Removes a downloaded InvenioRDM file from JupyterLab. */
 export async function deleteInvenioRDMFileDownload(
   serverSettings: ServerConnection.ISettings,
   fileId: InvenioRDMFileIdentifier
@@ -522,6 +568,7 @@ export async function deleteInvenioRDMFileDownload(
   );
 }
 
+/** Returns the notebook cell action used to import a downloaded file. */
 export async function getInvenioRDMFileImportCell(
   serverSettings: ServerConnection.ISettings,
   fileId: InvenioRDMFileIdentifier
@@ -537,8 +584,10 @@ export async function getInvenioRDMFileImportCell(
   );
 }
 
+/** Permission granted to the current user for a record. */
 export type InvenioRDMRecordPermission = 'manage' | 'edit' | 'preview' | 'view';
 
+/** Returns the current user's permission for a record representation. */
 export async function getInvenioRDMRecordPermission(
   serverSettings: ServerConnection.ISettings,
   recordId: string,
@@ -551,6 +600,7 @@ export async function getInvenioRDMRecordPermission(
   );
 }
 
+/** Tracks the current user's permission for a record representation. */
 export function useInvenioRDMRecordPermission(
   id: string,
   recordStatus: InvenioRDMFileIdentifier['record_status']
@@ -583,6 +633,7 @@ export function useInvenioRDMRecordPermission(
   return userPermission;
 }
 
+/** Data sent when a record's draft or version history changes. */
 export type InvenioRDMRecordVersionsChangedEventData = {
   type: 'version_created' | 'draft_discarded';
   record_id: string;
@@ -592,6 +643,7 @@ export type InvenioRDMRecordVersionsChangedEventData = {
   versions: InvenioRDMRecordVersion[];
 };
 
+/** Returns the available versions of a record. */
 export function useInvenioRDMRecordVersions(
   recordId: string,
   includeDrafts: boolean
@@ -617,6 +669,7 @@ export function useInvenioRDMRecordVersions(
 
 // TODO check if these fields exist/ if they are always present
 
+/** File metadata included with an InvenioRDM record. */
 export type InvenioRDMFile = {
   key: string;
   size?: number;
@@ -629,6 +682,7 @@ type InvenioRDMRecordStatus =
   'new_version_draft' | 'draft' | 'published' | string;
 // TODO check if these fields exist/ if they are always present
 
+/** Record metadata used by the extension's record views. */
 export type InvenioRDMRecordData = {
   id: string;
   is_draft: boolean;

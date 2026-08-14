@@ -5,6 +5,7 @@ import { JobProgress } from './JobProgress';
 import { useInvenioRDMRecordFileUpload } from '../core';
 import { ErrorPanel } from './ErrorPanel';
 
+/** Displays the workflow for adding local files to an existing draft. */
 export const InvenioRDMRecordFileUpload: React.FC<{
   recordId: string;
 }> = ({ recordId }) => {

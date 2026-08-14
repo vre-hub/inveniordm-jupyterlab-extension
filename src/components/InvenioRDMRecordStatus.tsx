@@ -29,6 +29,7 @@ const STATUS_STYLES: Record<
   }
 };
 
+/** Displays a visual label for a record's publication status. */
 export const InvenioRDMRecordStatus: React.FC<{
   status: InvenioRDMRecordData['status'];
   is_draft: boolean;

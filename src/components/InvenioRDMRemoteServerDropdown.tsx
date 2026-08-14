@@ -35,6 +35,7 @@ function fromSelectValue(
   return value;
 }
 
+/** Lets the user select an available InvenioRDM server. */
 export const InvenioRDMRemoteServerDropdown: React.FC<
   InvenioRDMRemoteServerDropdownProps
 > = ({

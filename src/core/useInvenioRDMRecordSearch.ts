@@ -6,6 +6,7 @@ import {
 } from '../api_calls';
 import { usePaginatedInvenioRDMRecords } from './usePaginatedInvenioRDMRecords';
 
+/** Provides query state and paginated results for public record search. */
 export function useInvenioRDMRecordSearch() {
   const serverSettings = useServerSettings();
   const submittedQuery = React.useRef<string>();

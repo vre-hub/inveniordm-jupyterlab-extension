@@ -57,6 +57,7 @@ const TABS: SidebarTab[] = [
 ];
 const DEFAULT_TAB_ID = 'account';
 
+/** Displays the tabbed content of the InvenioRDM sidebar. */
 const Panel: React.FC<{
   onRemoteNameChanged: (displayName: string | undefined) => void;
 }> = ({ onRemoteNameChanged }) => {
@@ -92,6 +93,7 @@ const Panel: React.FC<{
   );
 };
 
+/** Hosts the InvenioRDM extension in JupyterLab's sidebar. */
 export class SidebarPanel extends VDomRenderer {
   constructor() {
     super();

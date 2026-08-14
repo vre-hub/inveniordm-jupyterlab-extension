@@ -10,6 +10,7 @@ import {
 
 import { JobProgressProps, useJobProgressUpdates } from '../core';
 
+/** Displays progress and cancellation controls for a background job. */
 export const JobProgress: React.FC<JobProgressProps> = props => {
   const { progress, progressLabel, canCancel, cancel, loadingProgress } =
     useJobProgressUpdates(props);

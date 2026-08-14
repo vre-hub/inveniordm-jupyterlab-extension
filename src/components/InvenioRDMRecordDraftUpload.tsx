@@ -9,6 +9,7 @@ import {
 } from '../core';
 import { ErrorPanel } from './ErrorPanel';
 
+/** Displays the workflow for creating a record draft from local files. */
 export const InvenioRDMRecordDraftUpload: React.FC = () => {
   const {
     remoteServer,

@@ -29,10 +29,12 @@ export function InvenioRDMVersionedRecord(
   );
 }
 
+/** Displays a failure to load a record. */
 function RecordLoadingError({ error }: { error: string }): JSX.Element {
   return <ErrorPanel error={error} title="Could not load record" />;
 }
 
+/** Displays the record-loading state. */
 function RecordLoading(): JSX.Element {
   return (
     <div
@@ -49,6 +51,7 @@ function RecordLoading(): JSX.Element {
   );
 }
 
+/** Displays confirmation that a record draft was deleted. */
 function RecordDeleted(): JSX.Element | null {
   const [isVisible, setIsVisible] = React.useState(true);
 

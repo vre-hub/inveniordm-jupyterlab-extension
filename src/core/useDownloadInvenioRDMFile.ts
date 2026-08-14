@@ -6,6 +6,7 @@ import {
 } from '../api_calls';
 import { useServerSettings } from '../store';
 
+/** Provides state and actions for downloading an InvenioRDM file. */
 export function useDownloadInvenioRDMFile(fileId: InvenioRDMFileIdentifier) {
   const serverSettings = useServerSettings();
   const [downloadId, setDownloadId] = React.useState<string | null>(null);

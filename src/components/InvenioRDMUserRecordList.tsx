@@ -9,6 +9,7 @@ import { LoadingPanel } from './LoadingPanel';
 import { InvenioRDMRecordList } from './InvenioRDMRecordList';
 import { ErrorPanel } from './ErrorPanel';
 
+/** Displays the signed-in user's records with pagination. */
 export const InvenioRDMUserRecordList: React.FC = () => {
   const userRecords = useInvenioRDMUserRecords();
   const { isLoading, error } = userRecords;

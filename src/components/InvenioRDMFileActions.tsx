@@ -13,6 +13,7 @@ import {
 } from '../core';
 import { OverflowMenu, OverflowMenuItem } from './OverflowMenu';
 
+/** Displays the actions available for an InvenioRDM record file. */
 export const InvenioRDMFileActions: React.FC<{
   fileId: InvenioRDMFileIdentifier;
   status: InvenioRDMFileDownloadStatusResponse;

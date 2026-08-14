@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
+/** Properties shared by the accessible dropdown control. */
 export type DropdownProps = {
   ariaLabel: string;
   children: React.ReactNode;
@@ -10,6 +11,7 @@ export type DropdownProps = {
   value: string;
 };
 
+/** Describes a selectable option in a dropdown. */
 export type DropdownOptionProps = {
   children: React.ReactNode;
   value: string;
@@ -17,6 +19,7 @@ export type DropdownOptionProps = {
 
 type DropdownOptionElement = React.ReactElement<DropdownOptionProps>;
 
+/** Displays a button-driven single-selection dropdown. */
 export function Dropdown({
   ariaLabel,
   children,
@@ -117,6 +120,7 @@ export function Dropdown({
   );
 }
 
+/** Declares an option consumed and rendered by {@link Dropdown}. */
 export function DropdownOption(_: DropdownOptionProps): null {
   return null;
 }

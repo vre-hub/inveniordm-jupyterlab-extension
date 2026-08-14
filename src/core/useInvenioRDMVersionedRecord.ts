@@ -34,6 +34,7 @@ export function selectVersionAfterDraftDiscard(
   );
 }
 
+/** Manages the selected representation and known versions of a record. */
 export function useInvenioRDMVersionedRecord({
   initialRecordIdentifier,
   initialRecordValue,

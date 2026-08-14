@@ -14,9 +14,7 @@ import { requestAPI } from './request';
 import { initializeInvenioRDMStore } from './store';
 import { SidebarPanel } from './widgets/SidebarPanel';
 
-/**
- * Initialization data for the inveniordm_jupyterlab extension.
- */
+/** JupyterLab plugin that adds the InvenioRDM sidebar integration. */
 const plugin: JupyterFrontEndPlugin<void> = {
   id: 'inveniordm_jupyterlab:plugin',
   description: 'Integrates InvenioRDM into JupyterLab.',

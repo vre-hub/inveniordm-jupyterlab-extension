@@ -23,6 +23,7 @@ function downloadStatusChangedTopic(fileId: InvenioRDMFileIdentifier): string {
   ].join('.');
 }
 
+/** Reports whether an InvenioRDM file is available in JupyterLab. */
 export function useDownloadStatus(fileId: InvenioRDMFileIdentifier) {
   const serverSettings = useServerSettings();
   const [status, setStatus] =

@@ -5,6 +5,7 @@ import { setRemoteServerOverride, useRemoteServerOverride } from '../store';
 import { useGetRemoteServersDefault } from '../core';
 import { InvenioRDMRemoteServerDropdown } from './InvenioRDMRemoteServerDropdown';
 
+/** Displays the setting for overriding the default InvenioRDM server. */
 export const InvenioRDMRemoteServerOverrideSetting: React.FC = () => {
   const remoteServerOverride = useRemoteServerOverride();
   const defaultRemoteServer = useGetRemoteServersDefault();

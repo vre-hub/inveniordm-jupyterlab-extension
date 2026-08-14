@@ -16,6 +16,7 @@ const RecordActionContext = createContext<RecordActionContextValue | null>(
   null
 );
 
+/** Provides record-action status to descendant components. */
 export const RecordActionProvider: React.FC<React.PropsWithChildren> = ({
   children
 }) => {
@@ -28,6 +29,7 @@ export const RecordActionProvider: React.FC<React.PropsWithChildren> = ({
   );
 };
 
+/** Returns the current record-action status and its updater. */
 export const useRecordAction = (): RecordActionContextValue => {
   const context = useContext(RecordActionContext);
   if (!context) {
@@ -36,6 +38,7 @@ export const useRecordAction = (): RecordActionContextValue => {
   return context;
 };
 
+/** Displays feedback for the latest record action. */
 export const RecordActionStatus: React.FC = () => {
   const { currentAction } = useRecordAction();
 
