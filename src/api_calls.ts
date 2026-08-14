@@ -9,7 +9,7 @@ import { useRemoteServerOverride, useServerSettings } from './store';
 import { RemoteServerId } from './remoteServers';
 
 /** Authentication state reported for a remote server. */
-export type AccessTokenResponse = {
+type AccessTokenResponse = {
   access_token_present: boolean;
   access_token_valid: boolean;
   remote_server_id: RemoteServerId;
@@ -344,11 +344,11 @@ export type StartJobResponse = {
 };
 
 /** Lifecycle state of an upload or download job. */
-export type JobStatus =
+type JobStatus =
   'pending' | 'running' | 'canceling' | 'canceled' | 'done' | 'error';
 
 /** Output made available by a completed background job. */
-export type JobResult = {
+type JobResult = {
   draft?: InvenioRDMRecordDraftResponse;
   path?: string;
 };
@@ -367,7 +367,7 @@ export type JobProgressResponse = {
 };
 
 /** Job identifiers matching a backend query. */
-export type FindJobsResponse = {
+type FindJobsResponse = {
   job_ids: string[];
 };
 
@@ -588,7 +588,7 @@ export async function getInvenioRDMFileImportCell(
 export type InvenioRDMRecordPermission = 'manage' | 'edit' | 'preview' | 'view';
 
 /** Returns the current user's permission for a record representation. */
-export async function getInvenioRDMRecordPermission(
+async function getInvenioRDMRecordPermission(
   serverSettings: ServerConnection.ISettings,
   recordId: string,
   recordStatus: InvenioRDMFileIdentifier['record_status']
@@ -642,30 +642,6 @@ export type InvenioRDMRecordVersionsChangedEventData = {
   record?: InvenioRDMRecordData;
   versions: InvenioRDMRecordVersion[];
 };
-
-/** Returns the available versions of a record. */
-export function useInvenioRDMRecordVersions(
-  recordId: string,
-  includeDrafts: boolean
-): InvenioRDMRecordVersion[] {
-  const serverSettings = useServerSettings();
-  const [versions, setVersions] = React.useState<InvenioRDMRecordVersion[]>([]);
-
-  React.useEffect(() => {
-    void listInvenioRDMRecordVersions(
-      serverSettings,
-      recordId,
-      includeDrafts
-    ).then((versions: InvenioRDMRecordVersion[]) => {
-      const sortedVersions = versions.sort(
-        (a, b) => a.versions.index - b.versions.index
-      );
-      setVersions(sortedVersions);
-    });
-  }, [includeDrafts, recordId, serverSettings]);
-
-  return versions;
-}
 
 // TODO check if these fields exist/ if they are always present
 

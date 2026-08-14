@@ -114,10 +114,6 @@ function usePickUploadFiles(): () => Promise<string[] | null> {
 
 export {
   initializeInvenioRDMStore,
-  setInsertInvenioRDMCell,
-  setPickDownloadDirectory,
-  setPickUploadFiles,
-  setServerSettings,
   useInsertInvenioRDMCell,
   usePickDownloadDirectory,
   usePickUploadFiles,

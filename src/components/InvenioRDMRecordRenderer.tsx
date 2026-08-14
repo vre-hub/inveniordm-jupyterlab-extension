@@ -88,7 +88,7 @@ export const InvenioRDMRecordPreview: React.FC<
 );
 
 /** Displays a record heading with its status and refresh action. */
-export const InvenioRDMRecordRendererHeader: React.FC<
+const InvenioRDMRecordRendererHeader: React.FC<
   InvenioRDMRecordRendererProps
 > = ({
   record,
