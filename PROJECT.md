@@ -68,6 +68,8 @@ Other times, SSE are only used to notify the client that a certain information h
 
 This makes the network interface more complex but avoids performance issues and high network load.
 
+If InvenioRDM provided a way to notify a client if e.g. a record has been edited, we could use that instead of implementing our own SSE for this. This would be a better solution, because with the way this works now, the frontend does not get notified if the record is edited directly on e.g. Zenodo and is only notified if the record is edited via this extension backend.
+
 ### Multiple URLs pointing to the Jupyter Servers
 
 OAuth redirect URIs are matched as exact strings. This means that URLs that point to the same Jupyter server from a networking perspective are still different OAuth origins, for example `http://localhost:8888/...` and `http://127.0.0.1:8888/...`.
