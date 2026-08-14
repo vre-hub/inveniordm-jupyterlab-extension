@@ -466,6 +466,9 @@ def check_user_record_permission_workaround(
     """
     Check if a user has a specific permission on a record.
     Do this by querying /api/user/records?q=id:<record_id> AND parent.access.grant_tokens:<base64(subject_type).base64(subject_id).base64(permission)>
+
+    This is just a workaround because the InvenioRDM API does not include permissions in the record metadata.
+    Remove this if https://github.com/inveniosoftware/invenio-app-rdm/issues/3551 is ever implemented.
     """
     subject_type = "user"
     encoded_subject_type = base64.b64encode(subject_type.encode()).decode()

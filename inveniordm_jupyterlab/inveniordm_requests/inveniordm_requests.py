@@ -9,17 +9,17 @@ from inveniordm_jupyterlab.inveniordm_requests.inveniordm_helpers import (
     include_inveniordm_file_if_draft_or_restricted,
 )
 
-from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
-from ..util.progress_reporting_reader import ProgressReportingReader
 from ..inveniordm_file_identifier import InvenioRDMFileIdentifier
 from ..inveniordm_record_identifier import (
     InvenioRDMRecordIdentifier,
     InvenioRDMRecordStatus,
 )
+from ..util.job_types import CancelCheck, JobCancelled, UploadProgressCallback
+from ..util.progress_reporting_reader import ProgressReportingReader
 from .inveniordm import (
     InvenioRDMFileResponse,
-    InvenioRDMRecordSearchResponse,
     InvenioRDMPermission,
+    InvenioRDMRecordSearchResponse,
     check_user_record_permission_workaround,
     create_inveniordm_record_draft,
     create_inveniordm_record_version,
@@ -38,6 +38,7 @@ from .inveniordm import (
 @dataclass
 class AccessTokenStatus:
     """Summarize authentication state for a configured remote server."""
+
     access_token_present: bool
     access_token_valid: bool
     remote_server_id: RemoteServerId
@@ -235,7 +236,12 @@ class InvenioRDMRequests:
         record_id: int | str,
         record_status: InvenioRDMRecordStatus,
     ) -> InvenioRDMPermission:
-        """Return the authenticated user's effective permission for a record."""
+        """
+        Return the authenticated user's effective permission for a record.
+
+        This is just a workaround because the InvenioRDM API does not include permissions in the record metadata.
+        Remove this if https://github.com/inveniosoftware/invenio-app-rdm/issues/3551 is ever implemented.
+        """
         # Get user id
         user_id = self.inveniordm_user_id
         if user_id is None:
