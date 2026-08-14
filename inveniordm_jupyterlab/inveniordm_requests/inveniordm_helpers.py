@@ -9,6 +9,9 @@ def include_inveniordm_file_if_draft_or_restricted(
     item: dict[str, Any], *, base_url: str, headers: dict[str, str] | None
 ) -> None:
     """
+    This is a workaround for https://github.com/inveniosoftware/invenio-app-rdm/issues/3552 .
+    Remove this if it is ever fixed.
+
     Expand a InvenioRDM record in place with its file list if
     - the record is a draft
     - or if the files are restricted.
