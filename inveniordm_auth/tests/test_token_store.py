@@ -1,9 +1,6 @@
 import json
 
-from inveniordm_auth.token_store import (
-    BoundedTokenStore,
-    FileTokenStore,
-)
+from inveniordm_auth.token_store import FileTokenStore
 
 
 def test_file_token_store_persists_multiple_tokens(tmp_path):
@@ -11,41 +8,41 @@ def test_file_token_store_persists_multiple_tokens(tmp_path):
     store = FileTokenStore(path)
 
     store.set_token(
-        "alice",
+        "inveniordm_production",
         "alice-token",
         True,
         remote_server_id="inveniordm_production",
         inveniordm_user_id="123",
     )
     store.set_token(
-        "bob",
+        "inveniordm_sandbox",
         "bob-token",
         False,
         remote_server_id="inveniordm_sandbox",
     )
 
-    alice_token = store.get_token("alice")
-    assert alice_token is not None
-    assert alice_token.access_token == "alice-token"
-    assert alice_token.access_token_valid is True
-    assert alice_token.remote_server_id == "inveniordm_production"
-    assert alice_token.inveniordm_user_id == "123"
+    production_token = store.get_token("inveniordm_production")
+    assert production_token is not None
+    assert production_token.access_token == "alice-token"
+    assert production_token.access_token_valid is True
+    assert production_token.remote_server_id == "inveniordm_production"
+    assert production_token.inveniordm_user_id == "123"
 
-    bob_token = store.get_token("bob")
-    assert bob_token is not None
-    assert bob_token.access_token == "bob-token"
-    assert bob_token.access_token_valid is False
-    assert bob_token.remote_server_id == "inveniordm_sandbox"
+    sandbox_token = store.get_token("inveniordm_sandbox")
+    assert sandbox_token is not None
+    assert sandbox_token.access_token == "bob-token"
+    assert sandbox_token.access_token_valid is False
+    assert sandbox_token.remote_server_id == "inveniordm_sandbox"
 
     assert json.loads(path.read_text()) == {
         "tokens": {
-            "alice": {
+            "inveniordm_production": {
                 "access_token": "alice-token",
                 "access_token_valid": True,
                 "remote_server_id": "inveniordm_production",
                 "inveniordm_user_id": "123",
             },
-            "bob": {
+            "inveniordm_sandbox": {
                 "access_token": "bob-token",
                 "access_token_valid": False,
                 "remote_server_id": "inveniordm_sandbox",
@@ -81,24 +78,3 @@ def test_file_token_store_removes_file_after_last_token(tmp_path):
 
     assert store.get_token("user") is None
     assert not path.exists()
-
-
-def test_bounded_token_store_uses_single_bound_token(tmp_path):
-    path = tmp_path / "tokens.json"
-    multi_store = FileTokenStore(path)
-    store = BoundedTokenStore(multi_store, "local-user")
-
-    store.set_token(
-        "token",
-        True,
-        remote_server_id="inveniordm_sandbox",
-        inveniordm_user_id="456",
-    )
-
-    token = store.get_token()
-    assert token is not None
-    assert token.access_token == "token"
-    assert token.access_token_valid is True
-    assert token.remote_server_id == "inveniordm_sandbox"
-    assert token.inveniordm_user_id == "456"
-    assert multi_store.get_token("local-user") == token

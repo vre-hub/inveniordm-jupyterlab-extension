@@ -1,16 +1,22 @@
-from pathlib import Path
-
 import pytest
-from traitlets.config.loader import PyFileConfigLoader
 
 from inveniordm_auth.remote_servers import RemoteServerRegistry
 
 
 @pytest.fixture
 def remote_servers() -> RemoteServerRegistry:
-    repository_root = Path(__file__).parents[2]
-    config = PyFileConfigLoader(
-        "jupyter_server_config.py",
-        path=str(repository_root / "lab_cwd"),
-    ).load_config()
-    return RemoteServerRegistry(config["InvenioRDMJupyterLab"]["remote_servers"])
+    return RemoteServerRegistry(
+        {
+            "zenodo": {
+                "label": "Zenodo",
+                "base_url": "https://zenodo.org",
+                "oauth_client_id": "zenodo-client",
+            },
+            "cds": {
+                "label": "CDS",
+                "base_url": "https://repository.cern",
+                "oauth_client_id": "cds-client",
+            },
+        },
+        default_server_id="zenodo",
+    )
