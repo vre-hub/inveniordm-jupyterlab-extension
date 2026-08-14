@@ -24,6 +24,7 @@ request_modes = ["local", "proxy"]
 
 
 class InvenioRDMJupyterLab(Configurable):
+    """Configure the extension's request mode and remote servers."""
     request_mode = Enum(
         request_modes,
         default_value="local",
@@ -50,6 +51,7 @@ class InvenioRDMJupyterLab(Configurable):
     )
 
     def remote_server_registry(self) -> RemoteServerRegistry:
+        """Build and validate the configured remote-server registry."""
         if self.remote_servers is None:
             configured_servers: dict[str, dict[str, Any]] = DEFAULT_REMOTE_SERVERS
         else:

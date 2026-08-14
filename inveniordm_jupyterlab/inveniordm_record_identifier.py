@@ -16,6 +16,7 @@ def inveniordm_record_identifier(
     record_id: object,
     record_status: object,
 ) -> InvenioRDMRecordIdentifier | None:
+    """Validate record identifier fields and return a normalized value."""
     if (
         not isinstance(record_id, (int, str))
         or isinstance(record_id, bool)

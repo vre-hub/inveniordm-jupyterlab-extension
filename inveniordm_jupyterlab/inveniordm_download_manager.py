@@ -20,6 +20,7 @@ class InvenioRDMDownloadManager:
         remote_server_id: RemoteServerId,
         job_manager: JobManager | None = None,
     ):
+        """Initialize download storage and background-job tracking."""
         self.inveniordm_downloads = InvenioRDMDownloads(downloads_dir, remote_server_id)
         self.job_manager = job_manager or JobManager()
 
@@ -30,6 +31,11 @@ class InvenioRDMDownloadManager:
         file_id: InvenioRDMFileIdentifier,
         on_progress_changed: ProgressListener | None = None,
     ) -> str:
+        """Start a cancellable download job and return its job identifier.
+
+        Progress callbacks receive snapshots updated as response bytes are written.
+        The final job result contains the downloaded file's local path.
+        """
         def download(context: JobContext) -> dict[str, object]:
             destination = self.inveniordm_downloads.download_file(
                 inveniordm_requests,
@@ -57,9 +63,11 @@ class InvenioRDMDownloadManager:
         )
 
     def get_progress(self, download_id: str) -> dict[str, object] | None:
+        """Return the latest progress snapshot for a download."""
         return self.job_manager.get_progress(download_id)
 
     def cancel(self, download_id: str) -> dict[str, object] | None:
+        """Request cancellation of an active download."""
         return self.job_manager.cancel(download_id)
 
     def get_download_status(
@@ -67,6 +75,7 @@ class InvenioRDMDownloadManager:
         *,
         file_id: InvenioRDMFileIdentifier,
     ) -> dict[str, object]:
+        """Return whether a remote file has already been downloaded."""
         return self.inveniordm_downloads.get_download_status(
             file_id=file_id,
         )
@@ -76,6 +85,7 @@ class InvenioRDMDownloadManager:
         *,
         file_id: InvenioRDMFileIdentifier,
     ) -> dict[str, object]:
+        """Delete a downloaded file and report the outcome."""
         return self.inveniordm_downloads.delete_download(
             file_id=file_id,
         )
@@ -85,6 +95,7 @@ class InvenioRDMDownloadManager:
         *,
         file_id: InvenioRDMFileIdentifier,
     ) -> Path:
+        """Return the expected local path for a remote file."""
         return self.inveniordm_downloads.get_download_location(
             file_id=file_id,
         )

@@ -10,6 +10,7 @@ from .inveniordm_requests import AccessTokenStatus, InvenioRDMRequests
 
 
 def get_remote_server_override(handler: APIHandler) -> RemoteServerId | None:
+    """Read an optional remote-server override from a request."""
     remote_server = handler.get_query_argument("remote_server", None)
     if remote_server is None:
         return None
@@ -17,24 +18,30 @@ def get_remote_server_override(handler: APIHandler) -> RemoteServerId | None:
 
 
 class InvenioRDMRequestsFactory(ABC):
+    """Create authenticated API clients for request handlers."""
     def __init__(self, remote_servers: RemoteServerRegistry):
+        """Initialize the factory with its remote-server registry."""
         self.remote_servers = remote_servers
 
     @property
     @abstractmethod
     def auth_controller(self) -> InvenioRDMAuthController:
+        """Return the authentication controller for this request mode."""
         pass
 
     @abstractmethod
     def create_inveniordm_requests(self, handler: APIHandler) -> InvenioRDMRequests:
+        """Create an API client appropriate for a handler request."""
         pass
 
     def get_remote_server_id(
         self, inveniordm_requests: InvenioRDMRequests
     ) -> RemoteServerId:
+        """Resolve the configured server identifier for an API client."""
         return self.remote_servers.by_url(inveniordm_requests.url).id
 
     def get_access_token_status(self, handler: APIHandler) -> AccessTokenStatus:
+        """Check whether the selected server has valid authentication."""
         inveniordm_requests = self.create_inveniordm_requests(handler)
         authentication_present = bool(inveniordm_requests.headers)
         remote_server_id = self.get_remote_server_id(inveniordm_requests)

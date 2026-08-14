@@ -13,7 +13,9 @@ from .inveniordm_requests_factory import (
 
 
 class LocalInvenioRDMRequestsFactory(InvenioRDMRequestsFactory):
+    """Create API clients authenticated from the local token store."""
     def __init__(self, remote_servers: RemoteServerRegistry):
+        """Initialize local token storage and OAuth handling."""
         super().__init__(remote_servers)
         self.token_store = FileTokenStore()
         self._auth_controller = LocalInvenioRDMAuthController(
@@ -23,9 +25,11 @@ class LocalInvenioRDMRequestsFactory(InvenioRDMRequestsFactory):
 
     @property
     def auth_controller(self) -> InvenioRDMAuthController:
+        """Return the local OAuth controller."""
         return self._auth_controller
 
     def create_inveniordm_requests(self, handler: APIHandler) -> InvenioRDMRequests:
+        """Create a client for the requested or default remote server."""
         remote_server_id = (
             get_remote_server_override(handler) or self.remote_servers.default.id
         )
@@ -46,6 +50,7 @@ class LocalInvenioRDMRequestsFactory(InvenioRDMRequestsFactory):
         token: StoredToken | None,
         remote_server_id: RemoteServerId,
     ) -> dict[str, str]:
+        """Build authorization headers when the token matches the server."""
         if token is None or token.remote_server_id != remote_server_id:
             return {}
 

@@ -18,6 +18,7 @@ def inveniordm_file_identifier(
     record_status: object,
     file_key: object,
 ) -> InvenioRDMFileIdentifier | None:
+    """Validate and combine record and file identifier fields."""
     record_identifier = inveniordm_record_identifier(record_id, record_status)
     if record_identifier is None or not isinstance(file_key, str) or not file_key:
         return None

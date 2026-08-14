@@ -21,6 +21,7 @@ class InvenioRDMDownloads:
     """
 
     def __init__(self, downloads_dir: Path, remote_server_id: RemoteServerId):
+        """Initialize download storage for a remote server."""
         self.location_manager = InvenioRDMDownloadLocationManager(
             downloads_dir, remote_server_id
         )
@@ -30,6 +31,7 @@ class InvenioRDMDownloads:
         *,
         file_id: InvenioRDMFileIdentifier,
     ) -> Path:
+        """Return the expected local path for a remote file."""
         return self.location_manager.download_location(
             file_id=file_id,
         )
@@ -39,6 +41,7 @@ class InvenioRDMDownloads:
         *,
         file_id: InvenioRDMFileIdentifier,
     ) -> dict[str, object]:
+        """Return the local download status for a remote file."""
         existing_file = self.location_manager.find_downloaded_file(
             file_id=file_id,
         )
@@ -52,6 +55,7 @@ class InvenioRDMDownloads:
         *,
         file_id: InvenioRDMFileIdentifier,
     ) -> dict[str, object]:
+        """Delete a local download and prune its empty directories."""
         existing_file = self.location_manager.find_downloaded_file(
             file_id=file_id,
         )
@@ -70,6 +74,7 @@ class InvenioRDMDownloads:
         on_progress: DownloadProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
     ) -> Path:
+        """Download a file, report progress, and close the remote response."""
         destination = self.location_manager.download_location(
             file_id=file_id,
         )
@@ -93,6 +98,12 @@ class InvenioRDMDownloads:
         on_progress: DownloadProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
     ) -> Path:
+        """Atomically persist a streamed response to its final destination.
+
+        Bytes are first written to a ``.part`` file so incomplete downloads never
+        appear as finished files. Cancellation removes that temporary file before
+        propagating the cancellation signal.
+        """
         bytes_downloaded = 0
         total_bytes = response.content_length
         destination.parent.mkdir(parents=True, exist_ok=True)

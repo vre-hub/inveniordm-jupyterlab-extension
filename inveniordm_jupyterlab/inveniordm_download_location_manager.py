@@ -24,6 +24,7 @@ class InvenioRDMDownloadLocationManager:
     """
 
     def __init__(self, downloads_dir: Path, remote_server_id: RemoteServerId):
+        """Initialize paths for one remote server's downloads."""
         self.downloads_dir = downloads_dir
         self.remote_server_id = remote_server_id
 
@@ -40,6 +41,7 @@ class InvenioRDMDownloadLocationManager:
         return candidate if candidate.is_file() else None
 
     def remove_empty_parent(self, path: Path) -> None:
+        """Remove empty record and status directories above a file."""
         for parent in (path.parent, path.parent.parent):
             try:
                 parent.rmdir()
@@ -51,6 +53,7 @@ class InvenioRDMDownloadLocationManager:
         *,
         file_id: InvenioRDMFileIdentifier,
     ) -> Path:
+        """Return the safe, server-scoped destination for a remote file."""
         safe_record_id = Path(str(file_id.record_id)).name
         if not safe_record_id:
             raise ValueError("Missing record_id")

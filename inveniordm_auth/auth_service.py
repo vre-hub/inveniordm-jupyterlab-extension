@@ -10,12 +10,14 @@ from urllib.request import Request, urlopen
 
 @dataclass(frozen=True)
 class OAuthLogin:
+    """Describe a newly initiated OAuth authorization request."""
     state: str
     authorize_url: str
 
 
 @dataclass(frozen=True)
 class OAuthClientConfig:
+    """Contain the client and endpoint settings for an OAuth flow."""
     inveniordm_base_url: str
     client_id: str
     redirect_uri: str
@@ -25,6 +27,7 @@ class OAuthClientConfig:
 
 @dataclass(frozen=True)
 class OAuthToken:
+    """Contain the identity and token returned by InvenioRDM."""
     inveniordm_user_id: str
     access_token: str
     token_response: dict[str, Any]
@@ -32,6 +35,7 @@ class OAuthToken:
 
 @dataclass(frozen=True)
 class OAuthCallback:
+    """Contain a completed OAuth callback and its return target."""
     return_to: str
     inveniordm_user_id: str
     access_token: str
@@ -39,18 +43,22 @@ class OAuthCallback:
 
 
 class OAuthConfigurationError(ValueError):
+    """Report missing or invalid OAuth client configuration."""
     pass
 
 
 class OAuthStateError(ValueError):
+    """Report an invalid or expired OAuth state value."""
     pass
 
 
 class OAuthTokenResponseError(ValueError):
+    """Report a malformed response from the OAuth token endpoint."""
     pass
 
 
 def create_oauth_state() -> str:
+    """Create a cryptographically secure OAuth state value."""
     return secrets.token_urlsafe(32)
 
 
@@ -60,6 +68,7 @@ def _form_post_json(
     form_data: dict[str, str],
     timeout: int = 10,
 ) -> dict[str, Any]:
+    """POST form data and decode the endpoint's JSON response."""
     body = urlencode(form_data).encode("utf-8")
     request = Request(
         url,
@@ -79,6 +88,7 @@ def create_oauth_login(
     *,
     state: str | None = None,
 ) -> OAuthLogin:
+    """Create an OAuth authorization URL and its matching state value."""
     if not config.client_id:
         raise OAuthConfigurationError(
             "OAuth login is not configured for this remote server."
@@ -105,6 +115,12 @@ def exchange_oauth_code(
     *,
     code: str,
 ) -> OAuthToken:
+    """Exchange an authorization code for an InvenioRDM access token.
+
+    The client secret is included only for confidential clients. The response is
+    validated for both the bearer token and the authenticated InvenioRDM user ID,
+    since both are required by downstream token storage.
+    """
     form_data = {
         "grant_type": "authorization_code",
         "code": code,

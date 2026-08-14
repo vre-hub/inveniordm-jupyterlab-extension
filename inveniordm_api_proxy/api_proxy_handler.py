@@ -12,12 +12,14 @@ from .streaming_request_handler import StreamingRequestBodyHandler
 
 
 class ApiProxyHandler(StreamingRequestBodyHandler):
+    """Stream authenticated API requests between JupyterLab and InvenioRDM."""
     SUPPORTED_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
 
     def start_streaming_request(
         self,
         path: str,
     ) -> Coroutine[Any, Any, None] | None:
+        """Authorize the proxy session and start forwarding the request."""
         inveniordm_user_id = self.current_inveniordm_user_id()
         if inveniordm_user_id is None:
             self.write_json(
@@ -46,6 +48,13 @@ class ApiProxyHandler(StreamingRequestBodyHandler):
         *,
         request_body: Iterable[bytes] | None,
     ) -> None:
+        """Forward a request and stream the upstream response to the client.
+
+        Blocking URL operations run in worker threads. HTTP error responses remain
+        valid upstream responses and are proxied, while connection failures become
+        a local 502 response. Hop-by-hop and security-sensitive headers are filtered
+        separately before response chunks are flushed.
+        """
         target_url = f"{self.config.inveniordm_base_url}{path}"
         if self.request.query:
             target_url = f"{target_url}?{self.request.query}"
@@ -87,6 +96,7 @@ class ApiProxyHandler(StreamingRequestBodyHandler):
             response.close()
 
     def forward_request_headers(self, access_token: str) -> dict[str, str]:
+        """Build the restricted set of headers sent upstream."""
         headers: dict[str, str] = {
             "Accept": self.request.headers.get("Accept", "application/json"),
             "Authorization": f"Bearer {access_token}",
@@ -102,6 +112,7 @@ class ApiProxyHandler(StreamingRequestBodyHandler):
         status: int,
         headers: dict[str, str],
     ) -> None:
+        """Copy safe status and response headers from InvenioRDM."""
         self.set_status(status)
         for name, value in headers.items():
             if is_hop_by_hop_header(name):

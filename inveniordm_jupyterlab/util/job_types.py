@@ -7,11 +7,13 @@ DownloadProgressCallback = Callable[[int, int | None], None]
 
 
 class JobCancelled(Exception):
+    """Signal cooperative cancellation from a background job."""
     pass
 
 
 @dataclass
 class JobProgress:
+    """Mutable progress state for a background job."""
     job_type: str
     metadata: dict[str, object] = field(default_factory=dict)
     job_id: str = ""

@@ -37,6 +37,7 @@ from .inveniordm import (
 
 @dataclass
 class AccessTokenStatus:
+    """Summarize authentication state for a configured remote server."""
     access_token_present: bool
     access_token_valid: bool
     remote_server_id: RemoteServerId
@@ -56,11 +57,13 @@ class InvenioRDMRequests:
         headers: dict[str, str] | None = None,
         inveniordm_user_id: str | None = None,
     ):
+        """Initialize a server-scoped client with optional authentication."""
         self.url = url.rstrip("/")
         self.headers = headers or {}
         self.inveniordm_user_id = inveniordm_user_id
 
     def get_inveniordm_me(self) -> dict[str, Any]:
+        """Return the authenticated InvenioRDM user's profile."""
         if not self.headers:
             raise ValueError("Missing InvenioRDM request authentication headers")
 
@@ -79,6 +82,7 @@ class InvenioRDMRequests:
         allversions: bool = False,
         include_files: bool = False,
     ) -> InvenioRDMRecordSearchResponse:
+        """Search records and optionally hydrate protected file metadata."""
         records = search_inveniordm_records(
             query,
             base_url=self.url,
@@ -105,6 +109,7 @@ class InvenioRDMRequests:
         size: int = 10,
         include_files: bool = False,
     ) -> InvenioRDMRecordSearchResponse:
+        """List the user's records and optionally hydrate file metadata."""
         records = list_inveniordm_user_records(
             base_url=self.url,
             headers=self.headers,
@@ -126,6 +131,13 @@ class InvenioRDMRequests:
         record_id: int | str,
         include_drafts: bool = True,
     ) -> list[dict[str, Any]]:
+        """List published versions and, when accessible, editable drafts.
+
+        InvenioRDM's versions endpoint omits drafts. This method supplements its
+        results by resolving an initial draft directly or by finding drafts with
+        the same parent record, while preserving published and draft variants that
+        happen to share a record ID.
+        """
         response = list_inveniordm_record_versions(
             record_id,
             base_url=self.url,
@@ -328,6 +340,7 @@ class InvenioRDMRequests:
                     *,
                     current_file: str = path.name,
                 ) -> None:
+                    """Accumulate bytes read and report aggregate upload progress."""
                     nonlocal bytes_uploaded
                     bytes_uploaded += chunk_size
                     if on_upload_progress is not None:
@@ -369,6 +382,11 @@ class InvenioRDMRequests:
         on_upload_progress: UploadProgressCallback | None = None,
         should_cancel: CancelCheck | None = None,
     ) -> dict[str, Any]:
+        """Create a draft and upload files with cooperative cancellation.
+
+        Cancellation is checked both before and after draft creation to avoid
+        starting file transfers once the caller has requested a stop.
+        """
         if not self.headers:
             raise ValueError("Missing InvenioRDM request authentication headers")
 
@@ -394,6 +412,7 @@ class InvenioRDMRequests:
         *,
         file_id: InvenioRDMFileIdentifier,
     ) -> InvenioRDMFileResponse:
+        """Open a streaming response for a draft or published record file."""
         return open_inveniordm_file(
             file_id,
             base_url=self.url,

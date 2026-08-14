@@ -6,6 +6,7 @@ from .inveniordm_file_identifier import InvenioRDMFileIdentifier
 
 
 def _make_file_variable_name(*, record_id: int | str, path: Path) -> str:
+    """Build a valid Python variable name for an imported file."""
     name = f"{path.stem}_{record_id}"
     name = re.sub(r"\W+", "_", name).strip("_").lower()
     return name or "inveniordm_file"
@@ -16,6 +17,7 @@ def _file_comment_name(
     path: Path,
     file_metadata: dict[str, Any] | None = None,
 ) -> str:
+    """Choose a safe display name for a generated cell comment."""
     if file_metadata is not None:
         filename = (
             file_metadata.get("filename")
@@ -36,6 +38,7 @@ def make_inveniordm_import_cell_action(
     file_id: InvenioRDMFileIdentifier,
     file_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Build a notebook cell action that imports an InvenioRDM file."""
     path_literal = repr(str(path))
     variable_name = _make_file_variable_name(record_id=file_id.record_id, path=path)
     comment_name = _file_comment_name(path=path, file_metadata=file_metadata)

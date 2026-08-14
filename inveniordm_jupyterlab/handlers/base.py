@@ -38,6 +38,7 @@ GetUserSettings = Callable[[APIHandler], InvenioRDMUserSettings]
 
 
 def contents_root(handler: APIHandler) -> Path:
+    """Return the resolved root managed by Jupyter's contents service."""
     contents_manager = handler.settings["contents_manager"]
     return Path(contents_manager.root_dir).resolve()
 
