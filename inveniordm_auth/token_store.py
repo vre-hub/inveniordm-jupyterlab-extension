@@ -41,33 +41,6 @@ class MultiTokenStore(ABC):
         pass
 
 
-class BoundedTokenStore:  # TODO remove, unused
-    def __init__(self, multi_store: MultiTokenStore, token_id: str = "user"):
-        self.multi_store = multi_store
-        self.token_id = token_id
-
-    def get_token(self) -> StoredToken | None:
-        return self.multi_store.get_token(self.token_id)
-
-    def set_token(
-        self,
-        access_token: str,
-        access_token_valid: bool,
-        remote_server_id: RemoteServerId,
-        inveniordm_user_id: str | None = None,
-    ) -> None:
-        self.multi_store.set_token(
-            self.token_id,
-            access_token,
-            access_token_valid,
-            remote_server_id,
-            inveniordm_user_id,
-        )
-
-    def remove_token(self) -> None:
-        self.multi_store.remove_token(self.token_id)
-
-
 def default_token_store_path() -> Path:
     return Path(jupyter_data_dir()) / "inveniordm_jupyterlab" / "tokens.json"
 
