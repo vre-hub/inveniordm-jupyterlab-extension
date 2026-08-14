@@ -5,7 +5,11 @@ import { LoginButton, LogoutButton } from './AuthButtons';
 import { InvenioRDMUserProfile } from './InvenioRDMUserProfile';
 import { useAccessTokenStatus } from '../api_calls';
 import { LoadingPanel } from './LoadingPanel';
-import { useGetRemoteServersDefault, useRemoteServers } from '../core';
+import {
+  useGetRemoteServersDefault,
+  useRemoteServers,
+  useShouldShowRemoteServerDropdownForLogin
+} from '../core';
 import { useRemoteServerOverride } from '../store';
 import { ErrorPanel } from './ErrorPanel';
 import { InvenioRDMRemoteServerOverrideSetting } from './InvenioRDMRemoteServerOverrideSetting';
@@ -22,12 +26,16 @@ export const InvenioRDMLoginForm: React.FC = () => {
   const loginAvailable =
     selectedRemoteServerOption?.login_available ??
     defaultOption?.login_available;
+  const shouldShowRemoteServerDropdown =
+    useShouldShowRemoteServerDropdownForLogin();
 
   if (!accessStatus) {
     return (
       <div>
         <div className="border-b border-border px-3 pb-4">
-          <InvenioRDMRemoteServerOverrideSetting />
+          {shouldShowRemoteServerDropdown && (
+            <InvenioRDMRemoteServerOverrideSetting />
+          )}
         </div>
         <LoadingPanel text={`Checking login status…`} />
       </div>
@@ -38,7 +46,9 @@ export const InvenioRDMLoginForm: React.FC = () => {
     return (
       <div>
         <div className="border-b border-border px-3 pb-4">
-          <InvenioRDMRemoteServerOverrideSetting />
+          {shouldShowRemoteServerDropdown && (
+            <InvenioRDMRemoteServerOverrideSetting />
+          )}
         </div>
         <ErrorPanel error={accessStatus.error} />
       </div>
@@ -53,7 +63,9 @@ export const InvenioRDMLoginForm: React.FC = () => {
   return (
     <div>
       <div className="px-3 pb-4">
-        <InvenioRDMRemoteServerOverrideSetting />
+        {shouldShowRemoteServerDropdown && (
+          <InvenioRDMRemoteServerOverrideSetting />
+        )}
       </div>
       {!loggedIn && (
         <div className="px-3 py-5">
