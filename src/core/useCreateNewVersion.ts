@@ -49,6 +49,7 @@ export function useCreateNewVersion(
           'No record versions available to create a new version from.'
         );
       }
+      // we pass the latest version id here because passing any other ID can lead to a wrong version index in some deployments
       await createInvenioRDMRecordVersion(serverSettings, latestVersion.id);
     } catch (reason) {
       setError(String(reason));
