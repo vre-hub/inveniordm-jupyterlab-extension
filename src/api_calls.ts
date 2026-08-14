@@ -63,15 +63,29 @@ export async function getCurrentRemoteServer(
 export function useAccessTokenStatus(): AccessTokenStatus | undefined {
   const serverSettings = useServerSettings();
   const remoteServerOverride = useRemoteServerOverride();
-  const [status, setStatus] = React.useState<AccessTokenStatus>();
+  const [state, setState] = React.useState<{
+    remoteServerOverride: RemoteServerId | undefined;
+    status: AccessTokenStatus;
+  }>();
+  const requestId = React.useRef(0);
 
   const updateStatus = React.useCallback(async (): Promise<void> => {
+    const currentRequestId = ++requestId.current;
     try {
-      setStatus(
-        await requestAPI<AccessTokenResponse>('access-token', serverSettings)
+      const status = await requestAPI<AccessTokenResponse>(
+        'access-token',
+        serverSettings
       );
+      if (currentRequestId === requestId.current) {
+        setState({ remoteServerOverride, status });
+      }
     } catch (reason) {
-      setStatus({ error: String(reason) });
+      if (currentRequestId === requestId.current) {
+        setState({
+          remoteServerOverride,
+          status: { error: String(reason) }
+        });
+      }
     }
   }, [serverSettings, remoteServerOverride]);
 
@@ -83,7 +97,10 @@ export function useAccessTokenStatus(): AccessTokenStatus | undefined {
     void updateStatus();
   });
 
-  return status;
+  if (!state || state.remoteServerOverride !== remoteServerOverride) {
+    return undefined;
+  }
+  return state.status;
 }
 
 export function useAccessTokenEventListener(onEvent: () => void): void {
