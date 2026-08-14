@@ -21,8 +21,24 @@ Use this for the developer application registration on the InvenioRDM Instance.
 Copy the generated client credentials into your shell before starting the proxy:
 
 ```bash
-export INVENIORDM_CLIENT_ID="..."
-export INVENIORDM_CLIENT_SECRET="..."
+export INVENIORDM_BASE_URL="https://zenodo.org"
+export INVENIORDM_CLIENT_ID="HaWBPRb7lsif7cqTypUNeFni9PJOoTm5IcjTJrtt"
+export PROXY_HOST="127.0.0.1"
+export PROXY_PUBLIC_URL="http://127.0.0.1:8003"
+export PROXY_PORT="8003"
+export INVENIORDM_PROXY_SESSION_COOKIE_NAME="zenodo_production_proxy_session"
+python -m inveniordm_api_proxy
+```
+
+For just running the proxy with default credentials, run
+
+```bash
+unset INVENIORDM_BASE_URL
+unset INVENIORDM_CLIENT_ID # or set the client ID yourself
+unset PROXY_HOST
+unset PROXY_PUBLIC_URL
+unset PROXY_PORT
+unset INVENIORDM_PROXY_SESSION_COOKIE_NAME
 python -m inveniordm_api_proxy
 ```
 
@@ -41,6 +57,25 @@ Check whether the proxy session exists:
 
 ```text
 http://127.0.0.1:8001/auth/status
+```
+
+To use the proxy, you need to configure the JupyterLab extension to point to the proxy URL and session cookie name, e.g. like this:
+
+```python
+c.InvenioRDMJupyterLab.remote_servers = {
+    "zenodo": {
+        "label": "Zenodo",
+        "base_url": "https://zenodo.org",
+        "proxy_url": "http://127.0.0.1:8003/",
+        "proxy_session_cookie_name": "zenodo_production_proxy_session",
+    },
+    "zenodo_sandbox": {
+        "label": "Zenodo Sandbox",
+        "base_url": "https://sandbox.zenodo.org",
+        "proxy_url": "http://127.0.0.1:8001/",
+        "proxy_session_cookie_name": "zenodo_sandbox_proxy_session",
+    },
+}
 ```
 
 ### Notes
