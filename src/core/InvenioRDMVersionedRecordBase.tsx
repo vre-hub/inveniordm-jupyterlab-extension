@@ -41,7 +41,8 @@ export function InvenioRDMVersionedRecordBase({
     record,
     isLoading,
     recordDeleted,
-    versions
+    versions,
+    isLoadingVersions
   } = useInvenioRDMVersionedRecord({
     initialRecordIdentifier,
     initialRecordValue,
@@ -64,6 +65,7 @@ export function InvenioRDMVersionedRecordBase({
     record,
     recordIdentifier,
     versions,
+    isLoadingVersions,
     selectRecord
   };
 
