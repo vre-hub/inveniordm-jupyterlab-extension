@@ -1,12 +1,14 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, LoaderCircle } from 'lucide-react';
 
 /** Properties shared by the accessible dropdown control. */
 export type DropdownProps = {
   ariaLabel: string;
   children: React.ReactNode;
   emptyLabel: string;
+  isLoading?: boolean;
   listboxLabel?: string;
+  loadingLabel?: string;
   onChange: (value: string) => void;
   value: string;
 };
@@ -24,7 +26,9 @@ export function Dropdown({
   ariaLabel,
   children,
   emptyLabel,
+  isLoading = false,
   listboxLabel = ariaLabel,
+  loadingLabel = 'Loading…',
   onChange,
   value
 }: DropdownProps): JSX.Element {
@@ -66,15 +70,28 @@ export function Dropdown({
   return (
     <div className="relative inline-block max-w-full" ref={containerRef}>
       <button
+        aria-busy={isLoading}
         aria-controls={isOpen ? listboxId : undefined}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-label={ariaLabel}
-        className="box-border flex max-w-full items-center gap-2 rounded-md border border-border-strong bg-surface py-2 pl-3 pr-9 text-sm text-foreground-secondary shadow-sm transition-colors hover:border-border-hover focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        className="box-border flex max-w-full items-center gap-2 rounded-md border border-border-strong bg-surface py-2 pl-3 pr-9 text-sm text-foreground-secondary shadow-sm transition-colors hover:border-border-hover focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={isLoading}
         onClick={() => setIsOpen(open => !open)}
         type="button"
       >
-        {selectedOption ? (
+        {isLoading ? (
+          <>
+            <LoaderCircle
+              aria-hidden="true"
+              className="animate-spin text-primary"
+              size={16}
+            />
+            <span className="font-semibold text-foreground">
+              {loadingLabel}
+            </span>
+          </>
+        ) : selectedOption ? (
           selectedOption.props.children
         ) : (
           <span className="font-semibold text-foreground">{emptyLabel}</span>

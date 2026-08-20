@@ -30,10 +30,12 @@ export function findRecordIdentifier(
 
 /** Lets the user select a published or draft version of a record. */
 export function VersionDropdown({
+  isLoading,
   recordIdentifier,
   versions,
   onChange
 }: {
+  isLoading: boolean;
   recordIdentifier: InvenioRDMRecordIdentifier;
   versions: InvenioRDMRecordVersion[];
   onChange: (identifier: InvenioRDMRecordIdentifier) => void;
@@ -44,7 +46,9 @@ export function VersionDropdown({
     <Dropdown
       ariaLabel="Record version"
       emptyLabel="No versions"
+      isLoading={isLoading}
       listboxLabel="Record versions"
+      loadingLabel="Loading versions…"
       onChange={value => {
         const selectedIdentifier = findRecordIdentifier(versions, value);
         if (selectedIdentifier) {

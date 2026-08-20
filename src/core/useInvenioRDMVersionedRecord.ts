@@ -59,6 +59,9 @@ export function useInvenioRDMVersionedRecord({
   const [isLoading, setIsLoading] = React.useState(false);
   const [recordDeleted, setRecordDeleted] = React.useState(false);
   const [versions, setVersions] = React.useState<InvenioRDMRecordVersion[]>([]);
+  // Starts true so the dropdown shows its loading state rather than "No versions"
+  // on the first render, before the versions request has been made.
+  const [isLoadingVersions, setIsLoadingVersions] = React.useState(true);
   const serverSettings = useServerSettings();
 
   const loadRecord = React.useCallback(
@@ -127,15 +130,26 @@ export function useInvenioRDMVersionedRecord({
 
   React.useEffect(() => {
     let isMounted = true;
-    void listInvenioRDMRecordVersions(
-      serverSettings,
-      initialRecordIdentifier.record_id,
-      includeDrafts
-    ).then(versions => {
-      if (isMounted) {
-        setVersions(sortVersions(versions));
+    setIsLoadingVersions(true);
+
+    const loadVersions = async (): Promise<void> => {
+      try {
+        const versions = await listInvenioRDMRecordVersions(
+          serverSettings,
+          initialRecordIdentifier.record_id,
+          includeDrafts
+        );
+        if (isMounted) {
+          setVersions(sortVersions(versions));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingVersions(false);
+        }
       }
-    });
+    };
+
+    void loadVersions();
     return () => {
       isMounted = false;
     };
@@ -210,6 +224,7 @@ export function useInvenioRDMVersionedRecord({
     isLoading,
     selectRecord,
     recordDeleted,
-    versions
+    versions,
+    isLoadingVersions
   };
 }
