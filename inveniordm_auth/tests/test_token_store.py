@@ -1,4 +1,5 @@
 import json
+import stat
 
 from inveniordm_auth.token_store import FileTokenStore
 
@@ -78,3 +79,40 @@ def test_file_token_store_removes_file_after_last_token(tmp_path):
 
     assert store.get_token("user") is None
     assert not path.exists()
+
+
+def test_file_token_store_is_readable_only_by_its_owner(tmp_path):
+    path = tmp_path / "tokens.json"
+    FileTokenStore(path).set_token("user", "token", True, "production")
+
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+def test_file_token_store_tightens_permissions_of_an_existing_file(tmp_path):
+    path = tmp_path / "tokens.json"
+    store = FileTokenStore(path)
+    store.set_token("user", "token", True, "production")
+    path.chmod(0o644)
+
+    store.set_token("user", "new-token", True, "production")
+
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+def test_file_token_store_recovers_from_an_unreadable_file(tmp_path):
+    path = tmp_path / "tokens.json"
+    store = FileTokenStore(path)
+    store.set_token("user", "token", True, "production")
+    path.write_text(path.read_text()[: len(path.read_text()) // 2])
+
+    assert store.get_token("user") is None
+
+    store.set_token("user", "token", True, "production")
+    assert store.get_token("user") is not None
+
+
+def test_file_token_store_leaves_no_temporary_files_behind(tmp_path):
+    path = tmp_path / "tokens.json"
+    FileTokenStore(path).set_token("user", "token", True, "production")
+
+    assert [entry.name for entry in tmp_path.iterdir()] == ["tokens.json"]
