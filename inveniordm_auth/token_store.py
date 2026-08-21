@@ -1,5 +1,7 @@
 import json
+import logging
 import os
+import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -10,6 +12,8 @@ from jupyter_core.paths import jupyter_data_dir
 from .remote_servers import RemoteServerId
 
 TOKEN_STORE_PATH_ENV_VAR = "INVENIORDM_JUPYTERLAB_TOKEN_STORE"
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -97,11 +101,14 @@ class FileTokenStore(MultiTokenStore):
             self.path.unlink(missing_ok=True)
 
     def _read_tokens(self) -> dict[str, Any]:
-        if not self.path.exists():
+        try:
+            with self.path.open(encoding="utf-8") as fid:
+                data: Any = json.load(fid)
+        except FileNotFoundError:
             return {}
-
-        with self.path.open(encoding="utf-8") as fid:
-            data: Any = json.load(fid)
+        except (OSError, json.JSONDecodeError):
+            logger.warning("Ignoring unreadable token store %s", self.path)
+            return {}
 
         if isinstance(data, dict) and isinstance(data.get("tokens"), dict):
             return data["tokens"]
@@ -109,6 +116,16 @@ class FileTokenStore(MultiTokenStore):
         return {}
 
     def _write_tokens(self, tokens: dict[str, Any]) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("w", encoding="utf-8") as fid:
-            json.dump({"tokens": tokens}, fid)
+        self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=self.path.parent,
+            prefix=f"{self.path.name}.",
+            suffix=".tmp",
+        )
+        temporary_path = Path(temporary_name)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as fid:
+                json.dump({"tokens": tokens}, fid)
+            temporary_path.replace(self.path)
+        finally:
+            temporary_path.unlink(missing_ok=True)
